@@ -1,6 +1,0 @@
-[submodule "crt"]
-	path = src/crt
-	url = https://github.com/54ph/PetalCRT
-[submodule "d3d"]
-	path = src/d3d
-	url = https://github.com/54ph/PetalD3D.git
