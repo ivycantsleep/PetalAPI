@@ -27,17 +27,19 @@ Revision History:
 //      usermode side of the resource manager.
 //
 
-
+
 //
 // Globals used by the routines in this module
 //
 
 const WCHAR BasepMmLowMemoryConditionEventName[] = L"\\KernelObjects\\LowMemoryCondition";
 const WCHAR BasepMmHighMemoryConditionEventName[] = L"\\KernelObjects\\HighMemoryCondition";
-
+
 HANDLE
 APIENTRY
-CreateMemoryResourceNotification(IN MEMORY_RESOURCE_NOTIFICATION_TYPE NotificationType)
+CreateMemoryResourceNotification(
+    IN MEMORY_RESOURCE_NOTIFICATION_TYPE NotificationType
+    )
 
 /*++
 
@@ -61,17 +63,16 @@ Return Value:
 --*/
 
 {
-    LPCWSTR EventName;
-    HANDLE Handle;
+    LPCWSTR           EventName;
+    HANDLE            Handle;
     OBJECT_ATTRIBUTES Obja;
-    UNICODE_STRING ObjectName;
-    NTSTATUS Status;
+    UNICODE_STRING    ObjectName;
+    NTSTATUS          Status;
 
     //
     // Determine the event in which the caller's interested.
     //
-    switch (NotificationType)
-    {
+    switch (NotificationType) {
     case LowMemoryResourceNotification:
         //
         // It's the low memory condition event
@@ -88,27 +89,33 @@ Return Value:
 
     default:
         //
-        // Not one of our known event-of-interest types; all we can do
+        // Not one of our known event-of-interest types; all we can do 
         // is indicate an invalid parameter, and return a failure
         // condition.
         //
 
         SetLastError(ERROR_INVALID_PARAMETER);
         return NULL;
-    }
 
+    }
+    
 
     //
     // Attempt the actual event open
     //
     RtlInitUnicodeString(&ObjectName, EventName);
 
-    InitializeObjectAttributes(&Obja, &ObjectName, 0, NULL, NULL);
+    InitializeObjectAttributes(&Obja,
+                               &ObjectName,
+                               0,
+                               NULL,
+                               NULL);
 
-    Status = NtOpenEvent(&Handle, SYNCHRONIZE | EVENT_QUERY_STATE, &Obja);
+    Status = NtOpenEvent(&Handle,
+                         SYNCHRONIZE | EVENT_QUERY_STATE,
+                         &Obja);
 
-    if (!NT_SUCCESS(Status))
-    {
+    if (! NT_SUCCESS(Status)) {
         //
         // We failed to open the event for some reason.
         //
@@ -122,8 +129,13 @@ Return Value:
 
     return Handle;
 }
-
-BOOL APIENTRY QueryMemoryResourceNotification(IN HANDLE ResourceNotificationHandle, IN PBOOL ResourceState)
+
+BOOL
+APIENTRY
+QueryMemoryResourceNotification(
+    IN HANDLE ResourceNotificationHandle,
+    IN PBOOL  ResourceState
+    )
 
 /*++
 
@@ -150,14 +162,15 @@ Return Value:
 --*/
 
 {
-    EVENT_BASIC_INFORMATION EventInfo;
-    NTSTATUS Status;
+    EVENT_BASIC_INFORMATION      EventInfo;
+    NTSTATUS                     Status;
 
     //
     // Check parameter validity
     //
-    if (!ResourceNotificationHandle || ResourceNotificationHandle == INVALID_HANDLE_VALUE || !ResourceState)
-    {
+    if (! ResourceNotificationHandle
+        || ResourceNotificationHandle == INVALID_HANDLE_VALUE
+        || ! ResourceState) {
 
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
@@ -166,10 +179,13 @@ Return Value:
     //
     // Get the event's current state
     //
-    Status = NtQueryEvent(ResourceNotificationHandle, EventBasicInformation, &EventInfo, sizeof(EventInfo), NULL);
+    Status = NtQueryEvent(ResourceNotificationHandle,
+                          EventBasicInformation,
+                          &EventInfo,
+                          sizeof(EventInfo),
+                          NULL);
 
-    if (!NT_SUCCESS(Status))
-    {
+    if (! NT_SUCCESS(Status)) {
         //
         // On failure, set the last NT error and indicate the failure
         // condition to our caller.

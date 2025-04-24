@@ -21,7 +21,11 @@ Revision History:
 
 #include "basedll.h"
 
-BOOL WINAPI GetNumaHighestNodeNumber(PULONG HighestNodeNumber)
+BOOL
+WINAPI
+GetNumaHighestNodeNumber(
+    PULONG HighestNodeNumber
+    )
 
 /*++
 
@@ -48,10 +52,12 @@ Return Value:
 
     Numa = (PSYSTEM_NUMA_INFORMATION)&Information;
 
-    Status = NtQuerySystemInformation(SystemNumaProcessorMap, Numa, sizeof(Information), &ReturnedSize);
+    Status = NtQuerySystemInformation(SystemNumaProcessorMap,
+                                      Numa,
+                                      sizeof(Information),
+                                      &ReturnedSize);
 
-    if (!NT_SUCCESS(Status))
-    {
+    if (!NT_SUCCESS(Status)) {
 
         //
         // This can't possibly happen.   Attempt to handle it
@@ -62,8 +68,7 @@ Return Value:
         return FALSE;
     }
 
-    if (ReturnedSize < sizeof(ULONG))
-    {
+    if (ReturnedSize < sizeof(ULONG)) {
 
         //
         // Nor can this.
@@ -80,8 +85,13 @@ Return Value:
     *HighestNodeNumber = Numa->HighestNodeNumber;
     return TRUE;
 }
-
-BOOL WINAPI GetNumaProcessorNode(UCHAR Processor, PUCHAR NodeNumber)
+
+BOOL
+WINAPI
+GetNumaProcessorNode(
+    UCHAR Processor,
+    PUCHAR NodeNumber
+    )
 
 /*++
 
@@ -114,8 +124,7 @@ Return Value:
     // error value.
     //
 
-    if (Processor >= MAXIMUM_PROCESSORS)
-    {
+    if (Processor >= MAXIMUM_PROCESSORS) {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
@@ -124,10 +133,12 @@ Return Value:
     // Get the Node -> Processor Affinity map from the system.
     //
 
-    Status = NtQuerySystemInformation(SystemNumaProcessorMap, &Map, sizeof(Map), &ReturnedSize);
+    Status = NtQuerySystemInformation(SystemNumaProcessorMap,
+                                      &Map,
+                                      sizeof(Map),
+                                      &ReturnedSize);
 
-    if (!NT_SUCCESS(Status))
-    {
+    if (!NT_SUCCESS(Status)) {
 
         //
         // This can't happen,... but try to stay sane if possible.
@@ -144,10 +155,8 @@ Return Value:
 
     Mask = 1 << Processor;
 
-    for (Node = 0; Node <= Map.HighestNodeNumber; Node++)
-    {
-        if ((Map.ActiveProcessorsAffinityMask[Node] & Mask) != 0)
-        {
+    for (Node = 0; Node <= Map.HighestNodeNumber; Node++) {
+        if ((Map.ActiveProcessorsAffinityMask[Node] & Mask) != 0) {
             *NodeNumber = Node;
             return TRUE;
         }
@@ -160,8 +169,13 @@ Return Value:
     SetLastError(ERROR_INVALID_PARAMETER);
     return FALSE;
 }
-
-BOOL WINAPI GetNumaNodeProcessorMask(UCHAR Node, PULONGLONG ProcessorMask)
+
+BOOL
+WINAPI
+GetNumaNodeProcessorMask(
+    UCHAR Node,
+    PULONGLONG ProcessorMask
+    )
 
 /*++
 
@@ -192,9 +206,11 @@ Return Value:
     // Get the node -> processor mask table from the system.
     //
 
-    Status = NtQuerySystemInformation(SystemNumaProcessorMap, &Map, sizeof(Map), &ReturnedSize);
-    if (!NT_SUCCESS(Status))
-    {
+    Status = NtQuerySystemInformation(SystemNumaProcessorMap,
+                                      &Map,
+                                      sizeof(Map),
+                                      &ReturnedSize);
+    if (!NT_SUCCESS(Status)) {
 
         //
         // This can't possibly have happened.
@@ -209,8 +225,7 @@ Return Value:
     // mask.
     //
 
-    if (Node > Map.HighestNodeNumber)
-    {
+    if (Node > Map.HighestNodeNumber) {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
@@ -222,8 +237,14 @@ Return Value:
     *ProcessorMask = Map.ActiveProcessorsAffinityMask[Node];
     return TRUE;
 }
-
-BOOL WINAPI GetNumaProcessorMap(PSYSTEM_NUMA_INFORMATION Map, ULONG Length, PULONG ReturnedLength)
+
+BOOL
+WINAPI
+GetNumaProcessorMap(
+    PSYSTEM_NUMA_INFORMATION Map,
+    ULONG Length,
+    PULONG ReturnedLength
+    )
 
 
 /*++
@@ -255,17 +276,25 @@ Return Value:
     // Fill in the user's buffer with the system Node -> Processor map.
     //
 
-    Status = NtQuerySystemInformation(SystemNumaProcessorMap, Map, Length, ReturnedLength);
-    if (!NT_SUCCESS(Status))
-    {
+    Status = NtQuerySystemInformation(SystemNumaProcessorMap,
+                                      Map,
+                                      Length,
+                                      ReturnedLength);
+    if (!NT_SUCCESS(Status)) {
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
     return TRUE;
 }
-
-BOOL WINAPI GetNumaAvailableMemory(PSYSTEM_NUMA_INFORMATION Memory, ULONG Length, PULONG ReturnedLength)
+
+BOOL
+WINAPI
+GetNumaAvailableMemory(
+    PSYSTEM_NUMA_INFORMATION Memory,
+    ULONG Length,
+    PULONG ReturnedLength
+    )
 
 /*++
 
@@ -297,17 +326,24 @@ Return Value:
     // memory table.
     //
 
-    Status = NtQuerySystemInformation(SystemNumaAvailableMemory, Memory, Length, ReturnedLength);
-    if (!NT_SUCCESS(Status))
-    {
+    Status = NtQuerySystemInformation(SystemNumaAvailableMemory,
+                                      Memory,
+                                      Length,
+                                      ReturnedLength);
+    if (!NT_SUCCESS(Status)) {
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
     return TRUE;
 }
-
-BOOL WINAPI GetNumaAvailableMemoryNode(UCHAR Node, PULONGLONG AvailableBytes)
+
+BOOL
+WINAPI
+GetNumaAvailableMemoryNode(
+    UCHAR Node,
+    PULONGLONG AvailableBytes
+    )
 
 
 /*++
@@ -340,9 +376,11 @@ Return Value:
     // Get the per node available memory table from the system.
     //
 
-    Status = NtQuerySystemInformation(SystemNumaAvailableMemory, &Memory, sizeof(Memory), &ReturnedSize);
-    if (!NT_SUCCESS(Status))
-    {
+    Status = NtQuerySystemInformation(SystemNumaAvailableMemory,
+                                      &Memory,
+                                      sizeof(Memory),
+                                      &ReturnedSize);
+    if (!NT_SUCCESS(Status)) {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -352,8 +390,7 @@ Return Value:
     // available memory either.
     //
 
-    if (Node > Memory.HighestNodeNumber)
-    {
+    if (Node > Memory.HighestNodeNumber) {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
@@ -365,23 +402,26 @@ Return Value:
     *AvailableBytes = Memory.AvailableMemory[Node];
     return TRUE;
 }
-
+
 //
 // NumaVirtualQueryNode
 //
 // SORT_SIZE defines the number of elements to be sorted before merging.
 //
 
-#define SORT_SIZE 64
+#define SORT_SIZE   64
 
-typedef struct
-{
+typedef struct {
     PMEMORY_WORKING_SET_BLOCK Low;
     PMEMORY_WORKING_SET_BLOCK Limit;
 } MERGELIST, *PMERGELIST;
 
 
-static VOID numaSortWSInfo(PMERGELIST List)
+static
+VOID
+numaSortWSInfo(
+    PMERGELIST List
+    )
 {
     //
     // A simple bubble sort for small data sets.
@@ -391,12 +431,9 @@ static VOID numaSortWSInfo(PMERGELIST List)
     PMEMORY_WORKING_SET_BLOCK Low;
     MEMORY_WORKING_SET_BLOCK Temp;
 
-    for (Low = List->Low; Low < List->Limit; Low++)
-    {
-        for (High = Low + 1; High <= List->Limit; High++)
-        {
-            if (Low->VirtualPage > High->VirtualPage)
-            {
+    for (Low = List->Low; Low < List->Limit; Low++) {
+        for (High = Low + 1; High <= List->Limit; High++) {
+            if (Low->VirtualPage > High->VirtualPage) {
                 Temp = *High;
                 *High = *Low;
                 *Low = Temp;
@@ -408,8 +445,12 @@ static VOID numaSortWSInfo(PMERGELIST List)
 
 ULONGLONG
 WINAPI
-NumaVirtualQueryNode(IN ULONG NumberOfRanges, IN PULONG_PTR RangeList, OUT PULONG_PTR VirtualPageAndNode,
-                     IN SIZE_T MaximumOutputLength)
+NumaVirtualQueryNode(
+    IN  ULONG       NumberOfRanges,
+    IN  PULONG_PTR  RangeList,
+    OUT PULONG_PTR  VirtualPageAndNode,
+    IN  SIZE_T      MaximumOutputLength
+    )
 
 /*++
 
@@ -453,12 +494,11 @@ Return Value:
     PMERGELIST List;
     MERGELIST List0;
 
-    typedef union
-    {
+    typedef union {
         ULONG_PTR Raw;
         MEMORY_WORKING_SET_BLOCK WsBlock;
     } RAWWSBLOCK, *PRAWWSBLOCK;
-
+    
     RAWWSBLOCK Result;
     RAWWSBLOCK MaxInterest;
     RAWWSBLOCK MinInterest;
@@ -474,15 +514,12 @@ Return Value:
     Range = RangeList;
     MinInterest.Raw = (ULONG_PTR)-1;
     MaxInterest.Raw = 0;
-    for (i = 0; i < NumberOfRanges; i++)
-    {
-        if (*Range < MinInterest.Raw)
-        {
+    for (i = 0; i < NumberOfRanges; i++) {
+        if (*Range < MinInterest.Raw) {
             MinInterest.Raw = *Range;
         }
         Range++;
-        if (*Range > MaxInterest.Raw)
-        {
+        if (*Range > MaxInterest.Raw) {
             MaxInterest.Raw = *Range;
         }
         Range++;
@@ -498,8 +535,7 @@ Return Value:
     Result.WsBlock.VirtualPage = MaxInterest.WsBlock.VirtualPage;
     MaxInterest = Result;
 
-    if (MinInterest.Raw > MaxInterest.Raw)
-    {
+    if (MinInterest.Raw > MaxInterest.Raw) {
         return 0;
     }
 
@@ -508,16 +544,19 @@ Return Value:
     // the number of entries in the working set list.
     //
 
-    Status = NtQueryVirtualMemory(Process, NULL, MemoryWorkingSetInformation, &Info0, sizeof(Info0), &ReturnedLength);
+    Status = NtQueryVirtualMemory(Process,
+                                  NULL,
+                                  MemoryWorkingSetInformation,
+                                  &Info0,
+                                  sizeof(Info0),
+                                  &ReturnedLength);
 
-    if (Status != STATUS_INFO_LENGTH_MISMATCH)
-    {
+    if (Status != STATUS_INFO_LENGTH_MISMATCH) {
         BaseSetLastNTError(Status);
         return 0;
     }
 
-    if (Info->NumberOfEntries == 0)
-    {
+    if (Info->NumberOfEntries == 0) {
         return 0;
     }
 
@@ -526,22 +565,26 @@ Return Value:
     // before we ask again.
     //
 
-    i = sizeof(Info0) + (Info->NumberOfEntries + 100) * sizeof(MEMORY_WORKING_SET_BLOCK);
+    i = sizeof(Info0) + (Info->NumberOfEntries + 100) *
+                         sizeof(MEMORY_WORKING_SET_BLOCK);
 
     //
     // Get memory to read the process's working set information into.
     //
 
     Info = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), i);
-    if (!Info)
-    {
+    if (!Info) {
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
         return 0;
     }
 
-    Status = NtQueryVirtualMemory(Process, NULL, MemoryWorkingSetInformation, Info, i, &ReturnedLength);
-    if (!NT_SUCCESS(Status))
-    {
+    Status = NtQueryVirtualMemory(Process,
+                                  NULL,
+                                  MemoryWorkingSetInformation,
+                                  Info,
+                                  i,
+                                  &ReturnedLength);
+    if (!NT_SUCCESS(Status)) {
         RtlFreeHeap(RtlProcessHeap(), 0, Info);
         BaseSetLastNTError(Status);
         return 0;
@@ -564,12 +607,11 @@ Return Value:
     // to make one pass over the working set information.
     //
 
-    for (i = 0; i < Info->NumberOfEntries; i++)
-    {
+    for (i = 0; i < Info->NumberOfEntries; i++) {
 
         MaskHigh.WsBlock.VirtualPage = Info->WorkingSetInfo[i].VirtualPage;
-        if ((MaskHigh.Raw < MinInterest.Raw) || (MaskHigh.Raw > MaxInterest.Raw))
-        {
+        if ((MaskHigh.Raw < MinInterest.Raw) ||
+            (MaskHigh.Raw > MaxInterest.Raw)) {
 
             //
             // This page is not interesting, skip it.
@@ -580,10 +622,9 @@ Return Value:
         MaskLow.WsBlock.VirtualPage = MaskHigh.WsBlock.VirtualPage;
 
         Range = RangeList;
-        for (j = 0; j < NumberOfRanges; j++)
-        {
-            if ((MaskLow.Raw >= *Range) && (MaskHigh.Raw <= *(Range + 1)))
-            {
+        for (j = 0; j < NumberOfRanges; j++) {
+            if ((MaskLow.Raw >= *Range) &&
+                (MaskHigh.Raw <= *(Range+1))) {
 
                 //
                 // Match.
@@ -618,10 +659,11 @@ Return Value:
     // Allocate memory for list management of the sorts (for the merge).
     //
 
-    MergeList = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), NumberOfLists * sizeof(MERGELIST));
+    MergeList = RtlAllocateHeap(RtlProcessHeap(),
+                                MAKE_TAG(TMP_TAG),
+                                NumberOfLists * sizeof(MERGELIST));
 
-    if (!MergeList)
-    {
+    if (!MergeList) {
 
         //
         // Couldn't allocate memory for merge copy, do bubble sort in
@@ -633,9 +675,7 @@ Return Value:
         numaSortWSInfo(&List0);
         NumberOfLists = 1;
         MergeList = &List0;
-    }
-    else
-    {
+    } else {
 
 
         //
@@ -643,11 +683,9 @@ Return Value:
         //
 
         List = MergeList;
-        for (i = 0; i < Info->NumberOfEntries; i += SORT_SIZE)
-        {
+        for (i = 0; i < Info->NumberOfEntries; i += SORT_SIZE) {
             ULONG_PTR j = i + SORT_SIZE - 1;
-            if (j >= Info->NumberOfEntries)
-            {
+            if (j >= Info->NumberOfEntries) {
                 j = Info->NumberOfEntries - 1;
             }
             List->Low = &Info->WorkingSetInfo[i];
@@ -662,8 +700,7 @@ Return Value:
     // by the caller.
     //
 
-    if ((PagesReturned * sizeof(ULONG_PTR)) > MaximumOutputLength)
-    {
+    if ((PagesReturned * sizeof(ULONG_PTR)) > MaximumOutputLength) {
         PagesReturned = MaximumOutputLength / sizeof(ULONG_PTR);
     }
 
@@ -671,23 +708,20 @@ Return Value:
     // Merge each list into the result array.
     //
 
-    for (i = 0; i < PagesReturned; i++)
-    {
+    for (i = 0; i < PagesReturned; i++) {
 
         //
         // Look at each of the lists and choose the lowest element.
         //
 
         PMERGELIST NewLow = NULL;
-        for (j = 0; j < NumberOfLists; j++)
-        {
+        for (j = 0; j < NumberOfLists; j++) {
 
             //
             // If this list has been exhausted, skip it.
             //
 
-            if (MergeList[j].Low > MergeList[j].Limit)
-            {
+            if (MergeList[j].Low > MergeList[j].Limit) {
                 continue;
             }
 
@@ -697,8 +731,8 @@ Return Value:
             // selected low element, select it.
             //
 
-            if ((NewLow == NULL) || (MergeList[j].Low->VirtualPage < NewLow->Low->VirtualPage))
-            {
+            if ((NewLow == NULL) ||
+                (MergeList[j].Low->VirtualPage < NewLow->Low->VirtualPage)) {
                 NewLow = &MergeList[j];
             }
         }
@@ -716,14 +750,14 @@ Return Value:
     }
 
     //
-    // Free allocated memory and return the number of pages in the
+    // Free allocated memory and return the number of pages in the 
     // result set.
     //
 
-    if (MergeList != &List0)
-    {
+    if (MergeList != &List0) {
         RtlFreeHeap(RtlProcessHeap(), 0, MergeList);
     }
     RtlFreeHeap(RtlProcessHeap(), 0, Info);
     return PagesReturned;
 }
+

@@ -12,4 +12,4 @@
 //--------------------------------------------------------------------------
 
 #define DBGFLAG
-#define DEBTRACE(args) DebugTrace(0, ulLevel, args)
+#define DEBTRACE(args)	DebugTrace(0, ulLevel, args)

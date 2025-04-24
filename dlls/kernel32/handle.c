@@ -20,7 +20,10 @@ Revision History:
 
 #include "basedll.h"
 
-BOOL CloseHandle(HANDLE hObject)
+BOOL
+CloseHandle(
+    HANDLE hObject
+    )
 
 /*++
 
@@ -69,38 +72,39 @@ Return Value:
     PPEB Peb;
 
     Peb = NtCurrentPeb();
-    switch (HandleToUlong(hObject))
-    {
-    case STD_INPUT_HANDLE:
-        hObject = Peb->ProcessParameters->StandardInput;
-        break;
-    case STD_OUTPUT_HANDLE:
-        hObject = Peb->ProcessParameters->StandardOutput;
-        break;
-    case STD_ERROR_HANDLE:
-        hObject = Peb->ProcessParameters->StandardError;
-        break;
-    }
-    if (CONSOLE_HANDLE(hObject))
-    {
+    switch( HandleToUlong(hObject) ) {
+        case STD_INPUT_HANDLE:  hObject = Peb->ProcessParameters->StandardInput;
+                                break;
+        case STD_OUTPUT_HANDLE: hObject = Peb->ProcessParameters->StandardOutput;
+                                break;
+        case STD_ERROR_HANDLE:  hObject = Peb->ProcessParameters->StandardError;
+                                break;
+        }
+    if (CONSOLE_HANDLE(hObject)) {
         return CloseConsoleHandle(hObject);
-    }
+        }
 
     Status = NtClose(hObject);
-    if (NT_SUCCESS(Status))
-    {
+    if ( NT_SUCCESS(Status) ) {
         return TRUE;
-    }
-    else
-    {
+        }
+    else {
         BaseSetLastNTError(Status);
         return FALSE;
-    }
+        }
 }
 
 
-BOOL DuplicateHandle(HANDLE hSourceProcessHandle, HANDLE hSourceHandle, HANDLE hTargetProcessHandle,
-                     LPHANDLE lpTargetHandle, DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwOptions)
+BOOL
+DuplicateHandle(
+    HANDLE hSourceProcessHandle,
+    HANDLE hSourceHandle,
+    HANDLE hTargetProcessHandle,
+    LPHANDLE lpTargetHandle,
+    DWORD dwDesiredAccess,
+    BOOL bInheritHandle,
+    DWORD dwOptions
+    )
 
 /*++
 
@@ -184,67 +188,72 @@ Return Value:
     PPEB Peb;
 
     Peb = NtCurrentPeb();
-    switch (HandleToUlong(hSourceHandle))
-    {
-    case STD_INPUT_HANDLE:
-        hSourceHandle = Peb->ProcessParameters->StandardInput;
-        break;
-    case STD_OUTPUT_HANDLE:
-        hSourceHandle = Peb->ProcessParameters->StandardOutput;
-        break;
-    case STD_ERROR_HANDLE:
-        hSourceHandle = Peb->ProcessParameters->StandardError;
-        break;
-    }
+    switch( HandleToUlong(hSourceHandle) ) {
+        case STD_INPUT_HANDLE:  hSourceHandle = Peb->ProcessParameters->StandardInput;
+                                break;
+        case STD_OUTPUT_HANDLE: hSourceHandle = Peb->ProcessParameters->StandardOutput;
+                                break;
+        case STD_ERROR_HANDLE:  hSourceHandle = Peb->ProcessParameters->StandardError;
+                                break;
+        }
 
-    if (CONSOLE_HANDLE(hSourceHandle) && (hSourceHandle != NtCurrentProcess() && hSourceHandle != NtCurrentThread()))
-    {
+    if (CONSOLE_HANDLE(hSourceHandle) &&
+	(hSourceHandle != NtCurrentProcess() &&
+	 hSourceHandle != NtCurrentThread()) ) {
         HANDLE Target;
 
-        if (hSourceProcessHandle != NtCurrentProcess() || hTargetProcessHandle != NtCurrentProcess())
-        {
+        if (hSourceProcessHandle != NtCurrentProcess() ||
+            hTargetProcessHandle != NtCurrentProcess()) {
             BaseSetLastNTError(STATUS_INVALID_PARAMETER);
             return FALSE;
-        }
-        Target = DuplicateConsoleHandle(hSourceHandle, dwDesiredAccess, bInheritHandle, dwOptions);
-        if (Target == INVALID_HANDLE_VALUE)
-        {
+            }
+        Target = DuplicateConsoleHandle(hSourceHandle,
+                                        dwDesiredAccess,
+                                        bInheritHandle,
+                                        dwOptions
+                                       );
+        if (Target == INVALID_HANDLE_VALUE) {
             return FALSE;
-        }
-        else
-        {
-            try
-            {
-                if (ARGUMENT_PRESENT(lpTargetHandle))
-                {
+            }
+        else {
+            try {
+                if ( ARGUMENT_PRESENT(lpTargetHandle) ) {
                     *lpTargetHandle = Target;
+                    }
                 }
-            }
-            except(EXCEPTION_EXECUTE_HANDLER)
-            {
+            except (EXCEPTION_EXECUTE_HANDLER) {
                 return TRUE;
-            }
+                }
             return TRUE;
+            }
         }
-    }
 
-    Status = NtDuplicateObject(hSourceProcessHandle, hSourceHandle, hTargetProcessHandle, lpTargetHandle,
-                               (ACCESS_MASK)dwDesiredAccess, bInheritHandle ? OBJ_INHERIT : 0, dwOptions);
-    if (NT_SUCCESS(Status))
-    {
+    Status = NtDuplicateObject(
+                hSourceProcessHandle,
+                hSourceHandle,
+                hTargetProcessHandle,
+                lpTargetHandle,
+                (ACCESS_MASK)dwDesiredAccess,
+                bInheritHandle ? OBJ_INHERIT : 0,
+                dwOptions
+                );
+    if ( NT_SUCCESS(Status) ) {
         return TRUE;
-    }
-    else
-    {
+        }
+    else {
         BaseSetLastNTError(Status);
         return FALSE;
-    }
+        }
 
     return FALSE;
 }
 
 
-BOOL GetHandleInformation(HANDLE hObject, LPDWORD lpdwFlags)
+BOOL
+GetHandleInformation(
+    HANDLE hObject,
+    LPDWORD lpdwFlags
+    )
 {
     NTSTATUS Status;
     OBJECT_HANDLE_FLAG_INFORMATION HandleInfo;
@@ -252,94 +261,100 @@ BOOL GetHandleInformation(HANDLE hObject, LPDWORD lpdwFlags)
     PPEB Peb;
 
     Peb = NtCurrentPeb();
-    switch (HandleToUlong(hObject))
-    {
-    case STD_INPUT_HANDLE:
-        hObject = Peb->ProcessParameters->StandardInput;
-        break;
-    case STD_OUTPUT_HANDLE:
-        hObject = Peb->ProcessParameters->StandardOutput;
-        break;
-    case STD_ERROR_HANDLE:
-        hObject = Peb->ProcessParameters->StandardError;
-        break;
-    }
+    switch( HandleToUlong(hObject) ) {
+        case STD_INPUT_HANDLE:  hObject = Peb->ProcessParameters->StandardInput;
+                                break;
+        case STD_OUTPUT_HANDLE: hObject = Peb->ProcessParameters->StandardOutput;
+                                break;
+        case STD_ERROR_HANDLE:  hObject = Peb->ProcessParameters->StandardError;
+                                break;
+        }
 
-    if (CONSOLE_HANDLE(hObject))
-    {
-        return GetConsoleHandleInformation(hObject, lpdwFlags);
-    }
+    if (CONSOLE_HANDLE(hObject)) {
+        return GetConsoleHandleInformation(hObject,
+                                           lpdwFlags
+                                          );
+        }
 
-    Status = NtQueryObject(hObject, ObjectHandleFlagInformation, &HandleInfo, sizeof(HandleInfo), NULL);
-    if (NT_SUCCESS(Status))
-    {
+    Status = NtQueryObject( hObject,
+                            ObjectHandleFlagInformation,
+                            &HandleInfo,
+                            sizeof( HandleInfo ),
+                            NULL
+                          );
+    if (NT_SUCCESS( Status )) {
         Result = 0;
-        if (HandleInfo.Inherit)
-        {
+        if (HandleInfo.Inherit) {
             Result |= HANDLE_FLAG_INHERIT;
-        }
+            }
 
-        if (HandleInfo.ProtectFromClose)
-        {
+        if (HandleInfo.ProtectFromClose) {
             Result |= HANDLE_FLAG_PROTECT_FROM_CLOSE;
-        }
+            }
 
         *lpdwFlags = Result;
         return TRUE;
-    }
-    else
-    {
-        BaseSetLastNTError(Status);
+        }
+    else {
+        BaseSetLastNTError( Status );
         return FALSE;
-    }
+        }
 }
 
 
-BOOL SetHandleInformation(HANDLE hObject, DWORD dwMask, DWORD dwFlags)
+BOOL
+SetHandleInformation(
+    HANDLE hObject,
+    DWORD dwMask,
+    DWORD dwFlags
+    )
 {
     NTSTATUS Status;
     OBJECT_HANDLE_FLAG_INFORMATION HandleInfo;
     PPEB Peb;
 
     Peb = NtCurrentPeb();
-    switch (HandleToUlong(hObject))
-    {
-    case STD_INPUT_HANDLE:
-        hObject = Peb->ProcessParameters->StandardInput;
-        break;
-    case STD_OUTPUT_HANDLE:
-        hObject = Peb->ProcessParameters->StandardOutput;
-        break;
-    case STD_ERROR_HANDLE:
-        hObject = Peb->ProcessParameters->StandardError;
-        break;
-    }
+    switch( HandleToUlong(hObject) ) {
+        case STD_INPUT_HANDLE:  hObject = Peb->ProcessParameters->StandardInput;
+                                break;
+        case STD_OUTPUT_HANDLE: hObject = Peb->ProcessParameters->StandardOutput;
+                                break;
+        case STD_ERROR_HANDLE:  hObject = Peb->ProcessParameters->StandardError;
+                                break;
+        }
 
-    if (CONSOLE_HANDLE(hObject))
-    {
-        return SetConsoleHandleInformation(hObject, dwMask, dwFlags);
-    }
+    if (CONSOLE_HANDLE(hObject)) {
+        return SetConsoleHandleInformation(hObject,
+                                           dwMask,
+                                           dwFlags
+                                          );
+        }
 
-    Status = NtQueryObject(hObject, ObjectHandleFlagInformation, &HandleInfo, sizeof(HandleInfo), NULL);
-    if (NT_SUCCESS(Status))
-    {
-        if (dwMask & HANDLE_FLAG_INHERIT)
-        {
+    Status = NtQueryObject( hObject,
+                            ObjectHandleFlagInformation,
+                            &HandleInfo,
+                            sizeof( HandleInfo ),
+                            NULL
+                          );
+    if (NT_SUCCESS( Status )) {
+        if (dwMask & HANDLE_FLAG_INHERIT) {
             HandleInfo.Inherit = (dwFlags & HANDLE_FLAG_INHERIT) ? TRUE : FALSE;
-        }
+            }
 
-        if (dwMask & HANDLE_FLAG_PROTECT_FROM_CLOSE)
-        {
+        if (dwMask & HANDLE_FLAG_PROTECT_FROM_CLOSE) {
             HandleInfo.ProtectFromClose = (dwFlags & HANDLE_FLAG_PROTECT_FROM_CLOSE) ? TRUE : FALSE;
-        }
+            }
 
-        Status = NtSetInformationObject(hObject, ObjectHandleFlagInformation, &HandleInfo, sizeof(HandleInfo));
-        if (NT_SUCCESS(Status))
-        {
+        Status = NtSetInformationObject( hObject,
+                                         ObjectHandleFlagInformation,
+                                         &HandleInfo,
+                                         sizeof( HandleInfo )
+                                       );
+        if (NT_SUCCESS( Status )) {
             return TRUE;
+            }
         }
-    }
 
-    BaseSetLastNTError(Status);
+    BaseSetLastNTError( Status );
     return FALSE;
 }

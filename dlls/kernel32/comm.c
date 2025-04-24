@@ -26,23 +26,30 @@ Revision History:
 
 WCHAR CfgmgrDllString[] = L"cfgmgr32.dll";
 
-typedef struct _LOCALMATCHSTR
-{
+typedef struct _LOCALMATCHSTR {
     DWORD FoundIt;
     LPCWSTR FriendlyName;
-} LOCALMATCHSTR, *PLOCALMATCHSTR;
+    } LOCALMATCHSTR,*PLOCALMATCHSTR;
 
-
-static NTSTATUS GetConfigDialogName(IN PWSTR ValueName, IN ULONG ValueType, IN PVOID ValueData, IN ULONG ValueLength,
-                                    IN PVOID Context, IN PVOID EntryContext)
+
+static
+NTSTATUS
+GetConfigDialogName(
+    IN PWSTR ValueName,
+    IN ULONG ValueType,
+    IN PVOID ValueData,
+    IN ULONG ValueLength,
+    IN PVOID Context,
+    IN PVOID EntryContext
+    )
 
 {
 
     PUNICODE_STRING dllToLoad = Context;
-    if (ValueType != REG_SZ)
-    {
+    if (ValueType != REG_SZ) {
 
         return STATUS_INVALID_PARAMETER;
+
     }
 
     //
@@ -52,26 +59,45 @@ static NTSTATUS GetConfigDialogName(IN PWSTR ValueName, IN ULONG ValueType, IN P
     // sizeof(WCHAR) - ValueLength.
     //
 
-    RtlInitUnicodeString(dllToLoad, NULL);
+    RtlInitUnicodeString(
+        dllToLoad,
+        NULL
+        );
 
-    dllToLoad->Buffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), ValueLength);
+    dllToLoad->Buffer = RtlAllocateHeap(
+                            RtlProcessHeap(),
+                            MAKE_TAG( TMP_TAG ),
+                            ValueLength
+                            );
 
-    if (!dllToLoad->Buffer)
-    {
+    if (!dllToLoad->Buffer) {
 
         return STATUS_INSUFFICIENT_RESOURCES;
+
     }
 
-    RtlMoveMemory(dllToLoad->Buffer, ValueData, ValueLength);
+    RtlMoveMemory(
+        dllToLoad->Buffer,
+        ValueData,
+        ValueLength
+        );
 
     dllToLoad->Length = (USHORT)(ValueLength - (sizeof(WCHAR)));
     dllToLoad->MaximumLength = (USHORT)ValueLength;
 
     return STATUS_SUCCESS;
 }
-
-static NTSTATUS GetFriendlyMatchComm(IN PWSTR ValueName, IN ULONG ValueType, IN PVOID ValueData, IN ULONG ValueLength,
-                                     IN PVOID Context, IN PVOID EntryContext)
+
+static
+NTSTATUS
+GetFriendlyMatchComm(
+    IN PWSTR ValueName,
+    IN ULONG ValueType,
+    IN PVOID ValueData,
+    IN ULONG ValueLength,
+    IN PVOID Context,
+    IN PVOID EntryContext
+    )
 
 {
 
@@ -79,24 +105,38 @@ static NTSTATUS GetFriendlyMatchComm(IN PWSTR ValueName, IN ULONG ValueType, IN 
     UNICODE_STRING s2;
     PLOCALMATCHSTR localMatch = Context;
 
-    RtlInitUnicodeString(&s1, localMatch->FriendlyName);
-    RtlInitUnicodeString(&s2, ValueData);
+    RtlInitUnicodeString(
+        &s1,
+        localMatch->FriendlyName
+        );
+    RtlInitUnicodeString(
+        &s2,
+        ValueData
+        );
 
-    if (RtlEqualUnicodeString(&s1, &s2, TRUE))
-    {
+    if (RtlEqualUnicodeString(
+            &s1,
+            &s2,
+            TRUE
+            )) {
 
         localMatch->FoundIt = TRUE;
+
     }
 
     return STATUS_SUCCESS;
 }
 
-VOID GetFriendlyUi(LPCWSTR FriendlyName, PUNICODE_STRING DllToInvoke)
+VOID
+GetFriendlyUi(
+    LPCWSTR FriendlyName,
+    PUNICODE_STRING DllToInvoke
+    )
 
 {
 
-    RTL_QUERY_REGISTRY_TABLE paramTable[2] = { 0 };
-    LOCALMATCHSTR localMatch = { 0, FriendlyName };
+    RTL_QUERY_REGISTRY_TABLE paramTable[2] = {0};
+    LOCALMATCHSTR localMatch = {0,FriendlyName};
     HINSTANCE libHandle;
 
 
@@ -108,26 +148,35 @@ VOID GetFriendlyUi(LPCWSTR FriendlyName, PUNICODE_STRING DllToInvoke)
 
     libHandle = LoadLibraryW(CfgmgrDllString);
 
-    if (libHandle)
-    {
+    if (libHandle) {
 
         FARPROC getSize;
         FARPROC getList;
         FARPROC locateDevNode;
         FARPROC openDevKey;
 
-        try
-        {
-            getSize = GetProcAddress(libHandle, "CM_Get_Device_ID_List_SizeW");
+        try {
+            getSize = GetProcAddress(
+                          libHandle,
+                          "CM_Get_Device_ID_List_SizeW"
+                          );
 
-            getList = GetProcAddress(libHandle, "CM_Get_Device_ID_ListW");
+            getList = GetProcAddress(
+                          libHandle,
+                          "CM_Get_Device_ID_ListW"
+                          );
 
-            locateDevNode = GetProcAddress(libHandle, "CM_Locate_DevNodeW");
+            locateDevNode = GetProcAddress(
+                                libHandle,
+                                "CM_Locate_DevNodeW"
+                                );
 
-            openDevKey = GetProcAddress(libHandle, "CM_Open_DevNode_Key");
+            openDevKey = GetProcAddress(
+                             libHandle,
+                             "CM_Open_DevNode_Key"
+                             );
 
-            if (getSize && getList && locateDevNode && openDevKey)
-            {
+            if (getSize && getList && locateDevNode && openDevKey) {
 
                 PWCHAR bufferForList = NULL;
                 DWORD sizeOfBuffer;
@@ -136,46 +185,66 @@ VOID GetFriendlyUi(LPCWSTR FriendlyName, PUNICODE_STRING DllToInvoke)
                 // Find how much memory for the buffer.
                 //
 
-                if (getSize(&sizeOfBuffer, L"MODEM", CM_GETIDLIST_FILTER_SERVICE) == CR_SUCCESS)
-                {
+                if (getSize(
+                        &sizeOfBuffer,
+                        L"MODEM",
+                        CM_GETIDLIST_FILTER_SERVICE
+                        ) == CR_SUCCESS) {
 
                     //
                     // Allocate 2 extra wchar.
                     //
 
-                    bufferForList = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG),
-                                                    (sizeOfBuffer * sizeof(WCHAR)) + (sizeof(WCHAR) * 2));
+                    bufferForList = RtlAllocateHeap(
+                                        RtlProcessHeap(),
+                                        MAKE_TAG( TMP_TAG ),
+                                        (sizeOfBuffer*sizeof(WCHAR))
+                                         +(sizeof(WCHAR)*2)
+                                        );
 
-                    if (bufferForList)
-                    {
+                    if (bufferForList) {
 
                         PWCHAR currentId;
 
-                        try
-                        {
+                        try {
 
-                            if (getList(L"modem", bufferForList, sizeOfBuffer, CM_GETIDLIST_FILTER_SERVICE) ==
-                                CR_SUCCESS)
-                            {
+                            if (getList(
+                                    L"modem",
+                                    bufferForList,
+                                    sizeOfBuffer,
+                                    CM_GETIDLIST_FILTER_SERVICE
+                                    ) == CR_SUCCESS) {
 
-                                for (currentId = bufferForList; *currentId; currentId += wcslen(currentId) + 1)
-                                {
+                                for (
+                                    currentId = bufferForList;
+                                    *currentId;
+                                    currentId += wcslen(currentId)+1
+                                    ) {
 
                                     DWORD devInst = 0;
 
-                                    if (locateDevNode(&devInst, currentId, CM_LOCATE_DEVINST_NORMAL) == CR_SUCCESS)
-                                    {
+                                    if (locateDevNode(
+                                            &devInst,
+                                            currentId,
+                                            CM_LOCATE_DEVINST_NORMAL
+                                            ) == CR_SUCCESS) {
 
                                         HANDLE handleToDev;
 
-                                        if (openDevKey(devInst, KEY_ALL_ACCESS, 0, RegDisposition_OpenAlways,
-                                                       &handleToDev, CM_REGISTRY_SOFTWARE) == CR_SUCCESS)
-                                        {
+                                        if (openDevKey(
+                                                devInst,
+                                                KEY_ALL_ACCESS,
+                                                0,
+                                                RegDisposition_OpenAlways,
+                                                &handleToDev,
+                                                CM_REGISTRY_SOFTWARE
+                                                ) == CR_SUCCESS) {
 
                                             NTSTATUS statusOfQuery;
 
                                             localMatch.FoundIt = 0;
-                                            paramTable[0].Name = L"FriendlyName";
+                                            paramTable[0].Name =
+                                                L"FriendlyName";
 
                                             //
                                             // We now have an open
@@ -185,19 +254,26 @@ VOID GetFriendlyUi(LPCWSTR FriendlyName, PUNICODE_STRING DllToInvoke)
                                             // friendly name matches ours.
                                             //
 
-                                            if (!NT_SUCCESS(RtlQueryRegistryValues(RTL_REGISTRY_HANDLE, handleToDev,
-                                                                                   &paramTable[0], &localMatch, NULL)))
-                                            {
+                                            if (!NT_SUCCESS(
+                                                     RtlQueryRegistryValues(
+                                                         RTL_REGISTRY_HANDLE,
+                                                         handleToDev,
+                                                         &paramTable[0],
+                                                         &localMatch,
+                                                         NULL
+                                                         )
+                                                     )) {
 
                                                 CloseHandle(handleToDev);
                                                 continue;
+
                                             }
 
-                                            if (!localMatch.FoundIt)
-                                            {
+                                            if (!localMatch.FoundIt) {
 
                                                 CloseHandle(handleToDev);
                                                 continue;
+
                                             }
 
                                             //
@@ -205,15 +281,23 @@ VOID GetFriendlyUi(LPCWSTR FriendlyName, PUNICODE_STRING DllToInvoke)
                                             // for the config dll name.
                                             //
 
-                                            paramTable[0].QueryRoutine = GetConfigDialogName;
-                                            paramTable[0].Name = L"ConfigDialog";
-                                            statusOfQuery = RtlQueryRegistryValues(RTL_REGISTRY_HANDLE, handleToDev,
-                                                                                   &paramTable[0], DllToInvoke, NULL);
+                                            paramTable[0].QueryRoutine =
+                                                GetConfigDialogName;
+                                            paramTable[0].Name =
+                                                L"ConfigDialog";
+                                            statusOfQuery =
+                                                RtlQueryRegistryValues(
+                                                    RTL_REGISTRY_HANDLE,
+                                                    handleToDev,
+                                                    &paramTable[0],
+                                                    DllToInvoke,
+                                                    NULL
+                                                    );
 
-                                            paramTable[0].QueryRoutine = GetFriendlyMatchComm;
+                                            paramTable[0].QueryRoutine =
+                                                GetFriendlyMatchComm;
 
-                                            if (!NT_SUCCESS(statusOfQuery))
-                                            {
+                                            if (!NT_SUCCESS(statusOfQuery)) {
 
                                                 //
                                                 // We had a bad status
@@ -224,9 +308,12 @@ VOID GetFriendlyUi(LPCWSTR FriendlyName, PUNICODE_STRING DllToInvoke)
                                                 // looking for anymore
                                                 //
 
-                                                BaseSetLastNTError(statusOfQuery);
+                                                BaseSetLastNTError(
+                                                    statusOfQuery
+                                                    );
                                                 CloseHandle(handleToDev);
                                                 return;
+
                                             }
 
                                             //
@@ -237,8 +324,7 @@ VOID GetFriendlyUi(LPCWSTR FriendlyName, PUNICODE_STRING DllToInvoke)
 
                                             CloseHandle(handleToDev);
 
-                                            if (DllToInvoke->Buffer)
-                                            {
+                                            if (DllToInvoke->Buffer) {
 
                                                 //
                                                 // We have found a dll for
@@ -249,34 +335,47 @@ VOID GetFriendlyUi(LPCWSTR FriendlyName, PUNICODE_STRING DllToInvoke)
                                                 //
 
                                                 return;
+
                                             }
+
                                         }
+
                                     }
+
                                 }
+
                             }
-                        }
-                        finally
-                        {
+
+
+                        } finally {
 
                             //
                             // Free the idlist memory.
                             //
 
-                            RtlFreeHeap(RtlProcessHeap(), 0, bufferForList);
+                            RtlFreeHeap(
+                                RtlProcessHeap(),
+                                0,
+                                bufferForList
+                                );
+
                         }
+
                     }
+
                 }
+
             }
-        }
-        finally
-        {
+
+        } finally {
 
             FreeLibrary(libHandle);
+
         }
+
     }
 
-    if (!DllToInvoke->Buffer)
-    {
+    if (!DllToInvoke->Buffer) {
 
         //
         // Couldn't find the friendly name in the enum tree.
@@ -285,46 +384,68 @@ VOID GetFriendlyUi(LPCWSTR FriendlyName, PUNICODE_STRING DllToInvoke)
         //
 
         paramTable[0].Name = NULL;
-        RtlQueryRegistryValues(RTL_REGISTRY_DEVICEMAP, L"SERIALCOMM", paramTable, &localMatch, NULL);
+        RtlQueryRegistryValues(
+            RTL_REGISTRY_DEVICEMAP,
+            L"SERIALCOMM",
+            paramTable,
+            &localMatch,
+            NULL
+            );
 
-        if (localMatch.FoundIt)
-        {
+        if (localMatch.FoundIt) {
 
             ANSI_STRING ansiString;
 
-            RtlInitAnsiString(&ansiString, "serialui.dll");
+            RtlInitAnsiString(
+                &ansiString,
+                "serialui.dll"
+                );
 
-            DllToInvoke->Buffer =
-                RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), (ansiString.Length + 2) * sizeof(WCHAR));
+            DllToInvoke->Buffer = RtlAllocateHeap(
+                                      RtlProcessHeap(),
+                                      MAKE_TAG( TMP_TAG ),
+                                      (ansiString.Length+2)*sizeof(WCHAR)
+                                      );
 
-            if (!DllToInvoke->Buffer)
-            {
+            if (!DllToInvoke->Buffer) {
 
                 BaseSetLastNTError(STATUS_INSUFFICIENT_RESOURCES);
                 return;
+
             }
 
             DllToInvoke->Length = 0;
-            DllToInvoke->MaximumLength = (ansiString.Length + 1) * sizeof(WCHAR);
+            DllToInvoke->MaximumLength = (ansiString.Length+1)*sizeof(WCHAR);
 
-            RtlAnsiStringToUnicodeString(DllToInvoke, &ansiString, FALSE);
-            *(DllToInvoke->Buffer + ansiString.Length) = 0;
-        }
-        else
-        {
+            RtlAnsiStringToUnicodeString(
+                DllToInvoke,
+                &ansiString,
+                FALSE
+                );
+            *(DllToInvoke->Buffer+ansiString.Length) = 0;
+
+        } else {
 
             SetLastError(ERROR_INVALID_PARAMETER);
+
         }
+
     }
+
 }
 
-
-BOOL CommConfigDialogW(LPCWSTR lpszName, HWND hWnd, LPCOMMCONFIG lpCC)
+
+BOOL
+CommConfigDialogW(
+    LPCWSTR lpszName,
+    HWND hWnd,
+    LPCOMMCONFIG lpCC
+    )
 
 {
 
 
-    UNICODE_STRING dllName = { 0 };
+    UNICODE_STRING dllName = {0};
     BOOL boolToReturn = TRUE;
     HINSTANCE libInstance = 0;
     DWORD statOfCall = 0;
@@ -334,13 +455,14 @@ BOOL CommConfigDialogW(LPCWSTR lpszName, HWND hWnd, LPCOMMCONFIG lpCC)
     // Given the "friendly name" get the name of the dll to load.
     //
 
-    GetFriendlyUi(lpszName, &dllName);
+    GetFriendlyUi(
+        lpszName,
+        &dllName
+        );
 
-    try
-    {
+    try {
 
-        if (dllName.Buffer)
-        {
+        if (dllName.Buffer) {
 
             //
             // Got the new library name.  Try to load it.
@@ -348,8 +470,7 @@ BOOL CommConfigDialogW(LPCWSTR lpszName, HWND hWnd, LPCOMMCONFIG lpCC)
 
             libInstance = LoadLibraryW(dllName.Buffer);
 
-            if (libInstance)
-            {
+            if (libInstance) {
 
                 FARPROC procToCall;
 
@@ -357,53 +478,72 @@ BOOL CommConfigDialogW(LPCWSTR lpszName, HWND hWnd, LPCOMMCONFIG lpCC)
                 // Got the lib.  Get the proc address we need.
                 //
 
-                procToCall = GetProcAddress(libInstance, "drvCommConfigDialogW");
+                procToCall = GetProcAddress(
+                                 libInstance,
+                                 "drvCommConfigDialogW"
+                                 );
 
-                statOfCall = (DWORD)procToCall(lpszName, hWnd, lpCC);
-            }
-            else
-            {
+                statOfCall = (DWORD)procToCall(
+                                 lpszName,
+                                 hWnd,
+                                 lpCC
+                                 );
+
+            } else {
 
                 boolToReturn = FALSE;
+
             }
-        }
-        else
-        {
+
+        } else {
 
             //
             // Assume that an appropriate error has been set.
             //
 
             boolToReturn = FALSE;
-        }
-    }
-    finally
-    {
 
-        if (dllName.Buffer)
-        {
-
-            RtlFreeHeap(RtlProcessHeap(), 0, dllName.Buffer);
         }
 
-        if (libInstance)
-        {
+
+    } finally {
+
+        if (dllName.Buffer) {
+
+            RtlFreeHeap(
+                RtlProcessHeap(),
+                0,
+                dllName.Buffer
+                );
+
+        }
+
+        if (libInstance) {
 
             FreeLibrary(libInstance);
+
         }
 
-        if (statOfCall)
-        {
+        if (statOfCall) {
 
             SetLastError(statOfCall);
             boolToReturn = FALSE;
+
         }
+
     }
 
     return boolToReturn;
-}
 
-BOOL CommConfigDialogA(LPCSTR lpszName, HWND hWnd, LPCOMMCONFIG lpCC)
+
+}
+
+BOOL
+CommConfigDialogA(
+    LPCSTR lpszName,
+    HWND hWnd,
+    LPCOMMCONFIG lpCC
+    )
 
 {
 
@@ -412,42 +552,67 @@ BOOL CommConfigDialogA(LPCSTR lpszName, HWND hWnd, LPCOMMCONFIG lpCC)
     ANSI_STRING ansiString;
     BOOL uniBool;
 
-    RtlInitAnsiString(&ansiString, lpszName);
+    RtlInitAnsiString(
+        &ansiString,
+        lpszName
+        );
 
-    unicodeName = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), (ansiString.Length + 2) * sizeof(WCHAR));
+    unicodeName = RtlAllocateHeap(
+                      RtlProcessHeap(),
+                      MAKE_TAG( TMP_TAG ),
+                      (ansiString.Length+2)*sizeof(WCHAR)
+                      );
 
-    if (!unicodeName)
-    {
+    if (!unicodeName) {
 
         BaseSetLastNTError(STATUS_INSUFFICIENT_RESOURCES);
         return FALSE;
+
     }
 
     tmpString.Length = 0;
-    tmpString.MaximumLength = (ansiString.Length + 1) * sizeof(WCHAR);
+    tmpString.MaximumLength = (ansiString.Length+1)*sizeof(WCHAR);
     tmpString.Buffer = unicodeName;
 
-    RtlAnsiStringToUnicodeString(&tmpString, &ansiString, FALSE);
-    *(unicodeName + ansiString.Length) = 0;
+    RtlAnsiStringToUnicodeString(
+        &tmpString,
+        &ansiString,
+        FALSE
+        );
+    *(unicodeName+ansiString.Length) = 0;
 
-    try
-    {
+    try {
 
-        uniBool = CommConfigDialogW(unicodeName, hWnd, lpCC);
-    }
-    finally
-    {
+        uniBool = CommConfigDialogW(
+                      unicodeName,
+                      hWnd,
+                      lpCC
+                      );
 
-        RtlFreeHeap(RtlProcessHeap(), 0, unicodeName);
+
+    } finally {
+
+        RtlFreeHeap(
+            RtlProcessHeap(),
+            0,
+            unicodeName
+            );
+
     }
 
     return uniBool;
-}
 
-BOOL GetDefaultCommConfigW(LPCWSTR lpszName, LPCOMMCONFIG lpCC, LPDWORD lpdwSize)
+}
+
+BOOL
+GetDefaultCommConfigW(
+    LPCWSTR lpszName,
+    LPCOMMCONFIG lpCC,
+    LPDWORD lpdwSize
+    )
 {
 
-    UNICODE_STRING dllName = { 0 };
+    UNICODE_STRING dllName = {0};
     BOOL boolToReturn = TRUE;
     HINSTANCE libInstance = 0;
     DWORD statOfCall = 0;
@@ -457,13 +622,14 @@ BOOL GetDefaultCommConfigW(LPCWSTR lpszName, LPCOMMCONFIG lpCC, LPDWORD lpdwSize
     // Given the "friendly name" get the name of the dll to load.
     //
 
-    GetFriendlyUi(lpszName, &dllName);
+    GetFriendlyUi(
+        lpszName,
+        &dllName
+        );
 
-    try
-    {
+    try {
 
-        if (dllName.Buffer)
-        {
+        if (dllName.Buffer) {
 
             //
             // Got the new library name.  Try to load it.
@@ -471,8 +637,7 @@ BOOL GetDefaultCommConfigW(LPCWSTR lpszName, LPCOMMCONFIG lpCC, LPDWORD lpdwSize
 
             libInstance = LoadLibraryW(dllName.Buffer);
 
-            if (libInstance)
-            {
+            if (libInstance) {
 
                 FARPROC procToCall;
 
@@ -480,53 +645,71 @@ BOOL GetDefaultCommConfigW(LPCWSTR lpszName, LPCOMMCONFIG lpCC, LPDWORD lpdwSize
                 // Got the lib.  Get the proc address we need.
                 //
 
-                procToCall = GetProcAddress(libInstance, "drvGetDefaultCommConfigW");
+                procToCall = GetProcAddress(
+                                 libInstance,
+                                 "drvGetDefaultCommConfigW"
+                                 );
 
-                statOfCall = (DWORD)procToCall(lpszName, lpCC, lpdwSize);
-            }
-            else
-            {
+                statOfCall = (DWORD)procToCall(
+                                 lpszName,
+                                 lpCC,
+                                 lpdwSize
+                                 );
+
+            } else {
 
                 boolToReturn = FALSE;
+
             }
-        }
-        else
-        {
+
+        } else {
 
             //
             // Assume that an appropriate error has been set.
             //
 
             boolToReturn = FALSE;
-        }
-    }
-    finally
-    {
 
-        if (dllName.Buffer)
-        {
-
-            RtlFreeHeap(RtlProcessHeap(), 0, dllName.Buffer);
         }
 
-        if (libInstance)
-        {
+
+    } finally {
+
+        if (dllName.Buffer) {
+
+            RtlFreeHeap(
+                RtlProcessHeap(),
+                0,
+                dllName.Buffer
+                );
+
+        }
+
+        if (libInstance) {
 
             FreeLibrary(libInstance);
+
         }
 
-        if (statOfCall)
-        {
+        if (statOfCall) {
 
             SetLastError(statOfCall);
             boolToReturn = FALSE;
+
         }
+
     }
 
     return boolToReturn;
-}
 
-BOOL GetDefaultCommConfigA(LPCSTR lpszName, LPCOMMCONFIG lpCC, LPDWORD lpdwSize)
+}
+
+BOOL
+GetDefaultCommConfigA(
+    LPCSTR lpszName,
+    LPCOMMCONFIG lpCC,
+    LPDWORD lpdwSize
+    )
 {
 
     PWCHAR unicodeName;
@@ -534,42 +717,66 @@ BOOL GetDefaultCommConfigA(LPCSTR lpszName, LPCOMMCONFIG lpCC, LPDWORD lpdwSize)
     ANSI_STRING ansiString;
     BOOL uniBool;
 
-    RtlInitAnsiString(&ansiString, lpszName);
+    RtlInitAnsiString(
+        &ansiString,
+        lpszName
+        );
 
-    unicodeName = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), (ansiString.Length + 2) * sizeof(WCHAR));
+    unicodeName = RtlAllocateHeap(
+                      RtlProcessHeap(),
+                      MAKE_TAG( TMP_TAG ),
+                      (ansiString.Length+2)*sizeof(WCHAR)
+                      );
 
-    if (!unicodeName)
-    {
+    if (!unicodeName) {
 
         BaseSetLastNTError(STATUS_INSUFFICIENT_RESOURCES);
         return FALSE;
+
     }
 
     tmpString.Length = 0;
-    tmpString.MaximumLength = (ansiString.Length + 1) * sizeof(WCHAR);
+    tmpString.MaximumLength = (ansiString.Length+1)*sizeof(WCHAR);
     tmpString.Buffer = unicodeName;
 
-    RtlAnsiStringToUnicodeString(&tmpString, &ansiString, FALSE);
-    *(unicodeName + ansiString.Length) = 0;
+    RtlAnsiStringToUnicodeString(
+        &tmpString,
+        &ansiString,
+        FALSE
+        );
+    *(unicodeName+ansiString.Length) = 0;
 
-    try
-    {
+    try {
 
-        uniBool = GetDefaultCommConfigW(unicodeName, lpCC, lpdwSize);
-    }
-    finally
-    {
+        uniBool = GetDefaultCommConfigW(
+                      unicodeName,
+                      lpCC,
+                      lpdwSize
+                      );
 
-        RtlFreeHeap(RtlProcessHeap(), 0, unicodeName);
+    } finally {
+
+        RtlFreeHeap(
+            RtlProcessHeap(),
+            0,
+            unicodeName
+            );
+
     }
 
     return uniBool;
-}
 
-BOOL SetDefaultCommConfigW(LPCWSTR lpszName, LPCOMMCONFIG lpCC, DWORD dwSize)
+}
+
+BOOL
+SetDefaultCommConfigW(
+    LPCWSTR lpszName,
+    LPCOMMCONFIG lpCC,
+    DWORD dwSize
+    )
 {
 
-    UNICODE_STRING dllName = { 0 };
+    UNICODE_STRING dllName = {0};
     BOOL boolToReturn = TRUE;
     HINSTANCE libInstance = 0;
     DWORD statOfCall = 0;
@@ -579,13 +786,14 @@ BOOL SetDefaultCommConfigW(LPCWSTR lpszName, LPCOMMCONFIG lpCC, DWORD dwSize)
     // Given the "friendly name" get the name of the dll to load.
     //
 
-    GetFriendlyUi(lpszName, &dllName);
+    GetFriendlyUi(
+        lpszName,
+        &dllName
+        );
 
-    try
-    {
+    try {
 
-        if (dllName.Buffer)
-        {
+        if (dllName.Buffer) {
 
             //
             // Got the new library name.  Try to load it.
@@ -593,8 +801,7 @@ BOOL SetDefaultCommConfigW(LPCWSTR lpszName, LPCOMMCONFIG lpCC, DWORD dwSize)
 
             libInstance = LoadLibraryW(dllName.Buffer);
 
-            if (libInstance)
-            {
+            if (libInstance) {
 
                 FARPROC procToCall;
 
@@ -602,52 +809,69 @@ BOOL SetDefaultCommConfigW(LPCWSTR lpszName, LPCOMMCONFIG lpCC, DWORD dwSize)
                 // Got the lib.  Get the proc address we need.
                 //
 
-                procToCall = GetProcAddress(libInstance, "drvSetDefaultCommConfigW");
+                procToCall = GetProcAddress(
+                                 libInstance,
+                                 "drvSetDefaultCommConfigW"
+                                 );
 
-                statOfCall = (DWORD)procToCall(lpszName, lpCC, dwSize);
-            }
-            else
-            {
+                statOfCall = (DWORD)procToCall(
+                                 lpszName,
+                                 lpCC,
+                                 dwSize
+                                 );
+
+            } else {
 
                 boolToReturn = FALSE;
+
             }
-        }
-        else
-        {
+
+        } else {
 
             //
             // Assume that an appropriate error has been set.
             //
 
             boolToReturn = FALSE;
-        }
-    }
-    finally
-    {
 
-        if (dllName.Buffer)
-        {
-
-            RtlFreeHeap(RtlProcessHeap(), 0, dllName.Buffer);
         }
 
-        if (libInstance)
-        {
+
+    } finally {
+
+        if (dllName.Buffer) {
+
+            RtlFreeHeap(
+                RtlProcessHeap(),
+                0,
+                dllName.Buffer
+                );
+
+        }
+
+        if (libInstance) {
 
             FreeLibrary(libInstance);
+
         }
 
-        if (statOfCall)
-        {
+        if (statOfCall) {
 
             SetLastError(statOfCall);
             boolToReturn = FALSE;
+
         }
+
     }
     return boolToReturn;
 }
-
-BOOL SetDefaultCommConfigA(LPCSTR lpszName, LPCOMMCONFIG lpCC, DWORD dwSize)
+
+BOOL
+SetDefaultCommConfigA(
+    LPCSTR lpszName,
+    LPCOMMCONFIG lpCC,
+    DWORD dwSize
+    )
 {
 
     PWCHAR unicodeName;
@@ -655,39 +879,61 @@ BOOL SetDefaultCommConfigA(LPCSTR lpszName, LPCOMMCONFIG lpCC, DWORD dwSize)
     ANSI_STRING ansiString;
     BOOL uniBool = TRUE;
 
-    RtlInitAnsiString(&ansiString, lpszName);
+    RtlInitAnsiString(
+        &ansiString,
+        lpszName
+        );
 
-    unicodeName = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), (ansiString.Length + 2) * sizeof(WCHAR));
+    unicodeName = RtlAllocateHeap(
+                      RtlProcessHeap(),
+                      MAKE_TAG( TMP_TAG ),
+                      (ansiString.Length+2)*sizeof(WCHAR)
+                      );
 
-    if (!unicodeName)
-    {
+    if (!unicodeName) {
 
         BaseSetLastNTError(STATUS_INSUFFICIENT_RESOURCES);
         return FALSE;
+
     }
 
     tmpString.Length = 0;
-    tmpString.MaximumLength = (ansiString.Length + 1) * sizeof(WCHAR);
+    tmpString.MaximumLength = (ansiString.Length+1)*sizeof(WCHAR);
     tmpString.Buffer = unicodeName;
 
-    RtlAnsiStringToUnicodeString(&tmpString, &ansiString, FALSE);
-    *(unicodeName + ansiString.Length) = 0;
+    RtlAnsiStringToUnicodeString(
+        &tmpString,
+        &ansiString,
+        FALSE
+        );
+    *(unicodeName+ansiString.Length) = 0;
 
-    try
-    {
+    try {
 
-        uniBool = SetDefaultCommConfigW(unicodeName, lpCC, dwSize);
-    }
-    finally
-    {
+        uniBool = SetDefaultCommConfigW(
+                      unicodeName,
+                      lpCC,
+                      dwSize
+                      );
 
-        RtlFreeHeap(RtlProcessHeap(), 0, unicodeName);
+    } finally {
+
+        RtlFreeHeap(
+            RtlProcessHeap(),
+            0,
+            unicodeName
+            );
+
     }
 
     return uniBool;
-}
 
-BOOL ClearCommBreak(HANDLE hFile)
+}
+
+BOOL
+ClearCommBreak(
+    HANDLE hFile
+    )
 
 /*++
 
@@ -709,10 +955,16 @@ Return Value:
 
 {
 
-    return EscapeCommFunction(hFile, CLRBREAK);
-}
+    return EscapeCommFunction(hFile,CLRBREAK);
 
-BOOL ClearCommError(HANDLE hFile, LPDWORD lpErrors, LPCOMSTAT lpStat)
+}
+
+BOOL
+ClearCommError(
+    HANDLE hFile,
+    LPDWORD lpErrors,
+    LPCOMSTAT lpStat
+    )
 
 /*++
 
@@ -751,146 +1003,161 @@ Return Value:
 
     RtlZeroMemory(&LocalStat, sizeof(SERIAL_STATUS));
 
-    if (!(SyncEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
-    {
+    if (!(SyncEvent = CreateEvent(
+                          NULL,
+                          TRUE,
+                          FALSE,
+                          NULL
+                          ))) {
 
         return FALSE;
+
     }
 
-    Status = NtDeviceIoControlFile(hFile, SyncEvent, NULL, NULL, &Iosb, IOCTL_SERIAL_GET_COMMSTATUS, NULL, 0,
-                                   &LocalStat, sizeof(LocalStat));
+    Status = NtDeviceIoControlFile(
+                 hFile,
+                 SyncEvent,
+                 NULL,
+                 NULL,
+                 &Iosb,
+                 IOCTL_SERIAL_GET_COMMSTATUS,
+                 NULL,
+                 0,
+                 &LocalStat,
+                 sizeof(LocalStat)
+                 );
 
-    if (Status == STATUS_PENDING)
-    {
+    if ( Status == STATUS_PENDING) {
 
         // Operation must complete before return & IoStatusBlock destroyed
 
-        Status = NtWaitForSingleObject(SyncEvent, FALSE, NULL);
-        if (NT_SUCCESS(Status))
-        {
+        Status = NtWaitForSingleObject( SyncEvent, FALSE, NULL );
+        if ( NT_SUCCESS(Status)) {
 
             Status = Iosb.Status;
+
         }
     }
 
-    if (NT_ERROR(Status))
-    {
+    if (NT_ERROR(Status)) {
 
         CloseHandle(SyncEvent);
         BaseSetLastNTError(Status);
         return FALSE;
+
     }
 
-    if (lpStat)
-    {
+    if (lpStat) {
 
         //
         // All is well up to this point.  Translate the NT values
         // into win32 values.
         //
 
-        if (LocalStat.HoldReasons & SERIAL_TX_WAITING_FOR_CTS)
-        {
+        if (LocalStat.HoldReasons & SERIAL_TX_WAITING_FOR_CTS) {
 
             lpStat->fCtsHold = TRUE;
-        }
-        else
-        {
+
+        } else {
 
             lpStat->fCtsHold = FALSE;
+
         }
 
-        if (LocalStat.HoldReasons & SERIAL_TX_WAITING_FOR_DSR)
-        {
+        if (LocalStat.HoldReasons & SERIAL_TX_WAITING_FOR_DSR) {
 
             lpStat->fDsrHold = TRUE;
-        }
-        else
-        {
+
+        } else {
 
             lpStat->fDsrHold = FALSE;
+
         }
 
-        if (LocalStat.HoldReasons & SERIAL_TX_WAITING_FOR_DCD)
-        {
+        if (LocalStat.HoldReasons & SERIAL_TX_WAITING_FOR_DCD) {
 
             lpStat->fRlsdHold = TRUE;
-        }
-        else
-        {
+
+        } else {
 
             lpStat->fRlsdHold = FALSE;
+
         }
 
-        if (LocalStat.HoldReasons & SERIAL_TX_WAITING_FOR_XON)
-        {
+        if (LocalStat.HoldReasons & SERIAL_TX_WAITING_FOR_XON) {
 
             lpStat->fXoffHold = TRUE;
-        }
-        else
-        {
+
+        } else {
 
             lpStat->fXoffHold = FALSE;
+
         }
 
-        if (LocalStat.HoldReasons & SERIAL_TX_WAITING_XOFF_SENT)
-        {
+        if (LocalStat.HoldReasons & SERIAL_TX_WAITING_XOFF_SENT) {
 
             lpStat->fXoffSent = TRUE;
-        }
-        else
-        {
+
+        } else {
 
             lpStat->fXoffSent = FALSE;
+
         }
 
         lpStat->fEof = LocalStat.EofReceived;
         lpStat->fTxim = LocalStat.WaitForImmediate;
         lpStat->cbInQue = LocalStat.AmountInInQueue;
         lpStat->cbOutQue = LocalStat.AmountInOutQueue;
+
     }
 
-    if (lpErrors)
-    {
+    if (lpErrors) {
 
         *lpErrors = 0;
 
-        if (LocalStat.Errors & SERIAL_ERROR_BREAK)
-        {
+        if (LocalStat.Errors & SERIAL_ERROR_BREAK) {
 
             *lpErrors = *lpErrors | CE_BREAK;
+
         }
 
-        if (LocalStat.Errors & SERIAL_ERROR_FRAMING)
-        {
+        if (LocalStat.Errors & SERIAL_ERROR_FRAMING) {
 
             *lpErrors = *lpErrors | CE_FRAME;
+
         }
 
-        if (LocalStat.Errors & SERIAL_ERROR_OVERRUN)
-        {
+        if (LocalStat.Errors & SERIAL_ERROR_OVERRUN) {
 
             *lpErrors = *lpErrors | CE_OVERRUN;
+
         }
 
-        if (LocalStat.Errors & SERIAL_ERROR_QUEUEOVERRUN)
-        {
+        if (LocalStat.Errors & SERIAL_ERROR_QUEUEOVERRUN) {
 
             *lpErrors = *lpErrors | CE_RXOVER;
+
         }
 
-        if (LocalStat.Errors & SERIAL_ERROR_PARITY)
-        {
+        if (LocalStat.Errors & SERIAL_ERROR_PARITY) {
 
             *lpErrors = *lpErrors | CE_RXPARITY;
+
         }
+
     }
 
     CloseHandle(SyncEvent);
     return TRUE;
-}
 
-BOOL SetupComm(HANDLE hFile, DWORD dwInQueue, DWORD dwOutQueue)
+}
+
+BOOL
+SetupComm(
+    HANDLE hFile,
+    DWORD dwInQueue,
+    DWORD dwOutQueue
+    )
 
 /*++
 
@@ -929,73 +1196,92 @@ Return Value:
 
     HANDLE SyncEvent;
     IO_STATUS_BLOCK Iosb;
-    SERIAL_QUEUE_SIZE NewSizes = { 0 };
+    SERIAL_QUEUE_SIZE NewSizes = {0};
 
     //
     // Make sure that the sizes are even.
     //
 
-    if (dwOutQueue != ((DWORD)-1))
-    {
+    if (dwOutQueue != ((DWORD)-1)) {
 
-        if (((dwOutQueue / 2) * 2) != dwOutQueue)
-        {
+        if (((dwOutQueue/2)*2) != dwOutQueue) {
 
             SetLastError(ERROR_INVALID_DATA);
             return FALSE;
+
         }
+
     }
 
-    if (dwInQueue != ((DWORD)-1))
-    {
+    if (dwInQueue != ((DWORD)-1)) {
 
-        if (((dwInQueue / 2) * 2) != dwInQueue)
-        {
+        if (((dwInQueue/2)*2) != dwInQueue) {
 
             SetLastError(ERROR_INVALID_DATA);
             return FALSE;
+
         }
+
     }
 
     NewSizes.InSize = dwInQueue;
     NewSizes.OutSize = dwOutQueue;
 
 
-    if (!(SyncEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
-    {
+    if (!(SyncEvent = CreateEvent(
+                      NULL,
+                      TRUE,
+                      FALSE,
+                      NULL
+                      ))) {
 
         return FALSE;
+
     }
 
-    Status = NtDeviceIoControlFile(hFile, SyncEvent, NULL, NULL, &Iosb, IOCTL_SERIAL_SET_QUEUE_SIZE, &NewSizes,
-                                   sizeof(SERIAL_QUEUE_SIZE), NULL, 0);
+    Status = NtDeviceIoControlFile(
+                 hFile,
+                 SyncEvent,
+                 NULL,
+                 NULL,
+                 &Iosb,
+                 IOCTL_SERIAL_SET_QUEUE_SIZE,
+                 &NewSizes,
+                 sizeof(SERIAL_QUEUE_SIZE),
+                 NULL,
+                 0
+                 );
 
-    if (Status == STATUS_PENDING)
-    {
+    if ( Status == STATUS_PENDING) {
 
         // Operation must complete before return & IoStatusBlock destroyed
 
-        Status = NtWaitForSingleObject(SyncEvent, FALSE, NULL);
-        if (NT_SUCCESS(Status))
-        {
+        Status = NtWaitForSingleObject( SyncEvent, FALSE, NULL );
+        if ( NT_SUCCESS(Status)) {
 
             Status = Iosb.Status;
+
         }
     }
 
-    if (NT_ERROR(Status))
-    {
+    if (NT_ERROR(Status)) {
 
         CloseHandle(SyncEvent);
         BaseSetLastNTError(Status);
         return FALSE;
+
     }
 
     CloseHandle(SyncEvent);
     return TRUE;
-}
 
-BOOL EscapeCommFunction(HANDLE hFile, DWORD dwFunc)
+}
+
+BOOL
+EscapeCommFunction(
+    HANDLE hFile,
+    DWORD dwFunc
+    )
 
 /*++
 
@@ -1026,105 +1312,117 @@ Return Value:
     ULONG ControlCode;
     HANDLE Event;
 
-    switch (dwFunc)
-    {
+    switch (dwFunc) {
 
-    case SETXOFF:
-    {
-        ControlCode = IOCTL_SERIAL_SET_XOFF;
-        break;
-    }
+        case SETXOFF: {
+            ControlCode = IOCTL_SERIAL_SET_XOFF;
+            break;
+        }
 
-    case SETXON:
-    {
-        ControlCode = IOCTL_SERIAL_SET_XON;
-        break;
-    }
+        case SETXON: {
+            ControlCode = IOCTL_SERIAL_SET_XON;
+            break;
+        }
 
-    case SETRTS:
-    {
-        ControlCode = IOCTL_SERIAL_SET_RTS;
-        break;
-    }
+        case SETRTS: {
+            ControlCode = IOCTL_SERIAL_SET_RTS;
+            break;
+        }
 
-    case CLRRTS:
-    {
-        ControlCode = IOCTL_SERIAL_CLR_RTS;
-        break;
-    }
+        case CLRRTS: {
+            ControlCode = IOCTL_SERIAL_CLR_RTS;
+            break;
+        }
 
-    case SETDTR:
-    {
-        ControlCode = IOCTL_SERIAL_SET_DTR;
-        break;
-    }
+        case SETDTR: {
+            ControlCode = IOCTL_SERIAL_SET_DTR;
+            break;
+        }
 
-    case CLRDTR:
-    {
-        ControlCode = IOCTL_SERIAL_CLR_DTR;
-        break;
-    }
+        case CLRDTR: {
+            ControlCode = IOCTL_SERIAL_CLR_DTR;
+            break;
+        }
 
-    case RESETDEV:
-    {
-        ControlCode = IOCTL_SERIAL_RESET_DEVICE;
-        break;
-    }
+        case RESETDEV: {
+            ControlCode = IOCTL_SERIAL_RESET_DEVICE;
+            break;
+        }
 
-    case SETBREAK:
-    {
-        ControlCode = IOCTL_SERIAL_SET_BREAK_ON;
-        break;
-    }
+        case SETBREAK: {
+            ControlCode = IOCTL_SERIAL_SET_BREAK_ON;
+            break;
+        }
 
-    case CLRBREAK:
-    {
-        ControlCode = IOCTL_SERIAL_SET_BREAK_OFF;
-        break;
-    }
-    default:
-    {
+        case CLRBREAK: {
+            ControlCode = IOCTL_SERIAL_SET_BREAK_OFF;
+            break;
+        }
+        default: {
 
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-    }
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
 
 
-    if (!(Event = CreateEvent(NULL, TRUE, FALSE, NULL)))
-    {
-
-        return FALSE;
-    }
-
-    Status = NtDeviceIoControlFile(hFile, Event, NULL, NULL, &Iosb, ControlCode, NULL, 0, NULL, 0);
-
-    if (Status == STATUS_PENDING)
-    {
-
-        // Operation must complete before return & IoStatusBlock destroyed
-
-        Status = NtWaitForSingleObject(Event, FALSE, NULL);
-        if (NT_SUCCESS(Status))
-        {
-
-            Status = Iosb.Status;
         }
     }
 
-    if (NT_ERROR(Status))
-    {
+
+    if (!(Event = CreateEvent(
+                      NULL,
+                      TRUE,
+                      FALSE,
+                      NULL
+                      ))) {
+
+        return FALSE;
+
+    }
+
+    Status = NtDeviceIoControlFile(
+                 hFile,
+                 Event,
+                 NULL,
+                 NULL,
+                 &Iosb,
+                 ControlCode,
+                 NULL,
+                 0,
+                 NULL,
+                 0
+                 );
+
+    if ( Status == STATUS_PENDING) {
+
+        // Operation must complete before return & IoStatusBlock destroyed
+
+        Status = NtWaitForSingleObject( Event, FALSE, NULL );
+        if ( NT_SUCCESS(Status)) {
+
+            Status = Iosb.Status;
+
+        }
+    }
+
+    if (NT_ERROR(Status)) {
 
         CloseHandle(Event);
         BaseSetLastNTError(Status);
         return FALSE;
+
     }
 
     CloseHandle(Event);
     return TRUE;
-}
 
-BOOL GetCommConfig(HANDLE hCommDev, LPCOMMCONFIG lpCC, LPDWORD lpdwSize)
+}
+
+BOOL
+GetCommConfig(
+    HANDLE hCommDev,
+    LPCOMMCONFIG lpCC,
+    LPDWORD lpdwSize
+    )
 {
 
     NTSTATUS Status;
@@ -1138,55 +1436,65 @@ BOOL GetCommConfig(HANDLE hCommDev, LPCOMMCONFIG lpCC, LPDWORD lpdwSize)
     // Ask the device how big the device config structure is.
     //
 
-    if (!(Event = CreateEvent(NULL, TRUE, FALSE, NULL)))
-    {
+    if (!(Event = CreateEvent(
+                      NULL,
+                      TRUE,
+                      FALSE,
+                      NULL
+                      ))) {
 
         return FALSE;
+
     }
 
-    Status = NtDeviceIoControlFile(hCommDev, Event, NULL, NULL, &Iosb, IOCTL_SERIAL_CONFIG_SIZE, NULL, 0, &configLength,
-                                   sizeof(configLength));
+    Status = NtDeviceIoControlFile(
+                 hCommDev,
+                 Event,
+                 NULL,
+                 NULL,
+                 &Iosb,
+                 IOCTL_SERIAL_CONFIG_SIZE,
+                 NULL,
+                 0,
+                 &configLength,
+                 sizeof(configLength)
+                 );
 
-    if (Status == STATUS_PENDING)
-    {
+    if ( Status == STATUS_PENDING) {
 
         // Operation must complete before return & IoStatusBlock destroyed
 
-        Status = NtWaitForSingleObject(Event, FALSE, NULL);
-        if (NT_SUCCESS(Status))
-        {
+        Status = NtWaitForSingleObject( Event, FALSE, NULL );
+        if ( NT_SUCCESS(Status)) {
 
             Status = Iosb.Status;
+
         }
     }
 
-    if (NT_ERROR(Status))
-    {
+    if (NT_ERROR(Status)) {
 
         configLength = 0;
+
     }
 
-    if (!configLength)
-    {
+    if (!configLength) {
 
         //
         // The size needed is simply the size of the comm config structure.
         //
 
         CloseHandle(Event);
-        if (!ARGUMENT_PRESENT(lpdwSize))
-        {
+        if (!ARGUMENT_PRESENT(lpdwSize)) {
 
             BaseSetLastNTError(STATUS_INVALID_PARAMETER);
             return FALSE;
-        }
-        else
-        {
+
+        } else {
 
             *lpdwSize = sizeof(COMMCONFIG);
 
-            if (ARGUMENT_PRESENT(lpCC))
-            {
+            if (ARGUMENT_PRESENT(lpCC)) {
 
                 //
                 // Fill in the random fields.
@@ -1200,47 +1508,44 @@ BOOL GetCommConfig(HANDLE hCommDev, LPCOMMCONFIG lpCC, LPDWORD lpdwSize)
                 lpCC->dwProviderSize = 0;
                 lpCC->wcProviderData[0] = 0;
 
-                return GetCommState(hCommDev, &lpCC->dcb);
-            }
-            else
-            {
+                return GetCommState(
+                           hCommDev,
+                           &lpCC->dcb
+                           );
+
+            } else {
 
                 return TRUE;
-            }
-        }
-    }
-    else
-    {
 
-        if (!ARGUMENT_PRESENT(lpdwSize))
-        {
+            }
+
+        }
+
+    } else {
+
+        if (!ARGUMENT_PRESENT(lpdwSize)) {
 
             CloseHandle(Event);
             BaseSetLastNTError(STATUS_INVALID_PARAMETER);
             return FALSE;
-        }
-        else
-        {
 
-            if (*lpdwSize < sizeof(COMMCONFIG))
-            {
+        } else {
+
+            if (*lpdwSize < sizeof(COMMCONFIG)) {
 
                 CloseHandle(Event);
                 BaseSetLastNTError(STATUS_INVALID_PARAMETER);
                 *lpdwSize = configLength;
                 return FALSE;
-            }
-            else
-            {
 
-                if (ARGUMENT_PRESENT(lpCC))
-                {
+            } else {
+
+                if (ARGUMENT_PRESENT(lpCC)) {
 
                     lpCC->wVersion = 1;
                     lpCC->dwProviderSubType = PST_MODEM;
 
-                    if (*lpdwSize < configLength)
-                    {
+                    if (*lpdwSize < configLength) {
 
                         lpCC->dwProviderOffset = 0;
                         lpCC->dwProviderSize = 0;
@@ -1248,10 +1553,12 @@ BOOL GetCommConfig(HANDLE hCommDev, LPCOMMCONFIG lpCC, LPDWORD lpdwSize)
                         *lpdwSize = sizeof(COMMCONFIG);
                         CloseHandle(Event);
 
-                        return GetCommState(hCommDev, &lpCC->dcb);
-                    }
-                    else
-                    {
+                        return GetCommState(
+                                   hCommDev,
+                                   &lpCC->dcb
+                                   );
+
+                    } else {
 
                         *lpdwSize = configLength;
 
@@ -1263,28 +1570,37 @@ BOOL GetCommConfig(HANDLE hCommDev, LPCOMMCONFIG lpCC, LPDWORD lpdwSize)
                         // can write to at least that much.
                         //
 
-                        Status = NtDeviceIoControlFile(hCommDev, Event, NULL, NULL, &Iosb, IOCTL_SERIAL_GET_COMMCONFIG,
-                                                       NULL, 0, lpCC, configLength);
+                        Status = NtDeviceIoControlFile(
+                                     hCommDev,
+                                     Event,
+                                     NULL,
+                                     NULL,
+                                     &Iosb,
+                                     IOCTL_SERIAL_GET_COMMCONFIG,
+                                     NULL,
+                                     0,
+                                     lpCC,
+                                     configLength
+                                     );
 
-                        if (Status == STATUS_PENDING)
-                        {
+                        if ( Status == STATUS_PENDING) {
 
                             // Operation must complete before return & IoStatusBlock destroyed
 
-                            Status = NtWaitForSingleObject(Event, FALSE, NULL);
-                            if (NT_SUCCESS(Status))
-                            {
+                            Status = NtWaitForSingleObject( Event, FALSE, NULL );
+                            if ( NT_SUCCESS(Status)) {
 
                                 Status = Iosb.Status;
+
                             }
                         }
 
-                        if (NT_ERROR(Status))
-                        {
+                        if (NT_ERROR(Status)) {
 
                             CloseHandle(Event);
                             BaseSetLastNTError(Status);
                             return FALSE;
+
                         }
 
                         //
@@ -1292,23 +1608,35 @@ BOOL GetCommConfig(HANDLE hCommDev, LPCOMMCONFIG lpCC, LPDWORD lpdwSize)
                         //
 
                         CloseHandle(Event);
-                        return GetCommState(hCommDev, &lpCC->dcb);
+                        return GetCommState(
+                                   hCommDev,
+                                   &lpCC->dcb
+                                   );
+
                     }
-                }
-                else
-                {
+
+                } else {
 
 
                     *lpdwSize = configLength;
                     CloseHandle(Event);
                     return TRUE;
-                }
-            }
-        }
-    }
-}
 
-BOOL GetCommMask(HANDLE hFile, LPDWORD lpEvtMask)
+                }
+
+            }
+
+        }
+
+    }
+
+}
+
+BOOL
+GetCommMask(
+    HANDLE hFile,
+    LPDWORD lpEvtMask
+    )
 
 /*++
 
@@ -1347,51 +1675,79 @@ Return Value:
     // as the nt wait mask.
     //
 
-    ASSERT((SERIAL_EV_RXCHAR == EV_RXCHAR) && (SERIAL_EV_RXFLAG == EV_RXFLAG) && (SERIAL_EV_TXEMPTY == EV_TXEMPTY) &&
-           (SERIAL_EV_CTS == EV_CTS) && (SERIAL_EV_DSR == EV_DSR) && (SERIAL_EV_RLSD == EV_RLSD) &&
-           (SERIAL_EV_BREAK == EV_BREAK) && (SERIAL_EV_ERR == EV_ERR) && (SERIAL_EV_RING == EV_RING) &&
-           (SERIAL_EV_PERR == EV_PERR) && (SERIAL_EV_RX80FULL == EV_RX80FULL) && (SERIAL_EV_EVENT1 == EV_EVENT1) &&
-           (SERIAL_EV_EVENT2 == EV_EVENT2) && (sizeof(ULONG) == sizeof(DWORD)));
+    ASSERT((SERIAL_EV_RXCHAR   == EV_RXCHAR  ) &&
+           (SERIAL_EV_RXFLAG   == EV_RXFLAG  ) &&
+           (SERIAL_EV_TXEMPTY  == EV_TXEMPTY ) &&
+           (SERIAL_EV_CTS      == EV_CTS     ) &&
+           (SERIAL_EV_DSR      == EV_DSR     ) &&
+           (SERIAL_EV_RLSD     == EV_RLSD    ) &&
+           (SERIAL_EV_BREAK    == EV_BREAK   ) &&
+           (SERIAL_EV_ERR      == EV_ERR     ) &&
+           (SERIAL_EV_RING     == EV_RING    ) &&
+           (SERIAL_EV_PERR     == EV_PERR    ) &&
+           (SERIAL_EV_RX80FULL == EV_RX80FULL) &&
+           (SERIAL_EV_EVENT1   == EV_EVENT1  ) &&
+           (SERIAL_EV_EVENT2   == EV_EVENT2  ) &&
+           (sizeof(ULONG) == sizeof(DWORD)));
 
     //
     // All is well, get the mask from the driver.
     //
 
-    if (!(SyncEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
-    {
+    if (!(SyncEvent = CreateEvent(
+                          NULL,
+                          TRUE,
+                          FALSE,
+                          NULL
+                          ))) {
 
         return FALSE;
+
     }
 
-    Status = NtDeviceIoControlFile(hFile, SyncEvent, NULL, NULL, &Iosb, IOCTL_SERIAL_GET_WAIT_MASK, NULL, 0, lpEvtMask,
-                                   sizeof(ULONG));
+    Status = NtDeviceIoControlFile(
+                 hFile,
+                 SyncEvent,
+                 NULL,
+                 NULL,
+                 &Iosb,
+                 IOCTL_SERIAL_GET_WAIT_MASK,
+                 NULL,
+                 0,
+                 lpEvtMask,
+                 sizeof(ULONG)
+                 );
 
-    if (Status == STATUS_PENDING)
-    {
+    if ( Status == STATUS_PENDING) {
 
         // Operation must complete before return & IoStatusBlock destroyed
 
-        Status = NtWaitForSingleObject(SyncEvent, FALSE, NULL);
-        if (NT_SUCCESS(Status))
-        {
+        Status = NtWaitForSingleObject( SyncEvent, FALSE, NULL );
+        if ( NT_SUCCESS(Status)) {
 
             Status = Iosb.Status;
+
         }
     }
 
-    if (NT_ERROR(Status))
-    {
+    if (NT_ERROR(Status)) {
 
         CloseHandle(SyncEvent);
         BaseSetLastNTError(Status);
         return FALSE;
+
     }
 
     CloseHandle(SyncEvent);
     return TRUE;
-}
 
-BOOL GetCommModemStatus(HANDLE hFile, LPDWORD lpModemStat)
+}
+
+BOOL
+GetCommModemStatus(
+    HANDLE hFile,
+    LPDWORD lpModemStat
+    )
 
 /*++
 
@@ -1422,41 +1778,60 @@ Return Value:
     HANDLE SyncEvent;
     IO_STATUS_BLOCK Iosb;
 
-    if (!(SyncEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
-    {
+    if (!(SyncEvent = CreateEvent(
+                          NULL,
+                          TRUE,
+                          FALSE,
+                          NULL
+                          ))) {
 
         return FALSE;
+
     }
 
-    Status = NtDeviceIoControlFile(hFile, SyncEvent, NULL, NULL, &Iosb, IOCTL_SERIAL_GET_MODEMSTATUS, NULL, 0,
-                                   lpModemStat, sizeof(DWORD));
+    Status = NtDeviceIoControlFile(
+                 hFile,
+                 SyncEvent,
+                 NULL,
+                 NULL,
+                 &Iosb,
+                 IOCTL_SERIAL_GET_MODEMSTATUS,
+                 NULL,
+                 0,
+                 lpModemStat,
+                 sizeof(DWORD)
+                 );
 
-    if (Status == STATUS_PENDING)
-    {
+    if ( Status == STATUS_PENDING) {
 
         // Operation must complete before return & IoStatusBlock destroyed
 
-        Status = NtWaitForSingleObject(SyncEvent, FALSE, NULL);
-        if (NT_SUCCESS(Status))
-        {
+        Status = NtWaitForSingleObject( SyncEvent, FALSE, NULL );
+        if ( NT_SUCCESS(Status)) {
 
             Status = Iosb.Status;
+
         }
     }
 
-    if (NT_ERROR(Status))
-    {
+    if (NT_ERROR(Status)) {
 
         CloseHandle(SyncEvent);
         BaseSetLastNTError(Status);
         return FALSE;
+
     }
 
     CloseHandle(SyncEvent);
     return TRUE;
-}
 
-BOOL GetCommProperties(HANDLE hFile, LPCOMMPROP lpCommProp)
+}
+
+BOOL
+GetCommProperties(
+    HANDLE hFile,
+    LPCOMMPROP lpCommProp
+    )
 
 /*++
 
@@ -1495,32 +1870,68 @@ Return Value:
     // still in sync.
     //
 
-    ASSERT((SERIAL_PCF_DTRDSR == PCF_DTRDSR) && (SERIAL_PCF_RTSCTS == PCF_RTSCTS) && (SERIAL_PCF_CD == PCF_RLSD) &&
-           (SERIAL_PCF_PARITY_CHECK == PCF_PARITY_CHECK) && (SERIAL_PCF_XONXOFF == PCF_XONXOFF) &&
-           (SERIAL_PCF_SETXCHAR == PCF_SETXCHAR) && (SERIAL_PCF_TOTALTIMEOUTS == PCF_TOTALTIMEOUTS) &&
-           (SERIAL_PCF_INTTIMEOUTS == PCF_INTTIMEOUTS) && (SERIAL_PCF_SPECIALCHARS == PCF_SPECIALCHARS) &&
-           (SERIAL_PCF_16BITMODE == PCF_16BITMODE) && (SERIAL_SP_PARITY == SP_PARITY) && (SERIAL_SP_BAUD == SP_BAUD) &&
-           (SERIAL_SP_DATABITS == SP_DATABITS) && (SERIAL_SP_STOPBITS == SP_STOPBITS) &&
-           (SERIAL_SP_HANDSHAKING == SP_HANDSHAKING) && (SERIAL_SP_PARITY_CHECK == SP_PARITY_CHECK) &&
-           (SERIAL_SP_CARRIER_DETECT == SP_RLSD) && (SERIAL_BAUD_075 == BAUD_075) && (SERIAL_BAUD_110 == BAUD_110) &&
-           (SERIAL_BAUD_134_5 == BAUD_134_5) && (SERIAL_BAUD_150 == BAUD_150) && (SERIAL_BAUD_300 == BAUD_300) &&
-           (SERIAL_BAUD_600 == BAUD_600) && (SERIAL_BAUD_1200 == BAUD_1200) && (SERIAL_BAUD_1800 == BAUD_1800) &&
-           (SERIAL_BAUD_2400 == BAUD_2400) && (SERIAL_BAUD_4800 == BAUD_4800) && (SERIAL_BAUD_7200 == BAUD_7200) &&
-           (SERIAL_BAUD_9600 == BAUD_9600) && (SERIAL_BAUD_14400 == BAUD_14400) && (SERIAL_BAUD_19200 == BAUD_19200) &&
-           (SERIAL_BAUD_38400 == BAUD_38400) && (SERIAL_BAUD_56K == BAUD_56K) && (SERIAL_BAUD_57600 == BAUD_57600) &&
-           (SERIAL_BAUD_115200 == BAUD_115200) && (SERIAL_BAUD_USER == BAUD_USER) &&
-           (SERIAL_DATABITS_5 == DATABITS_5) && (SERIAL_DATABITS_6 == DATABITS_6) &&
-           (SERIAL_DATABITS_7 == DATABITS_7) && (SERIAL_DATABITS_8 == DATABITS_8) &&
-           (SERIAL_DATABITS_16 == DATABITS_16) && (SERIAL_DATABITS_16X == DATABITS_16X) &&
-           (SERIAL_STOPBITS_10 == STOPBITS_10) && (SERIAL_STOPBITS_15 == STOPBITS_15) &&
-           (SERIAL_STOPBITS_20 == STOPBITS_20) && (SERIAL_PARITY_NONE == PARITY_NONE) &&
-           (SERIAL_PARITY_ODD == PARITY_ODD) && (SERIAL_PARITY_EVEN == PARITY_EVEN) &&
-           (SERIAL_PARITY_MARK == PARITY_MARK) && (SERIAL_PARITY_SPACE == PARITY_SPACE));
-    ASSERT((SERIAL_SP_UNSPECIFIED == PST_UNSPECIFIED) && (SERIAL_SP_RS232 == PST_RS232) &&
-           (SERIAL_SP_PARALLEL == PST_PARALLELPORT) && (SERIAL_SP_RS422 == PST_RS422) &&
-           (SERIAL_SP_RS423 == PST_RS423) && (SERIAL_SP_RS449 == PST_RS449) && (SERIAL_SP_FAX == PST_FAX) &&
-           (SERIAL_SP_SCANNER == PST_SCANNER) && (SERIAL_SP_BRIDGE == PST_NETWORK_BRIDGE) &&
-           (SERIAL_SP_LAT == PST_LAT) && (SERIAL_SP_TELNET == PST_TCPIP_TELNET) && (SERIAL_SP_X25 == PST_X25));
+    ASSERT((SERIAL_PCF_DTRDSR        == PCF_DTRDSR) &&
+           (SERIAL_PCF_RTSCTS        == PCF_RTSCTS) &&
+           (SERIAL_PCF_CD            == PCF_RLSD) &&
+           (SERIAL_PCF_PARITY_CHECK  == PCF_PARITY_CHECK) &&
+           (SERIAL_PCF_XONXOFF       == PCF_XONXOFF) &&
+           (SERIAL_PCF_SETXCHAR      == PCF_SETXCHAR) &&
+           (SERIAL_PCF_TOTALTIMEOUTS == PCF_TOTALTIMEOUTS) &&
+           (SERIAL_PCF_INTTIMEOUTS   == PCF_INTTIMEOUTS) &&
+           (SERIAL_PCF_SPECIALCHARS  == PCF_SPECIALCHARS) &&
+           (SERIAL_PCF_16BITMODE     == PCF_16BITMODE) &&
+           (SERIAL_SP_PARITY         == SP_PARITY) &&
+           (SERIAL_SP_BAUD           == SP_BAUD) &&
+           (SERIAL_SP_DATABITS       == SP_DATABITS) &&
+           (SERIAL_SP_STOPBITS       == SP_STOPBITS) &&
+           (SERIAL_SP_HANDSHAKING    == SP_HANDSHAKING) &&
+           (SERIAL_SP_PARITY_CHECK   == SP_PARITY_CHECK) &&
+           (SERIAL_SP_CARRIER_DETECT == SP_RLSD) &&
+           (SERIAL_BAUD_075          == BAUD_075) &&
+           (SERIAL_BAUD_110          == BAUD_110) &&
+           (SERIAL_BAUD_134_5        == BAUD_134_5) &&
+           (SERIAL_BAUD_150          == BAUD_150) &&
+           (SERIAL_BAUD_300          == BAUD_300) &&
+           (SERIAL_BAUD_600          == BAUD_600) &&
+           (SERIAL_BAUD_1200         == BAUD_1200) &&
+           (SERIAL_BAUD_1800         == BAUD_1800) &&
+           (SERIAL_BAUD_2400         == BAUD_2400) &&
+           (SERIAL_BAUD_4800         == BAUD_4800) &&
+           (SERIAL_BAUD_7200         == BAUD_7200) &&
+           (SERIAL_BAUD_9600         == BAUD_9600) &&
+           (SERIAL_BAUD_14400        == BAUD_14400) &&
+           (SERIAL_BAUD_19200        == BAUD_19200) &&
+           (SERIAL_BAUD_38400        == BAUD_38400) &&
+           (SERIAL_BAUD_56K          == BAUD_56K) &&
+           (SERIAL_BAUD_57600        == BAUD_57600) &&
+           (SERIAL_BAUD_115200       == BAUD_115200) &&
+           (SERIAL_BAUD_USER         == BAUD_USER) &&
+           (SERIAL_DATABITS_5        == DATABITS_5) &&
+           (SERIAL_DATABITS_6        == DATABITS_6) &&
+           (SERIAL_DATABITS_7        == DATABITS_7) &&
+           (SERIAL_DATABITS_8        == DATABITS_8) &&
+           (SERIAL_DATABITS_16       == DATABITS_16) &&
+           (SERIAL_DATABITS_16X      == DATABITS_16X) &&
+           (SERIAL_STOPBITS_10       == STOPBITS_10) &&
+           (SERIAL_STOPBITS_15       == STOPBITS_15) &&
+           (SERIAL_STOPBITS_20       == STOPBITS_20) &&
+           (SERIAL_PARITY_NONE       == PARITY_NONE) &&
+           (SERIAL_PARITY_ODD        == PARITY_ODD) &&
+           (SERIAL_PARITY_EVEN       == PARITY_EVEN) &&
+           (SERIAL_PARITY_MARK       == PARITY_MARK) &&
+           (SERIAL_PARITY_SPACE      == PARITY_SPACE));
+    ASSERT((SERIAL_SP_UNSPECIFIED    == PST_UNSPECIFIED) &&
+           (SERIAL_SP_RS232          == PST_RS232) &&
+           (SERIAL_SP_PARALLEL       == PST_PARALLELPORT) &&
+           (SERIAL_SP_RS422          == PST_RS422) &&
+           (SERIAL_SP_RS423          == PST_RS423) &&
+           (SERIAL_SP_RS449          == PST_RS449) &&
+           (SERIAL_SP_FAX            == PST_FAX) &&
+           (SERIAL_SP_SCANNER        == PST_SCANNER) &&
+           (SERIAL_SP_BRIDGE         == PST_NETWORK_BRIDGE) &&
+           (SERIAL_SP_LAT            == PST_LAT) &&
+           (SERIAL_SP_TELNET         == PST_TCPIP_TELNET) &&
+           (SERIAL_SP_X25            == PST_X25));
 
     ASSERT(sizeof(SERIAL_COMMPROP) == sizeof(COMMPROP));
     //
@@ -1532,10 +1943,10 @@ Return Value:
 
     bufferLength = sizeof(COMMPROP);
 
-    if (lpCommProp->dwProvSpec1 == COMMPROP_INITIALIZED)
-    {
+    if (lpCommProp->dwProvSpec1 == COMMPROP_INITIALIZED) {
 
         bufferLength = lpCommProp->wPacketLength;
+
     }
 
     //
@@ -1546,41 +1957,61 @@ Return Value:
 
     RtlZeroMemory(lpCommProp, bufferLength);
 
-    if (!(SyncEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
-    {
+    if (!(SyncEvent = CreateEvent(
+                          NULL,
+                          TRUE,
+                          FALSE,
+                          NULL
+                          ))) {
 
         return FALSE;
+
     }
 
-    Status = NtDeviceIoControlFile(hFile, SyncEvent, NULL, NULL, &Iosb, IOCTL_SERIAL_GET_PROPERTIES, NULL, 0,
-                                   lpCommProp, bufferLength);
+    Status = NtDeviceIoControlFile(
+                 hFile,
+                 SyncEvent,
+                 NULL,
+                 NULL,
+                 &Iosb,
+                 IOCTL_SERIAL_GET_PROPERTIES,
+                 NULL,
+                 0,
+                 lpCommProp,
+                 bufferLength
+                 );
 
-    if (Status == STATUS_PENDING)
-    {
+    if ( Status == STATUS_PENDING) {
 
         // Operation must complete before return & IoStatusBlock destroyed
 
-        Status = NtWaitForSingleObject(SyncEvent, FALSE, NULL);
-        if (NT_SUCCESS(Status))
-        {
+        Status = NtWaitForSingleObject( SyncEvent, FALSE, NULL );
+        if ( NT_SUCCESS(Status)) {
 
             Status = Iosb.Status;
+
         }
+
     }
 
-    if (NT_ERROR(Status))
-    {
+    if (NT_ERROR(Status)) {
 
         CloseHandle(SyncEvent);
         BaseSetLastNTError(Status);
         return FALSE;
+
     }
 
     CloseHandle(SyncEvent);
     return TRUE;
-}
 
-BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
+}
+
+BOOL
+GetCommState(
+    HANDLE hFile,
+    LPDCB lpDCB
+    )
 
 /*++
 
@@ -1628,10 +2059,15 @@ Return Value:
     // Make sure the windows mapping is the same as the NT mapping.
     //
 
-    ASSERT((ONESTOPBIT == STOP_BIT_1) && (ONE5STOPBITS == STOP_BITS_1_5) && (TWOSTOPBITS == STOP_BITS_2));
+    ASSERT((ONESTOPBIT == STOP_BIT_1) &&
+           (ONE5STOPBITS == STOP_BITS_1_5) &&
+           (TWOSTOPBITS == STOP_BITS_2));
 
-    ASSERT((NOPARITY == NO_PARITY) && (ODDPARITY == ODD_PARITY) && (EVENPARITY == EVEN_PARITY) &&
-           (MARKPARITY == MARK_PARITY) && (SPACEPARITY == SPACE_PARITY));
+    ASSERT((NOPARITY == NO_PARITY) &&
+           (ODDPARITY == ODD_PARITY) &&
+           (EVENPARITY == EVEN_PARITY) &&
+           (MARKPARITY == MARK_PARITY) &&
+           (SPACEPARITY == SPACE_PARITY));
 
     //
     // Zero out the dcb.  This might create an access violation
@@ -1644,88 +2080,123 @@ Return Value:
     lpDCB->DCBlength = sizeof(DCB);
     lpDCB->fBinary = TRUE;
 
-    if (!(SyncEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
-    {
+    if (!(SyncEvent = CreateEvent(
+                          NULL,
+                          TRUE,
+                          FALSE,
+                          NULL
+                          ))) {
 
         return FALSE;
+
     }
 
-    Status = NtDeviceIoControlFile(hFile, SyncEvent, NULL, NULL, &Iosb, IOCTL_SERIAL_GET_BAUD_RATE, NULL, 0, &LocalBaud,
-                                   sizeof(LocalBaud));
+    Status = NtDeviceIoControlFile(
+                 hFile,
+                 SyncEvent,
+                 NULL,
+                 NULL,
+                 &Iosb,
+                 IOCTL_SERIAL_GET_BAUD_RATE,
+                 NULL,
+                 0,
+                 &LocalBaud,
+                 sizeof(LocalBaud)
+                 );
 
-    if (Status == STATUS_PENDING)
-    {
+    if ( Status == STATUS_PENDING) {
 
         // Operation must complete before return & IoStatusBlock destroyed
 
-        Status = NtWaitForSingleObject(SyncEvent, FALSE, NULL);
-        if (NT_SUCCESS(Status))
-        {
+        Status = NtWaitForSingleObject( SyncEvent, FALSE, NULL );
+        if ( NT_SUCCESS(Status)) {
 
             Status = Iosb.Status;
+
         }
+
     }
 
-    if (NT_ERROR(Status))
-    {
+    if (NT_ERROR(Status)) {
 
         CloseHandle(SyncEvent);
         BaseSetLastNTError(Status);
         return FALSE;
+
     }
 
     lpDCB->BaudRate = LocalBaud.BaudRate;
 
-    Status = NtDeviceIoControlFile(hFile, SyncEvent, NULL, NULL, &Iosb, IOCTL_SERIAL_GET_LINE_CONTROL, NULL, 0,
-                                   &LineControl, sizeof(LineControl));
+    Status = NtDeviceIoControlFile(
+                 hFile,
+                 SyncEvent,
+                 NULL,
+                 NULL,
+                 &Iosb,
+                 IOCTL_SERIAL_GET_LINE_CONTROL,
+                 NULL,
+                 0,
+                 &LineControl,
+                 sizeof(LineControl)
+                 );
 
-    if (Status == STATUS_PENDING)
-    {
+    if ( Status == STATUS_PENDING) {
 
         // Operation must complete before return & IoStatusBlock destroyed
 
-        Status = NtWaitForSingleObject(SyncEvent, FALSE, NULL);
-        if (NT_SUCCESS(Status))
-        {
+        Status = NtWaitForSingleObject( SyncEvent, FALSE, NULL );
+        if ( NT_SUCCESS(Status)) {
 
             Status = Iosb.Status;
+
         }
+
     }
 
-    if (NT_ERROR(Status))
-    {
+    if (NT_ERROR(Status)) {
 
         CloseHandle(SyncEvent);
         BaseSetLastNTError(Status);
         return FALSE;
+
     }
 
     lpDCB->Parity = LineControl.Parity;
     lpDCB->ByteSize = LineControl.WordLength;
     lpDCB->StopBits = LineControl.StopBits;
 
-    Status = NtDeviceIoControlFile(hFile, SyncEvent, NULL, NULL, &Iosb, IOCTL_SERIAL_GET_CHARS, NULL, 0, &Chars,
-                                   sizeof(Chars));
+    Status = NtDeviceIoControlFile(
+                 hFile,
+                 SyncEvent,
+                 NULL,
+                 NULL,
+                 &Iosb,
+                 IOCTL_SERIAL_GET_CHARS,
+                 NULL,
+                 0,
+                 &Chars,
+                 sizeof(Chars)
+                 );
 
-    if (Status == STATUS_PENDING)
-    {
+    if ( Status == STATUS_PENDING) {
 
         // Operation must complete before return & IoStatusBlock destroyed
 
-        Status = NtWaitForSingleObject(SyncEvent, FALSE, NULL);
-        if (NT_SUCCESS(Status))
-        {
+        Status = NtWaitForSingleObject( SyncEvent, FALSE, NULL );
+        if ( NT_SUCCESS(Status)) {
 
             Status = Iosb.Status;
+
         }
+
     }
 
-    if (NT_ERROR(Status))
-    {
+    if (NT_ERROR(Status)) {
 
         CloseHandle(SyncEvent);
         BaseSetLastNTError(Status);
         return FALSE;
+
     }
 
     lpDCB->XonChar = Chars.XonChar;
@@ -1734,116 +2205,129 @@ Return Value:
     lpDCB->EofChar = Chars.EofChar;
     lpDCB->EvtChar = Chars.EventChar;
 
-    Status = NtDeviceIoControlFile(hFile, SyncEvent, NULL, NULL, &Iosb, IOCTL_SERIAL_GET_HANDFLOW, NULL, 0, &HandFlow,
-                                   sizeof(HandFlow));
+    Status = NtDeviceIoControlFile(
+                 hFile,
+                 SyncEvent,
+                 NULL,
+                 NULL,
+                 &Iosb,
+                 IOCTL_SERIAL_GET_HANDFLOW,
+                 NULL,
+                 0,
+                 &HandFlow,
+                 sizeof(HandFlow)
+                 );
 
-    if (Status == STATUS_PENDING)
-    {
+    if ( Status == STATUS_PENDING) {
 
         // Operation must complete before return & IoStatusBlock destroyed
 
-        Status = NtWaitForSingleObject(SyncEvent, FALSE, NULL);
-        if (NT_SUCCESS(Status))
-        {
+        Status = NtWaitForSingleObject( SyncEvent, FALSE, NULL );
+        if ( NT_SUCCESS(Status)) {
 
             Status = Iosb.Status;
+
         }
+
     }
 
-    if (NT_ERROR(Status))
-    {
+    if (NT_ERROR(Status)) {
 
         CloseHandle(SyncEvent);
         BaseSetLastNTError(Status);
         return FALSE;
+
     }
 
-    if (HandFlow.ControlHandShake & SERIAL_CTS_HANDSHAKE)
-    {
+    if (HandFlow.ControlHandShake & SERIAL_CTS_HANDSHAKE) {
 
         lpDCB->fOutxCtsFlow = TRUE;
+
     }
 
-    if (HandFlow.ControlHandShake & SERIAL_DSR_HANDSHAKE)
-    {
+    if (HandFlow.ControlHandShake & SERIAL_DSR_HANDSHAKE) {
 
         lpDCB->fOutxDsrFlow = TRUE;
+
     }
 
-    if (HandFlow.FlowReplace & SERIAL_AUTO_TRANSMIT)
-    {
+    if (HandFlow.FlowReplace & SERIAL_AUTO_TRANSMIT) {
 
         lpDCB->fOutX = TRUE;
+
     }
 
-    if (HandFlow.FlowReplace & SERIAL_AUTO_RECEIVE)
-    {
+    if (HandFlow.FlowReplace & SERIAL_AUTO_RECEIVE) {
 
         lpDCB->fInX = TRUE;
+
     }
 
-    if (HandFlow.FlowReplace & SERIAL_NULL_STRIPPING)
-    {
+    if (HandFlow.FlowReplace & SERIAL_NULL_STRIPPING) {
 
         lpDCB->fNull = TRUE;
+
     }
 
-    if (HandFlow.FlowReplace & SERIAL_ERROR_CHAR)
-    {
+    if (HandFlow.FlowReplace & SERIAL_ERROR_CHAR) {
 
         lpDCB->fErrorChar = TRUE;
+
     }
 
-    if (HandFlow.FlowReplace & SERIAL_XOFF_CONTINUE)
-    {
+    if (HandFlow.FlowReplace & SERIAL_XOFF_CONTINUE) {
 
         lpDCB->fTXContinueOnXoff = TRUE;
+
     }
 
-    if (HandFlow.ControlHandShake & SERIAL_ERROR_ABORT)
-    {
+    if (HandFlow.ControlHandShake & SERIAL_ERROR_ABORT) {
 
         lpDCB->fAbortOnError = TRUE;
+
     }
 
-    switch (HandFlow.FlowReplace & SERIAL_RTS_MASK)
-    {
-    case 0:
-        lpDCB->fRtsControl = RTS_CONTROL_DISABLE;
-        break;
-    case SERIAL_RTS_CONTROL:
-        lpDCB->fRtsControl = RTS_CONTROL_ENABLE;
-        break;
-    case SERIAL_RTS_HANDSHAKE:
-        lpDCB->fRtsControl = RTS_CONTROL_HANDSHAKE;
-        break;
-    case SERIAL_TRANSMIT_TOGGLE:
-        lpDCB->fRtsControl = RTS_CONTROL_TOGGLE;
-        break;
+    switch (HandFlow.FlowReplace & SERIAL_RTS_MASK) {
+        case 0:
+            lpDCB->fRtsControl = RTS_CONTROL_DISABLE;
+            break;
+        case SERIAL_RTS_CONTROL:
+            lpDCB->fRtsControl = RTS_CONTROL_ENABLE;
+            break;
+        case SERIAL_RTS_HANDSHAKE:
+            lpDCB->fRtsControl = RTS_CONTROL_HANDSHAKE;
+            break;
+        case SERIAL_TRANSMIT_TOGGLE:
+            lpDCB->fRtsControl = RTS_CONTROL_TOGGLE;
+            break;
     }
 
-    switch (HandFlow.ControlHandShake & SERIAL_DTR_MASK)
-    {
-    case 0:
-        lpDCB->fDtrControl = DTR_CONTROL_DISABLE;
-        break;
-    case SERIAL_DTR_CONTROL:
-        lpDCB->fDtrControl = DTR_CONTROL_ENABLE;
-        break;
-    case SERIAL_DTR_HANDSHAKE:
-        lpDCB->fDtrControl = DTR_CONTROL_HANDSHAKE;
-        break;
+    switch (HandFlow.ControlHandShake & SERIAL_DTR_MASK) {
+        case 0:
+            lpDCB->fDtrControl = DTR_CONTROL_DISABLE;
+            break;
+        case SERIAL_DTR_CONTROL:
+            lpDCB->fDtrControl = DTR_CONTROL_ENABLE;
+            break;
+        case SERIAL_DTR_HANDSHAKE:
+            lpDCB->fDtrControl = DTR_CONTROL_HANDSHAKE;
+            break;
     }
 
-    lpDCB->fDsrSensitivity = (HandFlow.ControlHandShake & SERIAL_DSR_SENSITIVITY) ? (TRUE) : (FALSE);
+    lpDCB->fDsrSensitivity =
+        (HandFlow.ControlHandShake & SERIAL_DSR_SENSITIVITY)?(TRUE):(FALSE);
     lpDCB->XonLim = (WORD)HandFlow.XonLimit;
     lpDCB->XoffLim = (WORD)HandFlow.XoffLimit;
 
     CloseHandle(SyncEvent);
     return TRUE;
 }
-
-BOOL GetCommTimeouts(HANDLE hFile, LPCOMMTIMEOUTS lpCommTimeouts)
+
+BOOL
+GetCommTimeouts(
+    HANDLE hFile,
+    LPCOMMTIMEOUTS lpCommTimeouts
+    )
 
 /*++
 
@@ -1875,37 +2359,50 @@ Return Value:
     IO_STATUS_BLOCK Iosb;
     HANDLE Event;
 
-    if (!(Event = CreateEvent(NULL, TRUE, FALSE, NULL)))
-    {
+    if (!(Event = CreateEvent(
+                      NULL,
+                      TRUE,
+                      FALSE,
+                      NULL
+                      ))) {
 
         return FALSE;
-    }
-    else
-    {
+
+    } else {
 
 
-        Status =
-            NtDeviceIoControlFile(hFile, Event, NULL, NULL, &Iosb, IOCTL_SERIAL_GET_TIMEOUTS, NULL, 0, &To, sizeof(To));
+        Status = NtDeviceIoControlFile(
+                     hFile,
+                     Event,
+                     NULL,
+                     NULL,
+                     &Iosb,
+                     IOCTL_SERIAL_GET_TIMEOUTS,
+                     NULL,
+                     0,
+                     &To,
+                     sizeof(To)
+                     );
 
-        if (Status == STATUS_PENDING)
-        {
+        if ( Status == STATUS_PENDING) {
 
             // Operation must complete before return & IoStatusBlock destroyed
 
-            Status = NtWaitForSingleObject(Event, FALSE, NULL);
-            if (NT_SUCCESS(Status))
-            {
+            Status = NtWaitForSingleObject( Event, FALSE, NULL );
+            if ( NT_SUCCESS( Status )) {
 
                 Status = Iosb.Status;
+
             }
+
         }
 
-        if (NT_ERROR(Status))
-        {
+        if (NT_ERROR(Status)) {
 
             BaseSetLastNTError(Status);
             CloseHandle(Event);
             return FALSE;
+
         }
 
         CloseHandle(Event);
@@ -1922,10 +2419,16 @@ Return Value:
         lpCommTimeouts->WriteTotalTimeoutConstant = To.WriteTotalTimeoutConstant;
 
         return TRUE;
-    }
-}
 
-BOOL PurgeComm(HANDLE hFile, DWORD dwFlags)
+    }
+
+}
+
+BOOL
+PurgeComm(
+    HANDLE hFile,
+    DWORD dwFlags
+    )
 
 /*++
 
@@ -1955,44 +2458,63 @@ Return Value:
     NTSTATUS Status;
     IO_STATUS_BLOCK Iosb;
 
-    if (!(Event = CreateEvent(NULL, TRUE, FALSE, NULL)))
-    {
+    if (!(Event = CreateEvent(
+                      NULL,
+                      TRUE,
+                      FALSE,
+                      NULL
+                      ))) {
 
         return FALSE;
-    }
-    else
-    {
 
-        Status = NtDeviceIoControlFile(hFile, Event, NULL, NULL, &Iosb, IOCTL_SERIAL_PURGE, &dwFlags, sizeof(ULONG),
-                                       NULL, 0);
+    } else {
 
-        if (Status == STATUS_PENDING)
-        {
+        Status = NtDeviceIoControlFile(
+                     hFile,
+                     Event,
+                     NULL,
+                     NULL,
+                     &Iosb,
+                     IOCTL_SERIAL_PURGE,
+                     &dwFlags,
+                     sizeof(ULONG),
+                     NULL,
+                     0
+                     );
+
+        if ( Status == STATUS_PENDING) {
 
             // Operation must complete before return & IoStatusBlock destroyed
 
-            Status = NtWaitForSingleObject(Event, FALSE, NULL);
-            if (NT_SUCCESS(Status))
-            {
+            Status = NtWaitForSingleObject( Event, FALSE, NULL );
+            if ( NT_SUCCESS( Status )) {
 
                 Status = Iosb.Status;
+
             }
+
         }
 
-        if (NT_ERROR(Status))
-        {
+        if (NT_ERROR(Status)) {
 
             CloseHandle(Event);
             BaseSetLastNTError(Status);
             return FALSE;
+
         }
 
         CloseHandle(Event);
         return TRUE;
-    }
-}
 
-BOOL SetCommBreak(HANDLE hFile)
+    }
+
+
+}
+
+BOOL
+SetCommBreak(
+    HANDLE hFile
+    )
 
 /*++
 
@@ -2015,10 +2537,16 @@ Return Value:
 
 {
 
-    return EscapeCommFunction(hFile, SETBREAK);
-}
+    return EscapeCommFunction(hFile,SETBREAK);
 
-BOOL SetCommConfig(HANDLE hCommDev, LPCOMMCONFIG lpCC, DWORD dwSize)
+}
+
+BOOL
+SetCommConfig(
+    HANDLE hCommDev,
+    LPCOMMCONFIG lpCC,
+    DWORD dwSize
+    )
 
 {
 
@@ -2028,13 +2556,17 @@ BOOL SetCommConfig(HANDLE hCommDev, LPCOMMCONFIG lpCC, DWORD dwSize)
     HANDLE Event;
     LPCOMMCONFIG comConf = lpCC;
 
-    if (lpCC->dwProviderOffset)
-    {
+    if (lpCC->dwProviderOffset) {
 
-        if (!(Event = CreateEvent(NULL, TRUE, FALSE, NULL)))
-        {
+        if (!(Event = CreateEvent(
+                          NULL,
+                          TRUE,
+                          FALSE,
+                          NULL
+                          ))) {
 
             return FALSE;
+
         }
 
         //
@@ -2042,37 +2574,54 @@ BOOL SetCommConfig(HANDLE hCommDev, LPCOMMCONFIG lpCC, DWORD dwSize)
         // Call the driver to set the config structure.
         //
 
-        Status = NtDeviceIoControlFile(hCommDev, Event, NULL, NULL, &Iosb, IOCTL_SERIAL_SET_COMMCONFIG, lpCC, dwSize,
-                                       NULL, 0);
+        Status = NtDeviceIoControlFile(
+                     hCommDev,
+                     Event,
+                     NULL,
+                     NULL,
+                     &Iosb,
+                     IOCTL_SERIAL_SET_COMMCONFIG,
+                     lpCC,
+                     dwSize,
+                     NULL,
+                     0
+                     );
 
-        if (Status == STATUS_PENDING)
-        {
+        if ( Status == STATUS_PENDING) {
 
             // Operation must complete before return & IoStatusBlock destroyed
 
-            Status = NtWaitForSingleObject(Event, FALSE, NULL);
-            if (NT_SUCCESS(Status))
-            {
+            Status = NtWaitForSingleObject( Event, FALSE, NULL );
+            if ( NT_SUCCESS(Status)) {
 
                 Status = Iosb.Status;
+
             }
         }
 
-        if (NT_ERROR(Status))
-        {
+        if (NT_ERROR(Status)) {
 
             CloseHandle(Event);
             BaseSetLastNTError(Status);
             return FALSE;
+
         }
 
         CloseHandle(Event);
+
     }
 
-    return SetCommState(hCommDev, &comConf->dcb);
+    return SetCommState(
+               hCommDev,
+               &comConf->dcb
+               );
 }
-
-BOOL SetCommMask(HANDLE hFile, DWORD dwEvtMask)
+
+BOOL
+SetCommMask(
+    HANDLE hFile,
+    DWORD dwEvtMask
+    )
 
 /*++
 
@@ -2110,11 +2659,20 @@ Return Value:
     // size that win32 expects.
     //
 
-    ASSERT((SERIAL_EV_RXCHAR == EV_RXCHAR) && (SERIAL_EV_RXFLAG == EV_RXFLAG) && (SERIAL_EV_TXEMPTY == EV_TXEMPTY) &&
-           (SERIAL_EV_CTS == EV_CTS) && (SERIAL_EV_DSR == EV_DSR) && (SERIAL_EV_RLSD == EV_RLSD) &&
-           (SERIAL_EV_BREAK == EV_BREAK) && (SERIAL_EV_ERR == EV_ERR) && (SERIAL_EV_RING == EV_RING) &&
-           (SERIAL_EV_PERR == EV_PERR) && (SERIAL_EV_RX80FULL == EV_RX80FULL) && (SERIAL_EV_EVENT1 == EV_EVENT1) &&
-           (SERIAL_EV_EVENT2 == EV_EVENT2) && (sizeof(DWORD) == sizeof(ULONG)));
+    ASSERT((SERIAL_EV_RXCHAR   == EV_RXCHAR  ) &&
+           (SERIAL_EV_RXFLAG   == EV_RXFLAG  ) &&
+           (SERIAL_EV_TXEMPTY  == EV_TXEMPTY ) &&
+           (SERIAL_EV_CTS      == EV_CTS     ) &&
+           (SERIAL_EV_DSR      == EV_DSR     ) &&
+           (SERIAL_EV_RLSD     == EV_RLSD    ) &&
+           (SERIAL_EV_BREAK    == EV_BREAK   ) &&
+           (SERIAL_EV_ERR      == EV_ERR     ) &&
+           (SERIAL_EV_RING     == EV_RING    ) &&
+           (SERIAL_EV_PERR     == EV_PERR    ) &&
+           (SERIAL_EV_RX80FULL == EV_RX80FULL) &&
+           (SERIAL_EV_EVENT1   == EV_EVENT1  ) &&
+           (SERIAL_EV_EVENT2   == EV_EVENT2  ) &&
+           (sizeof(DWORD) == sizeof(ULONG)));
 
 
     //
@@ -2122,22 +2680,36 @@ Return Value:
     // we don't support.
     //
 
-    if (dwEvtMask & (~(EV_RXCHAR | EV_RXFLAG | EV_TXEMPTY | EV_CTS | EV_DSR | EV_RLSD | EV_BREAK | EV_ERR | EV_RING |
-                       EV_PERR | EV_RX80FULL | EV_EVENT1 | EV_EVENT2)))
-    {
+    if (dwEvtMask & (~(EV_RXCHAR   |
+                       EV_RXFLAG   |
+                       EV_TXEMPTY  |
+                       EV_CTS      |
+                       EV_DSR      |
+                       EV_RLSD     |
+                       EV_BREAK    |
+                       EV_ERR      |
+                       EV_RING     |
+                       EV_PERR     |
+                       EV_RX80FULL |
+                       EV_EVENT1   |
+                       EV_EVENT2))) {
 
         SetLastError(ERROR_INVALID_DATA);
         return FALSE;
+
     }
 
 
-    if (!(Event = CreateEvent(NULL, TRUE, FALSE, NULL)))
-    {
+    if (!(Event = CreateEvent(
+                      NULL,
+                      TRUE,
+                      FALSE,
+                      NULL
+                      ))) {
 
         return FALSE;
-    }
-    else
-    {
+
+    } else {
 
 
         //
@@ -2146,36 +2718,52 @@ Return Value:
 
         ULONG LocalMask = dwEvtMask;
 
-        Status = NtDeviceIoControlFile(hFile, Event, NULL, NULL, &Iosb, IOCTL_SERIAL_SET_WAIT_MASK, &LocalMask,
-                                       sizeof(ULONG), NULL, 0);
+        Status = NtDeviceIoControlFile(
+                     hFile,
+                     Event,
+                     NULL,
+                     NULL,
+                     &Iosb,
+                     IOCTL_SERIAL_SET_WAIT_MASK,
+                     &LocalMask,
+                     sizeof(ULONG),
+                     NULL,
+                     0
+                     );
 
-        if (Status == STATUS_PENDING)
-        {
+        if ( Status == STATUS_PENDING) {
 
             // Operation must complete before return & IoStatusBlock destroyed
 
-            Status = NtWaitForSingleObject(Event, FALSE, NULL);
-            if (NT_SUCCESS(Status))
-            {
+            Status = NtWaitForSingleObject( Event, FALSE, NULL );
+            if ( NT_SUCCESS( Status )) {
 
                 Status = Iosb.Status;
+
             }
+
         }
 
-        if (NT_ERROR(Status))
-        {
+        if (NT_ERROR(Status)) {
 
             CloseHandle(Event);
             BaseSetLastNTError(Status);
             return FALSE;
+
         }
 
         CloseHandle(Event);
         return TRUE;
-    }
-}
 
-BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
+    }
+
+}
+
+BOOL
+SetCommState(
+    HANDLE hFile,
+    LPDCB lpDCB
+    )
 
 /*++
 
@@ -2207,7 +2795,7 @@ Return Value:
     SERIAL_BAUD_RATE LocalBaud;
     SERIAL_LINE_CONTROL LineControl;
     SERIAL_CHARS Chars;
-    SERIAL_HANDFLOW HandFlow = { 0 };
+    SERIAL_HANDFLOW HandFlow = {0};
     IO_STATUS_BLOCK Iosb;
     NTSTATUS Status;
 
@@ -2232,147 +2820,167 @@ Return Value:
     //
     HANDLE SyncEvent;
 
-    if (GetCommState(hFile, &OldDcb))
-    {
+    if (GetCommState(
+            hFile,
+            &OldDcb
+            )) {
 
         //
         // Try to set the baud rate.  If we fail here, we just return
         // because we never actually got to set anything.
         //
 
-        if (!(SyncEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
-        {
+        if (!(SyncEvent = CreateEvent(
+                              NULL,
+                              TRUE,
+                              FALSE,
+                              NULL
+                              ))) {
 
             return FALSE;
+
         }
 
         LocalBaud.BaudRate = lpDCB->BaudRate;
-        Status = NtDeviceIoControlFile(hFile, SyncEvent, NULL, NULL, &Iosb, IOCTL_SERIAL_SET_BAUD_RATE, &LocalBaud,
-                                       sizeof(LocalBaud), NULL, 0);
+        Status = NtDeviceIoControlFile(
+                     hFile,
+                     SyncEvent,
+                     NULL,
+                     NULL,
+                     &Iosb,
+                     IOCTL_SERIAL_SET_BAUD_RATE,
+                     &LocalBaud,
+                     sizeof(LocalBaud),
+                     NULL,
+                     0
+                     );
 
-        if (Status == STATUS_PENDING)
-        {
+        if ( Status == STATUS_PENDING) {
 
             // Operation must complete before return & IoStatusBlock destroyed
 
-            Status = NtWaitForSingleObject(SyncEvent, FALSE, NULL);
-            if (NT_SUCCESS(Status))
-            {
+            Status = NtWaitForSingleObject( SyncEvent, FALSE, NULL );
+            if ( NT_SUCCESS(Status)) {
 
                 Status = Iosb.Status;
+
             }
+
         }
 
-        if (NT_ERROR(Status))
-        {
+        if (NT_ERROR(Status)) {
 
             CloseHandle(SyncEvent);
             BaseSetLastNTError(Status);
             return FALSE;
+
         }
 
         LineControl.StopBits = lpDCB->StopBits;
         LineControl.Parity = lpDCB->Parity;
         LineControl.WordLength = lpDCB->ByteSize;
         LocalBaud.BaudRate = lpDCB->BaudRate;
-        Chars.XonChar = lpDCB->XonChar;
-        Chars.XoffChar = lpDCB->XoffChar;
+        Chars.XonChar   = lpDCB->XonChar;
+        Chars.XoffChar  = lpDCB->XoffChar;
         Chars.ErrorChar = lpDCB->ErrorChar;
         Chars.BreakChar = lpDCB->ErrorChar;
-        Chars.EofChar = lpDCB->EofChar;
+        Chars.EofChar   = lpDCB->EofChar;
         Chars.EventChar = lpDCB->EvtChar;
 
         HandFlow.FlowReplace &= ~SERIAL_RTS_MASK;
-        switch (lpDCB->fRtsControl)
-        {
-        case RTS_CONTROL_DISABLE:
-            break;
-        case RTS_CONTROL_ENABLE:
-            HandFlow.FlowReplace |= SERIAL_RTS_CONTROL;
-            break;
-        case RTS_CONTROL_HANDSHAKE:
-            HandFlow.FlowReplace |= SERIAL_RTS_HANDSHAKE;
-            break;
-        case RTS_CONTROL_TOGGLE:
-            HandFlow.FlowReplace |= SERIAL_TRANSMIT_TOGGLE;
-            break;
-        default:
-            SetCommState(hFile, &OldDcb);
-            CloseHandle(SyncEvent);
-            BaseSetLastNTError(STATUS_INVALID_PARAMETER);
-            return FALSE;
+        switch (lpDCB->fRtsControl) {
+            case RTS_CONTROL_DISABLE:
+                break;
+            case RTS_CONTROL_ENABLE:
+                HandFlow.FlowReplace |= SERIAL_RTS_CONTROL;
+                break;
+            case RTS_CONTROL_HANDSHAKE:
+                HandFlow.FlowReplace |= SERIAL_RTS_HANDSHAKE;
+                break;
+            case RTS_CONTROL_TOGGLE:
+                HandFlow.FlowReplace |= SERIAL_TRANSMIT_TOGGLE;
+                break;
+            default:
+                SetCommState(
+                    hFile,
+                    &OldDcb
+                    );
+                CloseHandle(SyncEvent);
+                BaseSetLastNTError(STATUS_INVALID_PARAMETER);
+                return FALSE;
         }
 
         HandFlow.ControlHandShake &= ~SERIAL_DTR_MASK;
-        switch (lpDCB->fDtrControl)
-        {
-        case DTR_CONTROL_DISABLE:
-            break;
-        case DTR_CONTROL_ENABLE:
-            HandFlow.ControlHandShake |= SERIAL_DTR_CONTROL;
-            break;
-        case DTR_CONTROL_HANDSHAKE:
-            HandFlow.ControlHandShake |= SERIAL_DTR_HANDSHAKE;
-            break;
-        default:
-            SetCommState(hFile, &OldDcb);
-            CloseHandle(SyncEvent);
-            BaseSetLastNTError(STATUS_INVALID_PARAMETER);
-            return FALSE;
+        switch (lpDCB->fDtrControl) {
+            case DTR_CONTROL_DISABLE:
+                break;
+            case DTR_CONTROL_ENABLE:
+                HandFlow.ControlHandShake |= SERIAL_DTR_CONTROL;
+                break;
+            case DTR_CONTROL_HANDSHAKE:
+                HandFlow.ControlHandShake |= SERIAL_DTR_HANDSHAKE;
+                break;
+            default:
+                SetCommState(
+                    hFile,
+                    &OldDcb
+                    );
+                CloseHandle(SyncEvent);
+                BaseSetLastNTError(STATUS_INVALID_PARAMETER);
+                return FALSE;
         }
 
-        if (lpDCB->fDsrSensitivity)
-        {
+        if (lpDCB->fDsrSensitivity) {
 
             HandFlow.ControlHandShake |= SERIAL_DSR_SENSITIVITY;
+
         }
 
-        if (lpDCB->fOutxCtsFlow)
-        {
+        if (lpDCB->fOutxCtsFlow) {
 
             HandFlow.ControlHandShake |= SERIAL_CTS_HANDSHAKE;
+
         }
 
-        if (lpDCB->fOutxDsrFlow)
-        {
+        if (lpDCB->fOutxDsrFlow) {
 
             HandFlow.ControlHandShake |= SERIAL_DSR_HANDSHAKE;
+
         }
 
-        if (lpDCB->fOutX)
-        {
+        if (lpDCB->fOutX) {
 
             HandFlow.FlowReplace |= SERIAL_AUTO_TRANSMIT;
+
         }
 
-        if (lpDCB->fInX)
-        {
+        if (lpDCB->fInX) {
 
             HandFlow.FlowReplace |= SERIAL_AUTO_RECEIVE;
+
         }
 
-        if (lpDCB->fNull)
-        {
+        if (lpDCB->fNull) {
 
             HandFlow.FlowReplace |= SERIAL_NULL_STRIPPING;
+
         }
 
-        if (lpDCB->fErrorChar)
-        {
+        if (lpDCB->fErrorChar) {
 
             HandFlow.FlowReplace |= SERIAL_ERROR_CHAR;
         }
 
-        if (lpDCB->fTXContinueOnXoff)
-        {
+        if (lpDCB->fTXContinueOnXoff) {
 
             HandFlow.FlowReplace |= SERIAL_XOFF_CONTINUE;
+
         }
 
-        if (lpDCB->fAbortOnError)
-        {
+        if (lpDCB->fAbortOnError) {
 
             HandFlow.ControlHandShake |= SERIAL_ERROR_ABORT;
+
         }
 
         //
@@ -2381,114 +2989,171 @@ Return Value:
         // to that state.
         //
 
-        if (lpDCB->fRtsControl == RTS_CONTROL_ENABLE)
-        {
+        if (lpDCB->fRtsControl == RTS_CONTROL_ENABLE) {
 
-            EscapeCommFunction(hFile, SETRTS);
-        }
-        else if (lpDCB->fRtsControl == RTS_CONTROL_DISABLE)
-        {
+            EscapeCommFunction(
+                hFile,
+                SETRTS
+                );
 
-            EscapeCommFunction(hFile, CLRRTS);
-        }
-        if (lpDCB->fDtrControl == DTR_CONTROL_ENABLE)
-        {
+        } else if (lpDCB->fRtsControl == RTS_CONTROL_DISABLE) {
 
-            EscapeCommFunction(hFile, SETDTR);
-        }
-        else if (lpDCB->fDtrControl == DTR_CONTROL_DISABLE)
-        {
+            EscapeCommFunction(
+                hFile,
+                CLRRTS
+                );
 
-            EscapeCommFunction(hFile, CLRDTR);
         }
+        if (lpDCB->fDtrControl == DTR_CONTROL_ENABLE) {
+
+            EscapeCommFunction(
+                hFile,
+                SETDTR
+                );
+
+        } else if (lpDCB->fDtrControl == DTR_CONTROL_DISABLE) {
+
+            EscapeCommFunction(
+                hFile,
+                CLRDTR
+                );
+
+        }
+
+
 
 
         HandFlow.XonLimit = lpDCB->XonLim;
         HandFlow.XoffLimit = lpDCB->XoffLim;
 
 
-        Status = NtDeviceIoControlFile(hFile, SyncEvent, NULL, NULL, &Iosb, IOCTL_SERIAL_SET_LINE_CONTROL, &LineControl,
-                                       sizeof(LineControl), NULL, 0);
+        Status = NtDeviceIoControlFile(
+                     hFile,
+                     SyncEvent,
+                     NULL,
+                     NULL,
+                     &Iosb,
+                     IOCTL_SERIAL_SET_LINE_CONTROL,
+                     &LineControl,
+                     sizeof(LineControl),
+                     NULL,
+                     0
+                     );
 
-        if (Status == STATUS_PENDING)
-        {
-
-            // Operation must complete before return & IoStatusBlock destroyed
-
-            Status = NtWaitForSingleObject(SyncEvent, FALSE, NULL);
-            if (NT_SUCCESS(Status))
-            {
-
-                Status = Iosb.Status;
-            }
-        }
-
-        if (NT_ERROR(Status))
-        {
-
-            CloseHandle(SyncEvent);
-            SetCommState(hFile, &OldDcb);
-            BaseSetLastNTError(Status);
-            return FALSE;
-        }
-
-        Status = NtDeviceIoControlFile(hFile, SyncEvent, NULL, NULL, &Iosb, IOCTL_SERIAL_SET_CHARS, &Chars,
-                                       sizeof(Chars), NULL, 0);
-
-        if (Status == STATUS_PENDING)
-        {
+        if ( Status == STATUS_PENDING) {
 
             // Operation must complete before return & IoStatusBlock destroyed
 
-            Status = NtWaitForSingleObject(SyncEvent, FALSE, NULL);
-            if (NT_SUCCESS(Status))
-            {
+            Status = NtWaitForSingleObject( SyncEvent, FALSE, NULL );
+            if ( NT_SUCCESS(Status)) {
 
                 Status = Iosb.Status;
+
             }
+
         }
 
-        if (NT_ERROR(Status))
-        {
+        if (NT_ERROR(Status)) {
 
             CloseHandle(SyncEvent);
-            SetCommState(hFile, &OldDcb);
+            SetCommState(
+                hFile,
+                &OldDcb
+                );
             BaseSetLastNTError(Status);
             return FALSE;
+
         }
 
-        Status = NtDeviceIoControlFile(hFile, SyncEvent, NULL, NULL, &Iosb, IOCTL_SERIAL_SET_HANDFLOW, &HandFlow,
-                                       sizeof(HandFlow), NULL, 0);
+        Status = NtDeviceIoControlFile(
+                     hFile,
+                     SyncEvent,
+                     NULL,
+                     NULL,
+                     &Iosb,
+                     IOCTL_SERIAL_SET_CHARS,
+                     &Chars,
+                     sizeof(Chars),
+                     NULL,
+                     0
+                     );
 
-        if (Status == STATUS_PENDING)
-        {
+        if ( Status == STATUS_PENDING) {
 
             // Operation must complete before return & IoStatusBlock destroyed
 
-            Status = NtWaitForSingleObject(SyncEvent, FALSE, NULL);
-            if (NT_SUCCESS(Status))
-            {
+            Status = NtWaitForSingleObject( SyncEvent, FALSE, NULL );
+            if ( NT_SUCCESS(Status)) {
 
                 Status = Iosb.Status;
+
             }
+
         }
 
-        if (NT_ERROR(Status))
-        {
+        if (NT_ERROR(Status)) {
 
             CloseHandle(SyncEvent);
-            SetCommState(hFile, &OldDcb);
+            SetCommState(
+                hFile,
+                &OldDcb
+                );
             BaseSetLastNTError(Status);
             return FALSE;
+
+        }
+
+        Status = NtDeviceIoControlFile(
+                     hFile,
+                     SyncEvent,
+                     NULL,
+                     NULL,
+                     &Iosb,
+                     IOCTL_SERIAL_SET_HANDFLOW,
+                     &HandFlow,
+                     sizeof(HandFlow),
+                     NULL,
+                     0
+                     );
+
+        if ( Status == STATUS_PENDING) {
+
+            // Operation must complete before return & IoStatusBlock destroyed
+
+            Status = NtWaitForSingleObject( SyncEvent, FALSE, NULL );
+            if ( NT_SUCCESS(Status)) {
+
+                Status = Iosb.Status;
+
+            }
+
+        }
+
+        if (NT_ERROR(Status)) {
+
+            CloseHandle(SyncEvent);
+            SetCommState(
+                hFile,
+                &OldDcb
+                );
+            BaseSetLastNTError(Status);
+            return FALSE;
+
         }
         CloseHandle(SyncEvent);
         return TRUE;
+
     }
 
     return FALSE;
-}
 
-BOOL SetCommTimeouts(HANDLE hFile, LPCOMMTIMEOUTS lpCommTimeouts)
+}
+
+BOOL
+SetCommTimeouts(
+    HANDLE hFile,
+    LPCOMMTIMEOUTS lpCommTimeouts
+    )
 
 /*++
 
@@ -2525,44 +3190,63 @@ Return Value:
     To.WriteTotalTimeoutConstant = lpCommTimeouts->WriteTotalTimeoutConstant;
 
 
-    if (!(Event = CreateEvent(NULL, TRUE, FALSE, NULL)))
-    {
+    if (!(Event = CreateEvent(
+                      NULL,
+                      TRUE,
+                      FALSE,
+                      NULL
+                      ))) {
 
         return FALSE;
-    }
-    else
-    {
 
-        Status =
-            NtDeviceIoControlFile(hFile, Event, NULL, NULL, &Iosb, IOCTL_SERIAL_SET_TIMEOUTS, &To, sizeof(To), NULL, 0);
+    } else {
 
-        if (Status == STATUS_PENDING)
-        {
+        Status = NtDeviceIoControlFile(
+                     hFile,
+                     Event,
+                     NULL,
+                     NULL,
+                     &Iosb,
+                     IOCTL_SERIAL_SET_TIMEOUTS,
+                     &To,
+                     sizeof(To),
+                     NULL,
+                     0
+                     );
+
+        if ( Status == STATUS_PENDING) {
 
             // Operation must complete before return & IoStatusBlock destroyed
 
-            Status = NtWaitForSingleObject(Event, FALSE, NULL);
-            if (NT_SUCCESS(Status))
-            {
+            Status = NtWaitForSingleObject( Event, FALSE, NULL );
+            if ( NT_SUCCESS(Status)) {
 
                 Status = Iosb.Status;
+
             }
+
         }
 
-        if (NT_ERROR(Status))
-        {
+        if (NT_ERROR(Status)) {
 
             CloseHandle(Event);
             BaseSetLastNTError(Status);
             return FALSE;
+
         }
 
         CloseHandle(Event);
         return TRUE;
-    }
-}
 
-BOOL TransmitCommChar(HANDLE hFile, char cChar)
+    }
+
+}
+
+BOOL
+TransmitCommChar(
+    HANDLE hFile,
+    char cChar
+    )
 
 /*++
 
@@ -2592,44 +3276,64 @@ Return Value:
     IO_STATUS_BLOCK Iosb;
     HANDLE Event;
 
-    if (!(Event = CreateEvent(NULL, TRUE, FALSE, NULL)))
-    {
+    if (!(Event = CreateEvent(
+                      NULL,
+                      TRUE,
+                      FALSE,
+                      NULL
+                      ))) {
 
         return FALSE;
-    }
-    else
-    {
 
-        Status = NtDeviceIoControlFile(hFile, Event, NULL, NULL, &Iosb, IOCTL_SERIAL_IMMEDIATE_CHAR, &cChar,
-                                       sizeof(UCHAR), NULL, 0);
+    } else {
 
-        if (Status == STATUS_PENDING)
-        {
+        Status = NtDeviceIoControlFile(
+                     hFile,
+                     Event,
+                     NULL,
+                     NULL,
+                     &Iosb,
+                     IOCTL_SERIAL_IMMEDIATE_CHAR,
+                     &cChar,
+                     sizeof(UCHAR),
+                     NULL,
+                     0
+                     );
+
+        if ( Status == STATUS_PENDING) {
 
             // Operation must complete before return & IoStatusBlock destroyed
 
-            Status = NtWaitForSingleObject(Event, FALSE, NULL);
-            if (NT_SUCCESS(Status))
-            {
+            Status = NtWaitForSingleObject( Event, FALSE, NULL );
+            if ( NT_SUCCESS(Status)) {
 
                 Status = Iosb.Status;
+
             }
+
         }
 
-        if (NT_ERROR(Status))
-        {
+        if (NT_ERROR(Status)) {
 
             CloseHandle(Event);
             BaseSetLastNTError(Status);
             return FALSE;
+
         }
 
         CloseHandle(Event);
         return TRUE;
-    }
-}
 
-BOOL WaitCommEvent(HANDLE hFile, LPDWORD lpEvtMask, LPOVERLAPPED lpOverlapped)
+    }
+
+}
+
+BOOL
+WaitCommEvent(
+    HANDLE hFile,
+    LPDWORD lpEvtMask,
+    LPOVERLAPPED lpOverlapped
+    )
 
 /*++
 
@@ -2663,68 +3367,90 @@ Return Value:
 
     NTSTATUS Status;
 
-    if (ARGUMENT_PRESENT(lpOverlapped))
-    {
+    if (ARGUMENT_PRESENT(lpOverlapped)) {
         lpOverlapped->Internal = (DWORD)STATUS_PENDING;
 
         Status = NtDeviceIoControlFile(
-            hFile, lpOverlapped->hEvent, NULL, (ULONG_PTR)lpOverlapped->hEvent & 1 ? NULL : lpOverlapped,
-            (PIO_STATUS_BLOCK)&lpOverlapped->Internal, IOCTL_SERIAL_WAIT_ON_MASK, NULL, 0, lpEvtMask, sizeof(ULONG));
+                     hFile,
+                     lpOverlapped->hEvent,
+                     NULL,
+                     (ULONG_PTR)lpOverlapped->hEvent & 1 ? NULL : lpOverlapped,
+                     (PIO_STATUS_BLOCK)&lpOverlapped->Internal,
+                     IOCTL_SERIAL_WAIT_ON_MASK,
+                     NULL,
+                     0,
+                     lpEvtMask,
+                     sizeof(ULONG)
+                     );
 
-        if (!NT_ERROR(Status) && (Status != STATUS_PENDING))
-        {
+        if (!NT_ERROR(Status) && (Status != STATUS_PENDING)) {
 
             return TRUE;
-        }
-        else
-        {
+
+        } else {
 
             BaseSetLastNTError(Status);
             return FALSE;
+
         }
-    }
-    else
-    {
+
+    } else {
 
         IO_STATUS_BLOCK Iosb;
         HANDLE Event;
 
-        if (!(Event = CreateEvent(NULL, TRUE, FALSE, NULL)))
-        {
+        if (!(Event = CreateEvent(
+                          NULL,
+                          TRUE,
+                          FALSE,
+                          NULL
+                          ))) {
 
             return FALSE;
-        }
-        else
-        {
 
-            Status = NtDeviceIoControlFile(hFile, Event, NULL, NULL, &Iosb, IOCTL_SERIAL_WAIT_ON_MASK, NULL, 0,
-                                           lpEvtMask, sizeof(ULONG));
+        } else {
 
-            if (Status == STATUS_PENDING)
-            {
+            Status = NtDeviceIoControlFile(
+                         hFile,
+                         Event,
+                         NULL,
+                         NULL,
+                         &Iosb,
+                         IOCTL_SERIAL_WAIT_ON_MASK,
+                         NULL,
+                         0,
+                         lpEvtMask,
+                         sizeof(ULONG)
+                         );
+
+            if ( Status == STATUS_PENDING) {
 
                 //
                 // Operation must complete before return &
                 // IoStatusBlock destroyed
 
-                Status = NtWaitForSingleObject(Event, FALSE, NULL);
-                if (NT_SUCCESS(Status))
-                {
+                Status = NtWaitForSingleObject( Event, FALSE, NULL );
+                if ( NT_SUCCESS(Status)) {
 
                     Status = Iosb.Status;
+
                 }
+
             }
 
             CloseHandle(Event);
 
-            if (NT_ERROR(Status))
-            {
+            if (NT_ERROR(Status)) {
 
                 BaseSetLastNTError(Status);
                 return FALSE;
+
             }
 
             return TRUE;
+
         }
+
     }
+
 }

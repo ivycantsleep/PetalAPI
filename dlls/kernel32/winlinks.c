@@ -20,7 +20,13 @@ Revision History:
 
 #include "basedll.h"
 
-BOOL APIENTRY CreateHardLinkA(LPCSTR lpLinkName, LPCSTR lpExistingFileName, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
+BOOL
+APIENTRY
+CreateHardLinkA(
+    LPCSTR lpLinkName,
+    LPCSTR lpExistingFileName,
+    LPSECURITY_ATTRIBUTES lpSecurityAttributes
+    )
 
 /*++
 
@@ -35,26 +41,21 @@ Routine Description:
     UNICODE_STRING UnicodeExistingFileName;
     BOOL ReturnValue;
 
-    Unicode = Basep8BitStringToStaticUnicodeString(lpLinkName);
-    if (Unicode == NULL)
-    {
+    Unicode = Basep8BitStringToStaticUnicodeString( lpLinkName );
+    if (Unicode == NULL) {
         return FALSE;
     }
-
-    if (ARGUMENT_PRESENT(lpExistingFileName))
-    {
-        if (!Basep8BitStringToDynamicUnicodeString(&UnicodeExistingFileName, lpExistingFileName))
-        {
+    
+    if ( ARGUMENT_PRESENT(lpExistingFileName) ) {
+        if (!Basep8BitStringToDynamicUnicodeString( &UnicodeExistingFileName, lpExistingFileName )) {
             return FALSE;
+            }
         }
-    }
-    else
-    {
+    else {
         UnicodeExistingFileName.Buffer = NULL;
-    }
+        }
 
-    ReturnValue =
-        CreateHardLinkW((LPCWSTR)Unicode->Buffer, (LPCWSTR)UnicodeExistingFileName.Buffer, lpSecurityAttributes);
+    ReturnValue = CreateHardLinkW((LPCWSTR)Unicode->Buffer, (LPCWSTR)UnicodeExistingFileName.Buffer, lpSecurityAttributes);
 
     RtlFreeUnicodeString(&UnicodeExistingFileName);
 
@@ -62,8 +63,13 @@ Routine Description:
 }
 
 
-BOOL APIENTRY CreateHardLinkW(LPCWSTR lpLinkName, LPCWSTR lpExistingFileName,
-                              LPSECURITY_ATTRIBUTES lpSecurityAttributes)
+BOOL
+APIENTRY
+CreateHardLinkW(
+    LPCWSTR lpLinkName,
+    LPCWSTR lpExistingFileName,
+    LPSECURITY_ATTRIBUTES lpSecurityAttributes
+    )
 
 /*++
 
@@ -108,8 +114,8 @@ Return Value:
     // Check to see that both names are present.
     //
 
-    if (!ARGUMENT_PRESENT(lpLinkName) || !ARGUMENT_PRESENT(lpExistingFileName))
-    {
+    if ( !ARGUMENT_PRESENT(lpLinkName) ||
+         !ARGUMENT_PRESENT(lpExistingFileName) ) {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
@@ -117,13 +123,16 @@ Return Value:
     OldFileName.Buffer = NULL;
     NewFileName.Buffer = NULL;
 
-    try
-    {
+    try {
+        
+        TranslationStatus = RtlDosPathNameToNtPathName_U(
+                                lpExistingFileName,
+                                &OldFileName,
+                                NULL,
+                                NULL
+                                );
 
-        TranslationStatus = RtlDosPathNameToNtPathName_U(lpExistingFileName, &OldFileName, NULL, NULL);
-
-        if (!TranslationStatus)
-        {
+        if ( !TranslationStatus ) {
             SetLastError(ERROR_PATH_NOT_FOUND);
             __leave;
         }
@@ -132,14 +141,19 @@ Return Value:
         // Initialize the object name.
         //
 
-        InitializeObjectAttributes(&ObjectAttributes, &OldFileName, OBJ_CASE_INSENSITIVE, NULL, NULL);
+        InitializeObjectAttributes(
+            &ObjectAttributes,
+            &OldFileName,
+            OBJ_CASE_INSENSITIVE,
+            NULL,
+            NULL
+            );
 
         //
         // Account the inheritance of the security descriptor. Note: this argument has no effect currently
         //
 
-        if (ARGUMENT_PRESENT(lpSecurityAttributes))
-        {
+        if ( ARGUMENT_PRESENT(lpSecurityAttributes) ) {
             ObjectAttributes.SecurityDescriptor = lpSecurityAttributes->lpSecurityDescriptor;
         }
 
@@ -149,28 +163,35 @@ Return Value:
         // point or not.
         //
 
-        Status = NtOpenFile(&FileHandle, FILE_WRITE_ATTRIBUTES | SYNCHRONIZE, &ObjectAttributes, &IoStatusBlock,
-                            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                            FILE_FLAG_OPEN_REPARSE_POINT | FILE_SYNCHRONOUS_IO_NONALERT);
+        Status = NtOpenFile(
+                     &FileHandle,
+                     FILE_WRITE_ATTRIBUTES | SYNCHRONIZE,
+                     &ObjectAttributes,
+                     &IoStatusBlock,
+                     FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                     FILE_FLAG_OPEN_REPARSE_POINT | FILE_SYNCHRONOUS_IO_NONALERT
+                     );
 
-        if (!NT_SUCCESS(Status))
-        {
-            BaseSetLastNTError(Status);
+        if ( !NT_SUCCESS(Status) ) {
+            BaseSetLastNTError( Status );
             __leave;
         }
 
-        TranslationStatus = RtlDosPathNameToNtPathName_U(lpLinkName, &NewFileName, NULL, NULL);
+        TranslationStatus = RtlDosPathNameToNtPathName_U(
+                                lpLinkName,
+                                &NewFileName,
+                                NULL,
+                                NULL
+                                );
 
-        if (!TranslationStatus)
-        {
+        if ( !TranslationStatus ) {
             SetLastError(ERROR_PATH_NOT_FOUND);
             __leave;
         }
 
-        NewName = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), NewFileName.Length + sizeof(*NewName));
+        NewName = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( TMP_TAG ), NewFileName.Length+sizeof(*NewName));
 
-        if (NewName == NULL)
-        {
+        if ( NewName == NULL ) {
             SetLastError(ERROR_NOT_ENOUGH_MEMORY);
             __leave;
         }
@@ -180,36 +201,36 @@ Return Value:
         NewName->RootDirectory = NULL;
         NewName->FileNameLength = NewFileName.Length;
 
-        Status = NtSetInformationFile(FileHandle, &IoStatusBlock, NewName, NewFileName.Length + sizeof(*NewName),
-                                      FileLinkInformation);
+        Status = NtSetInformationFile(
+                     FileHandle,
+                     &IoStatusBlock,
+                     NewName,
+                     NewFileName.Length+sizeof(*NewName),
+                     FileLinkInformation
+                     );
 
-        if (!NT_SUCCESS(Status))
-        {
-            BaseSetLastNTError(Status);
+        if ( !NT_SUCCESS(Status) ) {
+            BaseSetLastNTError( Status );
             __leave;
         }
-
+            
         ReturnValue = TRUE;
-    }
-    finally
-    {
+    
+    } finally {
 
         //
         // Cleanup allocate memory and handles
-        //
+        //  
 
-        if (FileHandle != INVALID_HANDLE_VALUE)
-        {
-            NtClose(FileHandle);
+        if (FileHandle != INVALID_HANDLE_VALUE) {
+            NtClose( FileHandle );
         }
 
-        if (NewFileName.Buffer != NULL)
-        {
+        if (NewFileName.Buffer != NULL) {
             RtlFreeHeap(RtlProcessHeap(), 0, NewFileName.Buffer);
         }
-
-        if (OldFileName.Buffer != NULL)
-        {
+        
+        if (OldFileName.Buffer != NULL) {
             RtlFreeHeap(RtlProcessHeap(), 0, OldFileName.Buffer);
         }
     }

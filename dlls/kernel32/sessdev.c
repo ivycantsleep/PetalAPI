@@ -25,7 +25,14 @@ Revision History:
 #define SESSIONX_ROOT L"GLOBALROOT\\Sessions\\"
 
 
-BOOL WINAPI DosPathToSessionPathA(IN DWORD SessionId, IN LPCSTR pInPath, OUT LPSTR *ppOutPath)
+
+BOOL
+WINAPI
+DosPathToSessionPathA(
+    IN DWORD   SessionId,
+    IN LPCSTR pInPath,
+    OUT LPSTR  *ppOutPath
+    )
 
 /*++
 
@@ -65,72 +72,77 @@ Return Value:
     // if the input path is null or the pointer is a bad pointer, return
     // an error.
 
-    if ((pInPath == 0) || (IsBadReadPtr(pInPath, sizeof(CHAR))) || (IsBadWritePtr(ppOutPath, sizeof(LPSTR))))
-    {
+    if( (pInPath == 0) ||
+        (IsBadReadPtr( pInPath, sizeof( CHAR ))) ||
+        (IsBadWritePtr( ppOutPath, sizeof(LPSTR) )) ) {
 
         SetLastError(ERROR_INVALID_PARAMETER);
-        return (FALSE);
+        return(FALSE);
     }
 
-    try
-    {
+    try {
 
-        RtlInitAnsiString(&AnsiString, pInPath);
-        Status = RtlAnsiStringToUnicodeString(&UnicodeString, &AnsiString, TRUE);
-    }
-    except(EXCEPTION_EXECUTE_HANDLER)
-    {
+        RtlInitAnsiString( &AnsiString, pInPath );
+        Status = RtlAnsiStringToUnicodeString( &UnicodeString, &AnsiString, TRUE );
+
+    } except (EXCEPTION_EXECUTE_HANDLER) {
 
         Status = GetExceptionCode();
     }
 
-    if (!NT_SUCCESS(Status))
-    {
-        BaseSetLastNTError(Status);
+    if (!NT_SUCCESS( Status )) {
+        BaseSetLastNTError( Status );
         return FALSE;
     }
 
-    rc = DosPathToSessionPathW(SessionId, UnicodeString.Buffer, &pOutPath);
+    rc = DosPathToSessionPathW(
+             SessionId,
+             UnicodeString.Buffer,
+             &pOutPath
+             );
 
-    RtlFreeUnicodeString(&UnicodeString);
+    RtlFreeUnicodeString( &UnicodeString );
 
-    if (!rc)
-    {
-        return (rc);
+    if( !rc ) {
+        return( rc );
     }
 
-    RtlInitUnicodeString(&UnicodeString, pOutPath);
-    Status = RtlUnicodeStringToAnsiString(&AnsiString, &UnicodeString, TRUE);
-    if (!NT_SUCCESS(Status))
-    {
-        BaseSetLastNTError(Status);
-        LocalFree(pOutPath);
+    RtlInitUnicodeString( &UnicodeString, pOutPath );
+    Status = RtlUnicodeStringToAnsiString( &AnsiString, &UnicodeString, TRUE );
+    if (!NT_SUCCESS( Status )) {
+        BaseSetLastNTError( Status );
+        LocalFree( pOutPath );
         return FALSE;
     }
 
-    Len = strlen(AnsiString.Buffer) + 1;
+    Len = strlen( AnsiString.Buffer ) + 1;
     Buf = LocalAlloc(LMEM_FIXED, Len);
 
-    if (Buf == NULL)
-    {
-        LocalFree(pOutPath);
-        RtlFreeAnsiString(&AnsiString);
+    if( Buf == NULL ) {
+        LocalFree( pOutPath );
+        RtlFreeAnsiString( &AnsiString );
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-        return (FALSE);
+        return(FALSE);
     }
 
-    strcpy(Buf, AnsiString.Buffer);
+    strcpy( Buf, AnsiString.Buffer );
 
     *ppOutPath = Buf;
 
-    LocalFree(pOutPath);
-    RtlFreeAnsiString(&AnsiString);
+    LocalFree( pOutPath );
+    RtlFreeAnsiString( &AnsiString );
 
-    return (TRUE);
+    return(TRUE);
 }
 
-
-BOOL WINAPI DosPathToSessionPathW(IN DWORD SessionId, IN LPCWSTR pInPath, OUT LPWSTR *ppOutPath)
+
+BOOL
+WINAPI
+DosPathToSessionPathW(
+    IN DWORD   SessionId,
+    IN LPCWSTR  pInPath,
+    OUT LPWSTR  *ppOutPath
+    )
 
 /*++
 
@@ -160,89 +172,99 @@ Return Value:
 
 {
     PWCHAR Buf;
-    ULONG Len;
+    ULONG  Len;
 
     //
     // SessionId 0 has no per session object directories.
     //
-    if (BaseStaticServerData->LUIDDeviceMapsEnabled == TRUE)
-    {
+    if (BaseStaticServerData->LUIDDeviceMapsEnabled == TRUE) {
 
         Len = 0;
-    }
-    else
-    {
 
-        if (SessionId == 0)
-        {
-            Len = wcslen(SESSION0_ROOT);
+    } else {
+
+        if( SessionId == 0 ) {
+            Len =  wcslen(SESSION0_ROOT);
         }
-        else
-        {
-            Len = wcslen(SESSIONX_ROOT);
-            Len += 10; // Max DWORD width
+        else {
+            Len =  wcslen(SESSIONX_ROOT);
+            Len += 10;                     // Max DWORD width
         }
     }
 
-    Len += 13; // \DosDevices\ ... <NULL>
+    Len += 13;                         // \DosDevices\ ... <NULL>
 
     // if the input path is null or the pointer is a bad pointer, return
     // an error.
 
-    if ((pInPath == 0) || (IsBadReadPtr(pInPath, sizeof(WCHAR))) || (IsBadWritePtr(ppOutPath, sizeof(LPWSTR))))
-    {
+    if( (pInPath == 0) ||
+        (IsBadReadPtr( pInPath, sizeof( WCHAR ))) ||
+        (IsBadWritePtr( ppOutPath, sizeof(LPWSTR) )) ) {
 
         SetLastError(ERROR_INVALID_PARAMETER);
-        return (FALSE);
+        return(FALSE);
     }
 
     Len += wcslen(pInPath);
 
     Buf = LocalAlloc(LMEM_FIXED, Len * sizeof(WCHAR));
-    if (Buf == NULL)
-    {
+    if( Buf == NULL ) {
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-        return (FALSE);
+        return(FALSE);
     }
 
-    try
-    {
-        if (BaseStaticServerData->LUIDDeviceMapsEnabled == TRUE)
-        {
+    try {
+        if (BaseStaticServerData->LUIDDeviceMapsEnabled == TRUE) {
 
             // C: -> C:
-            swprintf(Buf, L"%ws", pInPath);
-        }
-        else
-        {
+            swprintf(
+                Buf,
+                L"%ws",
+                pInPath
+                );
 
-            if (SessionId == 0)
-            {
+        } else {
+
+            if( SessionId == 0 ) {
                 // C: -> GLOBALROOT\DosDevices\C:
-                swprintf(Buf, L"%ws\\DosDevices\\%ws", SESSION0_ROOT, pInPath);
+                swprintf(
+                    Buf,
+                    L"%ws\\DosDevices\\%ws",
+                    SESSION0_ROOT,
+                    pInPath
+                    );
             }
-            else
-            {
+            else {
                 // C: -> GLOBALROOT\Sessions\6\DosDevices\C:
-                swprintf(Buf, L"%ws%u\\DosDevices\\%ws", SESSIONX_ROOT, SessionId, pInPath);
+                swprintf(
+                    Buf,
+                    L"%ws%u\\DosDevices\\%ws",
+                    SESSIONX_ROOT,
+                    SessionId,
+                    pInPath
+                    );
             }
         }
 
         *ppOutPath = Buf;
-    }
-    except(EXCEPTION_EXECUTE_HANDLER)
-    {
+
+    } except (EXCEPTION_EXECUTE_HANDLER) {
 
         BaseSetLastNTError(GetExceptionCode());
-        return (FALSE);
+        return(FALSE);
     }
 
 
-    return (TRUE);
+    return(TRUE);
 }
 
-
-BOOL WINAPI ProcessIdToSessionId(IN DWORD dwProcessId, OUT DWORD *pSessionId)
+
+BOOL
+WINAPI
+ProcessIdToSessionId(
+    IN  DWORD  dwProcessId,
+    OUT DWORD *pSessionId
+    )
 
 /*++
 
@@ -277,46 +299,60 @@ Return Value:
     PROCESS_SESSION_INFORMATION Info;
 
 
-    if (IsBadWritePtr(pSessionId, sizeof(DWORD)))
-    {
+    if( IsBadWritePtr( pSessionId, sizeof(DWORD) ) )   {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
 
-    InitializeObjectAttributes(&Obja, NULL, 0, NULL, NULL);
+    InitializeObjectAttributes(
+        &Obja,
+        NULL,
+        0,
+        NULL,
+        NULL
+        );
 
-    ClientId.UniqueProcess = (HANDLE)LongToHandle(dwProcessId);
+    ClientId.UniqueProcess = (HANDLE) LongToHandle(dwProcessId);
     ClientId.UniqueThread = (HANDLE)NULL;
 
-    Status = NtOpenProcess(&Handle, (ACCESS_MASK)PROCESS_QUERY_INFORMATION, &Obja, &ClientId);
+    Status = NtOpenProcess(
+                 &Handle,
+                 (ACCESS_MASK)PROCESS_QUERY_INFORMATION,
+                 &Obja,
+                 &ClientId
+                 );
 
-    if (!NT_SUCCESS(Status))
-    {
+    if( !NT_SUCCESS(Status) ) {
         SetLastError(RtlNtStatusToDosError(Status));
-        return (FALSE);
+        return(FALSE);
     }
 
-    Status = NtQueryInformationProcess(Handle, ProcessSessionInformation, &Info, sizeof(Info), NULL);
+    Status = NtQueryInformationProcess(
+                 Handle,
+                 ProcessSessionInformation,
+                 &Info,
+                 sizeof(Info),
+                 NULL
+                 );
 
-    if (!NT_SUCCESS(Status))
-    {
-        NtClose(Handle);
+    if( !NT_SUCCESS(Status) ) {
+        NtClose( Handle );
         SetLastError(RtlNtStatusToDosError(Status));
-        return (FALSE);
+        return(FALSE);
     }
 
     *pSessionId = Info.SessionId;
 
-    NtClose(Handle);
+    NtClose( Handle );
 
-    return (TRUE);
+    return(TRUE);
 }
 
-
+
 DWORD
 WINAPI
-WTSGetActiveConsoleSessionId()
+WTSGetActiveConsoleSessionId ()
 /*++
 
 Routine Description:
@@ -341,4 +377,6 @@ Return Value:
 --*/
 {
     return (USER_SHARED_DATA->ActiveConsoleId);
+
 }
+

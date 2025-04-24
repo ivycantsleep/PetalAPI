@@ -6,18 +6,25 @@
 #define _LZPRIVAPI_
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
-    /*
+/*
 ** Prototypes
 */
 
-    // For the time being, private APIS exported
-    INT LZCreateFileW(LPWSTR, DWORD, DWORD, DWORD, LPWSTR);
+// For the time being, private APIS exported
+INT
+LZCreateFileW(
+    LPWSTR,
+    DWORD,
+    DWORD,
+    DWORD,
+    LPWSTR);
 
-    VOID LZCloseFile(INT);
+VOID
+LZCloseFile(
+    INT);
 
 
 #ifdef __cplusplus

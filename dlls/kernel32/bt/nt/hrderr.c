@@ -8,23 +8,40 @@
 
 
 DWORD
-_cdecl main(int argc, char *argv[], char *envp[])
+_cdecl
+main(
+    int argc,
+    char *argv[],
+    char *envp[]
+    )
 {
 
     ULONG ErrorParameters[2];
     ULONG ErrorResponse;
     UNICODE_STRING PathName;
 
-    RtlInitUnicodeString(&PathName, L"\\\\??\\O:\\AUTORUN.EXE");
+    RtlInitUnicodeString(&PathName,L"\\\\??\\O:\\AUTORUN.EXE");
     ErrorResponse = ResponseOk;
     ErrorParameters[0] = (ULONG)&PathName;
 
-    NtRaiseHardError(STATUS_IMAGE_MACHINE_TYPE_MISMATCH_EXE, 1, 1, ErrorParameters, OptionOk, &ErrorResponse);
+    NtRaiseHardError( STATUS_IMAGE_MACHINE_TYPE_MISMATCH_EXE,
+                      1,
+                      1,
+                      ErrorParameters,
+                      OptionOk,
+                      &ErrorResponse
+                    );
 
-    RtlInitUnicodeString(&PathName, L"\\\\??\\O:\\autorun.exe");
+    RtlInitUnicodeString(&PathName,L"\\\\??\\O:\\autorun.exe");
     ErrorResponse = ResponseOk;
     ErrorParameters[0] = (ULONG)&PathName;
 
-    NtRaiseHardError(STATUS_IMAGE_MACHINE_TYPE_MISMATCH_EXE, 1, 1, ErrorParameters, OptionOk, &ErrorResponse);
+    NtRaiseHardError( STATUS_IMAGE_MACHINE_TYPE_MISMATCH_EXE,
+                      1,
+                      1,
+                      ErrorParameters,
+                      OptionOk,
+                      &ErrorResponse
+                    );
     return 1;
 }

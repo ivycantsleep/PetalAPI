@@ -25,12 +25,24 @@ Revision History:
 #include <ntddtape.h>
 
 DWORD
-BasepDoTapeOperation(IN HANDLE TapeDevice, IN ULONG IoControlCode, IN PVOID InputBuffer, IN ULONG InputBufferLength,
-                     OUT PVOID OutputBuffer, IN ULONG OutputBufferLength);
+BasepDoTapeOperation(
+    IN HANDLE TapeDevice,
+    IN ULONG IoControlCode,
+    IN PVOID InputBuffer,
+    IN ULONG InputBufferLength,
+    OUT PVOID OutputBuffer,
+    IN ULONG OutputBufferLength
+    );
 
 DWORD
-BasepDoTapeOperation(IN HANDLE TapeDevice, IN ULONG IoControlCode, IN PVOID InputBuffer, IN ULONG InputBufferLength,
-                     OUT PVOID OutputBuffer, IN ULONG OutputBufferLength)
+BasepDoTapeOperation(
+    IN HANDLE TapeDevice,
+    IN ULONG IoControlCode,
+    IN PVOID InputBuffer,
+    IN ULONG InputBufferLength,
+    OUT PVOID OutputBuffer,
+    IN ULONG OutputBufferLength
+    )
 {
     HANDLE NotificationEvent;
     NTSTATUS Status;
@@ -39,30 +51,37 @@ BasepDoTapeOperation(IN HANDLE TapeDevice, IN ULONG IoControlCode, IN PVOID Inpu
 
     IoStatusBlock = &IoStatus;
 
-    NotificationEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-    if (NotificationEvent == NULL)
-    {
+    NotificationEvent = CreateEvent(NULL, FALSE, FALSE, 
+                                    NULL);
+    if (NotificationEvent == NULL) {
         return GetLastError();
     }
 
-    Status = NtDeviceIoControlFile(TapeDevice, NotificationEvent, NULL, NULL, IoStatusBlock, IoControlCode, InputBuffer,
-                                   InputBufferLength, OutputBuffer, OutputBufferLength);
-    if (Status == STATUS_PENDING)
-    {
+    Status = NtDeviceIoControlFile( TapeDevice,
+                                    NotificationEvent,
+                                    NULL,
+                                    NULL,
+                                    IoStatusBlock,
+                                    IoControlCode,
+                                    InputBuffer,
+                                    InputBufferLength,
+                                    OutputBuffer,
+                                    OutputBufferLength
+                                  );
+    if (Status == STATUS_PENDING) {
 
         WaitForSingleObject(NotificationEvent, INFINITE);
 
         Status = IoStatus.Status;
+
     }
 
     CloseHandle(NotificationEvent);
 
-    if (!NT_SUCCESS(Status))
-    {
-        return BaseSetLastNTError(Status);
+    if (!NT_SUCCESS( Status )) {
+        return BaseSetLastNTError( Status );
     }
-    else
-    {
+    else {
         return NO_ERROR;
     }
 }
@@ -70,8 +89,14 @@ BasepDoTapeOperation(IN HANDLE TapeDevice, IN ULONG IoControlCode, IN PVOID Inpu
 
 DWORD
 WINAPI
-SetTapePosition(HANDLE hDevice, DWORD dwPositionMethod, DWORD dwPartition, DWORD dwOffsetLow, DWORD dwOffsetHigh,
-                BOOL bImmediate)
+SetTapePosition(
+    HANDLE hDevice,
+    DWORD dwPositionMethod,
+    DWORD dwPartition,
+    DWORD dwOffsetLow,
+    DWORD dwOffsetHigh,
+    BOOL bImmediate
+    )
 
 /*++
 
@@ -188,14 +213,25 @@ Return Value:
     TapeSetPosition.Offset.HighPart = dwOffsetHigh;
     TapeSetPosition.Immediate = (BOOLEAN)bImmediate;
 
-    return BasepDoTapeOperation(hDevice, IOCTL_TAPE_SET_POSITION, &TapeSetPosition, sizeof(TapeSetPosition), NULL, 0);
+    return BasepDoTapeOperation( hDevice,
+                                 IOCTL_TAPE_SET_POSITION,
+                                 &TapeSetPosition,
+                                 sizeof( TapeSetPosition ),
+                                 NULL,
+                                 0
+                               );
 }
 
 
 DWORD
 WINAPI
-GetTapePosition(HANDLE hDevice, DWORD dwPositionType, LPDWORD lpdwPartition, LPDWORD lpdwOffsetLow,
-                LPDWORD lpdwOffsetHigh)
+GetTapePosition(
+    HANDLE hDevice,
+    DWORD dwPositionType,
+    LPDWORD lpdwPartition,
+    LPDWORD lpdwOffsetLow,
+    LPDWORD lpdwOffsetHigh
+    )
 
 /*++
 
@@ -246,17 +282,20 @@ Return Value:
 
     TapeGetPosition.Type = dwPositionType;
 
-    rc = BasepDoTapeOperation(hDevice, IOCTL_TAPE_GET_POSITION, &TapeGetPosition, sizeof(TapeGetPosition),
-                              &TapeGetPosition, sizeof(TapeGetPosition));
+    rc = BasepDoTapeOperation( hDevice,
+                               IOCTL_TAPE_GET_POSITION,
+                               &TapeGetPosition,
+                               sizeof( TapeGetPosition ),
+                               &TapeGetPosition,
+                               sizeof( TapeGetPosition )
+                             );
 
-    if (rc == NO_ERROR)
-    {
+    if (rc == NO_ERROR) {
         *lpdwPartition = TapeGetPosition.Partition;
         *lpdwOffsetLow = TapeGetPosition.Offset.LowPart;
         *lpdwOffsetHigh = TapeGetPosition.Offset.HighPart;
     }
-    else
-    {
+    else {
         *lpdwPartition = 0;
         *lpdwOffsetLow = 0;
         *lpdwOffsetHigh = 0;
@@ -268,7 +307,11 @@ Return Value:
 
 DWORD
 WINAPI
-PrepareTape(HANDLE hDevice, DWORD dwOperation, BOOL bImmediate)
+PrepareTape(
+    HANDLE hDevice,
+    DWORD dwOperation,
+    BOOL bImmediate
+    )
 
 /*++
 
@@ -316,13 +359,23 @@ Return Value:
     TapePrepare.Operation = dwOperation;
     TapePrepare.Immediate = (BOOLEAN)bImmediate;
 
-    return BasepDoTapeOperation(hDevice, IOCTL_TAPE_PREPARE, &TapePrepare, sizeof(TapePrepare), NULL, 0);
+    return BasepDoTapeOperation( hDevice,
+                                 IOCTL_TAPE_PREPARE,
+                                 &TapePrepare,
+                                 sizeof( TapePrepare ),
+                                 NULL,
+                                 0
+                               );
 }
 
 
 DWORD
 WINAPI
-EraseTape(HANDLE hDevice, DWORD dwEraseType, BOOL bImmediate)
+EraseTape(
+    HANDLE hDevice,
+    DWORD dwEraseType,
+    BOOL bImmediate
+    )
 
 /*++
 
@@ -358,13 +411,24 @@ Return Value:
     TapeErase.Type = dwEraseType;
     TapeErase.Immediate = (BOOLEAN)bImmediate;
 
-    return BasepDoTapeOperation(hDevice, IOCTL_TAPE_ERASE, &TapeErase, sizeof(TapeErase), NULL, 0);
+    return BasepDoTapeOperation( hDevice,
+                                 IOCTL_TAPE_ERASE,
+                                 &TapeErase,
+                                 sizeof( TapeErase ),
+                                 NULL,
+                                 0
+                               );
 }
 
 
 DWORD
 WINAPI
-CreateTapePartition(HANDLE hDevice, DWORD dwPartitionMethod, DWORD dwCount, DWORD dwSize)
+CreateTapePartition(
+    HANDLE hDevice,
+    DWORD dwPartitionMethod,
+    DWORD dwCount,
+    DWORD dwSize
+    )
 
 /*++
 
@@ -416,14 +480,24 @@ Return Value:
     TapeCreatePartition.Count = dwCount;
     TapeCreatePartition.Size = dwSize;
 
-    return BasepDoTapeOperation(hDevice, IOCTL_TAPE_CREATE_PARTITION, &TapeCreatePartition, sizeof(TapeCreatePartition),
-                                NULL, 0);
+    return BasepDoTapeOperation( hDevice,
+                                 IOCTL_TAPE_CREATE_PARTITION,
+                                 &TapeCreatePartition,
+                                 sizeof( TapeCreatePartition ),
+                                 NULL,
+                                 0
+                               );
 }
 
 
 DWORD
 WINAPI
-WriteTapemark(HANDLE hDevice, DWORD dwTapemarkType, DWORD dwTapemarkCount, BOOL bImmediate)
+WriteTapemark(
+    HANDLE hDevice,
+    DWORD dwTapemarkType,
+    DWORD dwTapemarkCount,
+    BOOL bImmediate
+    )
 
 /*++
 
@@ -485,13 +559,24 @@ Return Value:
     TapeWriteMarks.Count = dwTapemarkCount;
     TapeWriteMarks.Immediate = (BOOLEAN)bImmediate;
 
-    return BasepDoTapeOperation(hDevice, IOCTL_TAPE_WRITE_MARKS, &TapeWriteMarks, sizeof(TapeWriteMarks), NULL, 0);
+    return BasepDoTapeOperation( hDevice,
+                                 IOCTL_TAPE_WRITE_MARKS,
+                                 &TapeWriteMarks,
+                                 sizeof( TapeWriteMarks ),
+                                 NULL,
+                                 0
+                               );
 }
 
 
 DWORD
 WINAPI
-GetTapeParameters(HANDLE hDevice, DWORD dwOperation, LPDWORD lpdwSize, LPVOID lpTapeInformation)
+GetTapeParameters(
+    HANDLE hDevice,
+    DWORD dwOperation,
+    LPDWORD lpdwSize,
+    LPVOID lpTapeInformation
+    )
 
 /*++
 
@@ -696,38 +781,41 @@ Return Value:
 {
     DWORD rc;
 
-    switch (dwOperation)
-    {
-    case GET_TAPE_MEDIA_INFORMATION:
+    switch (dwOperation) {
+        case GET_TAPE_MEDIA_INFORMATION:
 
-        if (*lpdwSize < sizeof(TAPE_GET_MEDIA_PARAMETERS))
-        {
-            *lpdwSize = sizeof(TAPE_GET_MEDIA_PARAMETERS);
-            rc = ERROR_MORE_DATA;
-        }
-        else
-        {
-            rc = BasepDoTapeOperation(hDevice, IOCTL_TAPE_GET_MEDIA_PARAMS, NULL, 0, lpTapeInformation,
-                                      sizeof(TAPE_GET_MEDIA_PARAMETERS));
-        }
-        break;
+            if (*lpdwSize < sizeof(TAPE_GET_MEDIA_PARAMETERS)) {
+                *lpdwSize = sizeof(TAPE_GET_MEDIA_PARAMETERS);
+                rc = ERROR_MORE_DATA ;
+            } else {
+                rc = BasepDoTapeOperation( hDevice,
+                                           IOCTL_TAPE_GET_MEDIA_PARAMS,
+                                           NULL,
+                                           0,
+                                           lpTapeInformation,
+                                           sizeof( TAPE_GET_MEDIA_PARAMETERS )
+                                         );
+            }
+            break;
 
-    case GET_TAPE_DRIVE_INFORMATION:
-        if (*lpdwSize < sizeof(TAPE_GET_DRIVE_PARAMETERS))
-        {
-            *lpdwSize = sizeof(TAPE_GET_DRIVE_PARAMETERS);
-            rc = ERROR_MORE_DATA;
-        }
-        else
-        {
-            rc = BasepDoTapeOperation(hDevice, IOCTL_TAPE_GET_DRIVE_PARAMS, NULL, 0, lpTapeInformation,
-                                      sizeof(TAPE_GET_DRIVE_PARAMETERS));
-        }
-        break;
+        case GET_TAPE_DRIVE_INFORMATION:
+            if (*lpdwSize < sizeof(TAPE_GET_DRIVE_PARAMETERS)) {
+                *lpdwSize = sizeof(TAPE_GET_DRIVE_PARAMETERS);
+                rc = ERROR_MORE_DATA ;
+            } else {
+                rc = BasepDoTapeOperation( hDevice,
+                                           IOCTL_TAPE_GET_DRIVE_PARAMS,
+                                           NULL,
+                                           0,
+                                           lpTapeInformation,
+                                           sizeof( TAPE_GET_DRIVE_PARAMETERS )
+                                         );
+            }
+            break;
 
-    default:
-        rc = ERROR_INVALID_FUNCTION;
-        break;
+        default:
+            rc = ERROR_INVALID_FUNCTION;
+            break;
     }
 
     return rc;
@@ -736,7 +824,11 @@ Return Value:
 
 DWORD
 WINAPI
-SetTapeParameters(HANDLE hDevice, DWORD dwOperation, LPVOID lpTapeInformation)
+SetTapeParameters(
+    HANDLE hDevice,
+    DWORD dwOperation,
+    LPVOID lpTapeInformation
+    )
 
 /*++
 
@@ -795,21 +887,30 @@ Return Value:
 {
     DWORD rc;
 
-    switch (dwOperation)
-    {
-    case SET_TAPE_MEDIA_INFORMATION:
-        rc = BasepDoTapeOperation(hDevice, IOCTL_TAPE_SET_MEDIA_PARAMS, lpTapeInformation,
-                                  sizeof(TAPE_SET_MEDIA_PARAMETERS), NULL, 0);
-        break;
+    switch (dwOperation) {
+        case SET_TAPE_MEDIA_INFORMATION:
+            rc = BasepDoTapeOperation( hDevice,
+                                       IOCTL_TAPE_SET_MEDIA_PARAMS,
+                                       lpTapeInformation,
+                                       sizeof( TAPE_SET_MEDIA_PARAMETERS ),
+                                       NULL,
+                                       0
+                                     );
+            break;
 
-    case SET_TAPE_DRIVE_INFORMATION:
-        rc = BasepDoTapeOperation(hDevice, IOCTL_TAPE_SET_DRIVE_PARAMS, lpTapeInformation,
-                                  sizeof(TAPE_SET_DRIVE_PARAMETERS), NULL, 0);
-        break;
+        case SET_TAPE_DRIVE_INFORMATION:
+            rc = BasepDoTapeOperation( hDevice,
+                                       IOCTL_TAPE_SET_DRIVE_PARAMS,
+                                       lpTapeInformation,
+                                       sizeof( TAPE_SET_DRIVE_PARAMETERS ),
+                                       NULL,
+                                       0
+                                     );
+            break;
 
-    default:
-        rc = ERROR_INVALID_FUNCTION;
-        break;
+        default:
+            rc = ERROR_INVALID_FUNCTION;
+            break;
     }
 
     return rc;
@@ -818,7 +919,9 @@ Return Value:
 
 DWORD
 WINAPI
-GetTapeStatus(HANDLE hDevice)
+GetTapeStatus(
+    HANDLE hDevice
+    )
 
 /*++
 
@@ -839,5 +942,11 @@ Return Value:
 --*/
 
 {
-    return BasepDoTapeOperation(hDevice, IOCTL_TAPE_GET_STATUS, NULL, 0, NULL, 0);
+    return BasepDoTapeOperation( hDevice,
+                                 IOCTL_TAPE_GET_STATUS,
+                                 NULL,
+                                 0,
+                                 NULL,
+                                 0
+                               );
 }

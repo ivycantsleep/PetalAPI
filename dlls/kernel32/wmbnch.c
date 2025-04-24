@@ -16,8 +16,7 @@ HANDLE WaitHandles[64];
 // Define local types.
 //
 
-typedef struct _PERFINFO
-{
+typedef struct _PERFINFO {
     LARGE_INTEGER StartTime;
     LARGE_INTEGER StopTime;
     ULONG ContextSwitches;
@@ -28,7 +27,10 @@ typedef struct _PERFINFO
     ULONG Iterations;
 } PERFINFO, *PPERFINFO;
 
-VOID FinishBenchMark(IN PPERFINFO PerfInfo)
+VOID
+FinishBenchMark (
+    IN PPERFINFO PerfInfo
+    )
 
 {
 
@@ -48,11 +50,12 @@ VOID FinishBenchMark(IN PPERFINFO PerfInfo)
     //
 
     NtQuerySystemTime((PLARGE_INTEGER)&PerfInfo->StopTime);
-    Status = NtQuerySystemInformation(SystemPerformanceInformation, (PVOID)&SystemInfo,
-                                      sizeof(SYSTEM_PERFORMANCE_INFORMATION), NULL);
+    Status = NtQuerySystemInformation(SystemPerformanceInformation,
+                                      (PVOID)&SystemInfo,
+                                      sizeof(SYSTEM_PERFORMANCE_INFORMATION),
+                                      NULL);
 
-    if (NT_SUCCESS(Status) == FALSE)
-    {
+    if (NT_SUCCESS(Status) == FALSE) {
         printf("Failed to query performance information, status = %lx\n", Status);
         return;
     }
@@ -77,8 +80,13 @@ VOID FinishBenchMark(IN PPERFINFO PerfInfo)
     printf("*** End of Test ***\n\n");
     return;
 }
-
-VOID StartBenchMark(IN PCHAR Title, IN ULONG Iterations, IN PPERFINFO PerfInfo)
+
+VOID
+StartBenchMark (
+    IN PCHAR Title,
+    IN ULONG Iterations,
+    IN PPERFINFO PerfInfo
+    )
 
 {
 
@@ -93,11 +101,12 @@ VOID StartBenchMark(IN PCHAR Title, IN ULONG Iterations, IN PPERFINFO PerfInfo)
     PerfInfo->Title = Title;
     PerfInfo->Iterations = Iterations;
     NtQuerySystemTime((PLARGE_INTEGER)&PerfInfo->StartTime);
-    Status = NtQuerySystemInformation(SystemPerformanceInformation, (PVOID)&SystemInfo,
-                                      sizeof(SYSTEM_PERFORMANCE_INFORMATION), NULL);
+    Status = NtQuerySystemInformation(SystemPerformanceInformation,
+                                      (PVOID)&SystemInfo,
+                                      sizeof(SYSTEM_PERFORMANCE_INFORMATION),
+                                      NULL);
 
-    if (NT_SUCCESS(Status) == FALSE)
-    {
+    if (NT_SUCCESS(Status) == FALSE) {
         printf("Failed to query performance information, status = %lx\n", Status);
         return;
     }
@@ -110,76 +119,99 @@ VOID StartBenchMark(IN PCHAR Title, IN ULONG Iterations, IN PPERFINFO PerfInfo)
 }
 
 
-VOID WaitMultipleTest()
+VOID
+WaitMultipleTest()
 {
     PERFINFO PerfInfo;
     int i;
 
-    StartBenchMark("Wait Single Object", WAIT_MULTIPLE_ITERATIONS, &PerfInfo);
+    StartBenchMark(
+        "Wait Single Object",
+        WAIT_MULTIPLE_ITERATIONS,
+        &PerfInfo
+        );
 
-    for (i = 0; i < WAIT_MULTIPLE_ITERATIONS; i++)
-    {
-        WaitForSingleObject(WaitHandles[0], INFINITE); // Wait Single Object
-    }
-
-    FinishBenchMark(&PerfInfo);
-
-    StartBenchMark("Wait Multiple Test 1 Object", WAIT_MULTIPLE_ITERATIONS, &PerfInfo);
-
-    for (i = 0; i < WAIT_MULTIPLE_ITERATIONS; i++)
-    {
-        WaitForMultipleObjects(1, WaitHandles, FALSE, INFINITE); // Wait Any, 1 Object
-    }
+    for ( i=0;i<WAIT_MULTIPLE_ITERATIONS;i++) {
+        WaitForSingleObject(WaitHandles[0],INFINITE);   // Wait Single Object
+        }
 
     FinishBenchMark(&PerfInfo);
 
-    StartBenchMark("Wait Multiple Test 8 Objects", WAIT_MULTIPLE_ITERATIONS, &PerfInfo);
+    StartBenchMark(
+        "Wait Multiple Test 1 Object",
+        WAIT_MULTIPLE_ITERATIONS,
+        &PerfInfo
+        );
 
-    for (i = 0; i < WAIT_MULTIPLE_ITERATIONS; i++)
-    {
-        WaitForMultipleObjects(8, WaitHandles, FALSE, INFINITE); // Wait Any, 8 Objects
-    }
-
-    FinishBenchMark(&PerfInfo);
-
-    StartBenchMark("Wait Multiple Test 16 Objects", WAIT_MULTIPLE_ITERATIONS, &PerfInfo);
-
-    for (i = 0; i < WAIT_MULTIPLE_ITERATIONS; i++)
-    {
-        WaitForMultipleObjects(16, WaitHandles, FALSE, INFINITE); // Wait Any, 16 Objects
-    }
+    for ( i=0;i<WAIT_MULTIPLE_ITERATIONS;i++) {
+        WaitForMultipleObjects(1,WaitHandles,FALSE,INFINITE);   // Wait Any, 1 Object
+        }
 
     FinishBenchMark(&PerfInfo);
 
-    StartBenchMark("Wait Multiple Test 32 Objects", WAIT_MULTIPLE_ITERATIONS, &PerfInfo);
+    StartBenchMark(
+        "Wait Multiple Test 8 Objects",
+        WAIT_MULTIPLE_ITERATIONS,
+        &PerfInfo
+        );
 
-    for (i = 0; i < WAIT_MULTIPLE_ITERATIONS; i++)
-    {
-        WaitForMultipleObjects(32, WaitHandles, FALSE, INFINITE); // Wait Any, 32 Objects
-    }
+    for ( i=0;i<WAIT_MULTIPLE_ITERATIONS;i++) {
+        WaitForMultipleObjects(8,WaitHandles,FALSE,INFINITE);   // Wait Any, 8 Objects
+        }
 
     FinishBenchMark(&PerfInfo);
 
-    StartBenchMark("Wait Multiple Test 64 Objects", WAIT_MULTIPLE_ITERATIONS, &PerfInfo);
+    StartBenchMark(
+        "Wait Multiple Test 16 Objects",
+        WAIT_MULTIPLE_ITERATIONS,
+        &PerfInfo
+        );
 
-    for (i = 0; i < WAIT_MULTIPLE_ITERATIONS; i++)
-    {
-        WaitForMultipleObjects(64, WaitHandles, FALSE, INFINITE); // Wait Any, 64 Objects
-    }
+    for ( i=0;i<WAIT_MULTIPLE_ITERATIONS;i++) {
+        WaitForMultipleObjects(16,WaitHandles,FALSE,INFINITE);   // Wait Any, 16 Objects
+        }
+
+    FinishBenchMark(&PerfInfo);
+
+    StartBenchMark(
+        "Wait Multiple Test 32 Objects",
+        WAIT_MULTIPLE_ITERATIONS,
+        &PerfInfo
+        );
+
+    for ( i=0;i<WAIT_MULTIPLE_ITERATIONS;i++) {
+        WaitForMultipleObjects(32,WaitHandles,FALSE,INFINITE);   // Wait Any, 32 Objects
+        }
+
+    FinishBenchMark(&PerfInfo);
+
+    StartBenchMark(
+        "Wait Multiple Test 64 Objects",
+        WAIT_MULTIPLE_ITERATIONS,
+        &PerfInfo
+        );
+
+    for ( i=0;i<WAIT_MULTIPLE_ITERATIONS;i++) {
+        WaitForMultipleObjects(64,WaitHandles,FALSE,INFINITE);   // Wait Any, 64 Objects
+        }
 
     FinishBenchMark(&PerfInfo);
 }
 
 DWORD
-_cdecl main(int argc, char *argv[], char *envp[])
+_cdecl
+main(
+    int argc,
+    char *argv[],
+    char *envp[]
+    )
 {
 
     int i;
 
-    for (i = 0; i < 64; i++)
-    {
-        WaitHandles[i] = CreateEvent(NULL, TRUE, TRUE, NULL);
-    }
+    for(i=0;i<64;i++){
+        WaitHandles[i] = CreateEvent(NULL,TRUE,TRUE,NULL);
+        }
     WaitMultipleTest();
     return 0;
 }

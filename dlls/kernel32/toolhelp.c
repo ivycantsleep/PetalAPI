@@ -36,8 +36,8 @@ Revision History:
 
 #include "tlhelp32.h"
 
-#define BUFFER_SIZE 64 * 1024
-#define ARRAYSIZE(x) (sizeof(x) / sizeof(x[0]))
+#define BUFFER_SIZE 64*1024
+#define ARRAYSIZE(x)        (sizeof(x) / sizeof(x[0]))
 
 /*
  snapshot structure
@@ -45,27 +45,26 @@ Revision History:
  This is mapped onto the beginning of the memory we use to hold the information.
 
 */
-typedef struct tagSNAPSHOTSTATE
-{
+typedef struct tagSNAPSHOTSTATE {
     /* item list counts */
-    ULONG HeapListCount;
-    ULONG ProcessCount;
-    ULONG ModuleCount;
-    ULONG ThreadCount;
+    ULONG    HeapListCount;
+    ULONG    ProcessCount;
+    ULONG    ModuleCount;
+    ULONG    ThreadCount;
     /* item list head pointers */
-    PHEAPLIST32 HeapListHead;
-    PPROCESSENTRY32W ProcessListHead;
-    PMODULEENTRY32W ModuleListHead;
-    PTHREADENTRY32 ThreadListHead;
+    PHEAPLIST32         HeapListHead;
+    PPROCESSENTRY32W    ProcessListHead;
+    PMODULEENTRY32W     ModuleListHead;
+    PTHREADENTRY32      ThreadListHead;
     /* item list current indexes */
-    ULONG HeapListIndex;
-    ULONG ProcessListIndex;
-    ULONG ModuleListIndex;
-    ULONG ThreadListIndex;
+    ULONG   HeapListIndex;
+    ULONG   ProcessListIndex;
+    ULONG   ModuleListIndex;
+    ULONG   ThreadListIndex;
     /* data begins here... */
-    UCHAR DataBegin;
-} SNAPSHOTSTATE;
-typedef SNAPSHOTSTATE *PSNAPSHOTSTATE;
+    UCHAR    DataBegin;
+}SNAPSHOTSTATE;
+typedef SNAPSHOTSTATE * PSNAPSHOTSTATE;
 
 
 //
@@ -73,20 +72,36 @@ typedef SNAPSHOTSTATE *PSNAPSHOTSTATE;
 //
 
 NTSTATUS
-ThpCreateRawSnap(IN ULONG dwFlags, IN ULONG th32ProcessID, PUCHAR *RawProcess, PRTL_DEBUG_INFORMATION *RawModule,
-                 PRTL_DEBUG_INFORMATION *RawDebugInfo);
+ThpCreateRawSnap(
+    IN ULONG dwFlags,
+    IN ULONG th32ProcessID,
+    PUCHAR *RawProcess,
+    PRTL_DEBUG_INFORMATION *RawModule,
+    PRTL_DEBUG_INFORMATION *RawDebugInfo);
 
 NTSTATUS
-ThpAllocateSnapshotSection(OUT PHANDLE SnapSection, IN DWORD dwFlags, IN DWORD th32ProcessID, PUCHAR RawProcess,
-                           PRTL_DEBUG_INFORMATION RawModule, PRTL_DEBUG_INFORMATION RawDebugInfo);
+ThpAllocateSnapshotSection(
+    OUT PHANDLE SnapSection,
+    IN DWORD dwFlags,
+    IN DWORD th32ProcessID,
+    PUCHAR RawProcess,
+    PRTL_DEBUG_INFORMATION RawModule,
+    PRTL_DEBUG_INFORMATION RawDebugInfo);
 
 NTSTATUS
-ThpProcessToSnap(IN DWORD dwFlags, IN DWORD th32ProcessID, IN HANDLE SnapSection, PUCHAR RawProcess,
-                 PRTL_DEBUG_INFORMATION RawModule, PRTL_DEBUG_INFORMATION RawDebugInfo);
+ThpProcessToSnap(
+    IN DWORD dwFlags,
+    IN DWORD th32ProcessID,
+    IN HANDLE SnapSection,
+    PUCHAR RawProcess,
+    PRTL_DEBUG_INFORMATION RawModule,
+    PRTL_DEBUG_INFORMATION RawDebugInfo);
 
 HANDLE
 WINAPI
-CreateToolhelp32Snapshot(IN DWORD dwFlags, IN DWORD th32ProcessID)
+CreateToolhelp32Snapshot(
+    IN DWORD dwFlags,
+    IN DWORD th32ProcessID)
 /*++
 
 Routine Description:
@@ -143,8 +158,7 @@ Return Value:
     PRTL_DEBUG_INFORMATION RawDebugInfo;
     NTSTATUS Status = 0;
 
-    if (th32ProcessID == 0)
-    {
+    if (th32ProcessID == 0) {
         th32ProcessID = GetCurrentProcessId();
     }
 
@@ -152,26 +166,37 @@ Return Value:
     // process the requested data types
     //
 
-    Status = ThpCreateRawSnap(dwFlags, th32ProcessID, &RawProcess, &RawModule, &RawDebugInfo);
+    Status = ThpCreateRawSnap(dwFlags,
+                              th32ProcessID,
+                              &RawProcess,
+                              &RawModule,
+                              &RawDebugInfo);
 
-    if (!NT_SUCCESS(Status))
-    {
+    if (!NT_SUCCESS(Status)) {
         BaseSetLastNTError(Status);
         return (HANDLE)-1;
     }
 
-    Status = ThpAllocateSnapshotSection(&SnapSection, dwFlags, th32ProcessID, RawProcess, RawModule, RawDebugInfo);
+    Status = ThpAllocateSnapshotSection(&SnapSection,
+                                        dwFlags,
+                                        th32ProcessID,
+                                        RawProcess,
+                                        RawModule,
+                                        RawDebugInfo);
 
-    if (!NT_SUCCESS(Status))
-    {
+    if (!NT_SUCCESS(Status)) {
         BaseSetLastNTError(Status);
         return (HANDLE)-1;
     }
 
-    Status = ThpProcessToSnap(dwFlags, th32ProcessID, SnapSection, RawProcess, RawModule, RawDebugInfo);
+    Status = ThpProcessToSnap(dwFlags,
+                              th32ProcessID,
+                              SnapSection,
+                              RawProcess,
+                              RawModule,
+                              RawDebugInfo);
 
-    if (!NT_SUCCESS(Status))
-    {
+    if (!NT_SUCCESS(Status)) {
         CloseHandle(SnapSection);
         BaseSetLastNTError(Status);
         return (HANDLE)-1;
@@ -181,7 +206,11 @@ Return Value:
 }
 
 
-BOOL WINAPI Heap32ListFirst(IN HANDLE SnapSection, IN OUT LPHEAPLIST32 lphl)
+BOOL
+WINAPI
+Heap32ListFirst(
+   IN HANDLE SnapSection,
+   IN OUT LPHEAPLIST32 lphl)
 /*++
 
 Routine Description:
@@ -212,8 +241,7 @@ Return Value:
     NTSTATUS Status = 0;
     BOOL retv = FALSE;
 
-    if (!lphl || lphl->dwSize != sizeof(HEAPLIST32))
-    {
+    if (!lphl || lphl->dwSize != sizeof(HEAPLIST32)) {
         BaseSetLastNTError(STATUS_INFO_LENGTH_MISMATCH);
         return FALSE;
     }
@@ -223,23 +251,28 @@ Return Value:
     ViewSize = 0;
     SnapshotBase = 0;
 
-    Status = NtMapViewOfSection(SnapSection, NtCurrentProcess(), &SnapshotBase, 0L, 0L, &SectionOffset, &ViewSize,
-                                ViewShare, 0L, PAGE_READWRITE);
+    Status = NtMapViewOfSection(SnapSection,
+                NtCurrentProcess(),
+                &SnapshotBase,
+                0L,
+                0L,
+                &SectionOffset,
+                &ViewSize,
+                ViewShare,
+                0L,
+                PAGE_READWRITE);
 
-    if (!NT_SUCCESS(Status))
-    {
+    if (!NT_SUCCESS(Status)) {
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
-    if (SnapshotBase->HeapListCount == 0)
-    {
+    if (SnapshotBase->HeapListCount == 0) {
         RtlZeroMemory((PUCHAR)lphl + sizeof(SIZE_T), (lphl->dwSize - sizeof(SIZE_T)));
         SetLastError(ERROR_NO_MORE_FILES);
-    }
-    else
-    {
-        memcpy(lphl, (LPHEAPLIST32)((ULONG_PTR)SnapshotBase + (ULONG_PTR)SnapshotBase->HeapListHead),
+    } else {
+        memcpy(lphl,
+               (LPHEAPLIST32)((ULONG_PTR)SnapshotBase + (ULONG_PTR)SnapshotBase->HeapListHead),
                sizeof(HEAPLIST32));
         retv = TRUE;
         SnapshotBase->HeapListIndex = 1;
@@ -250,7 +283,11 @@ Return Value:
 }
 
 
-BOOL WINAPI Heap32ListNext(IN HANDLE SnapSection, IN OUT LPHEAPLIST32 lphl)
+BOOL
+WINAPI
+Heap32ListNext(
+   IN HANDLE SnapSection,
+   IN OUT LPHEAPLIST32 lphl)
 /*++
 
 Routine Description:
@@ -280,8 +317,7 @@ Return Value:
     SIZE_T ViewSize;
     NTSTATUS Status = 0;
 
-    if (!lphl || lphl->dwSize != sizeof(HEAPLIST32))
-    {
+    if (!lphl || lphl->dwSize != sizeof(HEAPLIST32)) {
         BaseSetLastNTError(STATUS_INFO_LENGTH_MISMATCH);
         return FALSE;
     }
@@ -291,35 +327,43 @@ Return Value:
     ViewSize = 0;
     SnapshotBase = 0;
 
-    Status = NtMapViewOfSection(SnapSection, NtCurrentProcess(), &SnapshotBase, 0L, 0L, &SectionOffset, &ViewSize,
-                                ViewShare, 0L, PAGE_READWRITE);
+    Status = NtMapViewOfSection(SnapSection,
+                NtCurrentProcess(),
+                &SnapshotBase,
+                0L,
+                0L,
+                &SectionOffset,
+                &ViewSize,
+                ViewShare,
+                0L,
+                PAGE_READWRITE);
 
-    if (!NT_SUCCESS(Status))
-    {
+    if (!NT_SUCCESS(Status)) {
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
-    if (SnapshotBase->HeapListIndex < SnapshotBase->HeapListCount)
-    {
+    if (SnapshotBase->HeapListIndex < SnapshotBase->HeapListCount) {
         memcpy(lphl,
-               (LPHEAPLIST32)((ULONG_PTR)SnapshotBase +
-                              (ULONG_PTR)(&SnapshotBase->HeapListHead[SnapshotBase->HeapListIndex++])),
+               (LPHEAPLIST32)((ULONG_PTR)SnapshotBase + (ULONG_PTR)(&SnapshotBase->HeapListHead[SnapshotBase->HeapListIndex++])),
                sizeof(HEAPLIST32));
         retv = TRUE;
-    }
-    else
-    {
+    } else {
         SetLastError(ERROR_NO_MORE_FILES);
     }
 
     NtUnmapViewOfSection(NtCurrentProcess(), (PVOID)SnapshotBase);
 
-    return (retv);
+    return(retv);
 }
 
 
-BOOL WINAPI Heap32First(IN OUT LPHEAPENTRY32 lphe, IN DWORD th32ProcessID, IN ULONG_PTR th32HeapID)
+BOOL
+WINAPI
+Heap32First(
+   IN OUT LPHEAPENTRY32 lphe,
+   IN DWORD th32ProcessID,
+   IN ULONG_PTR th32HeapID)
 /*++
 
 Routine Description:
@@ -363,8 +407,7 @@ Notes:
     NTSTATUS Status = 0;
     BOOL retv = FALSE;
 
-    if (!lphe || lphe->dwSize != sizeof(HEAPENTRY32))
-    {
+    if (!lphe || lphe->dwSize != sizeof(HEAPENTRY32)) {
         BaseSetLastNTError(STATUS_INFO_LENGTH_MISMATCH);
         return FALSE;
     }
@@ -374,15 +417,15 @@ Notes:
     //
 
     ThRawHeapDebugInfo = RtlCreateQueryDebugBuffer(0, FALSE);
-    if (ThRawHeapDebugInfo == 0)
+    if(ThRawHeapDebugInfo == 0)
     {
         return STATUS_UNSUCCESSFUL;
     }
     Status = RtlQueryProcessDebugInformation((HANDLE)LongToHandle(th32ProcessID),
-                                             RTL_QUERY_PROCESS_HEAP_SUMMARY | RTL_QUERY_PROCESS_HEAP_ENTRIES,
-                                             ThRawHeapDebugInfo);
-    if (!NT_SUCCESS(Status))
-    {
+                                          RTL_QUERY_PROCESS_HEAP_SUMMARY |
+                                          RTL_QUERY_PROCESS_HEAP_ENTRIES,
+                                          ThRawHeapDebugInfo);
+    if (!NT_SUCCESS(Status))    {
         RtlDestroyQueryDebugBuffer(ThRawHeapDebugInfo);
         BaseSetLastNTError(Status);
         return FALSE;
@@ -392,13 +435,13 @@ Notes:
     // query snapshot
     //
 
-    for (HeapListCount = 0; HeapListCount < ThRawHeapDebugInfo->Heaps->NumberOfHeaps; HeapListCount++)
-    {
+    for (HeapListCount = 0;
+         HeapListCount < ThRawHeapDebugInfo->Heaps->NumberOfHeaps;
+         HeapListCount++) {
 
         HeapInfo = &ThRawHeapDebugInfo->Heaps->Heaps[HeapListCount];
 
-        if ((ULONG_PTR)HeapInfo->BaseAddress == th32HeapID)
-        {
+        if ((ULONG_PTR)HeapInfo->BaseAddress == th32HeapID) {
 
             p = HeapInfo->Entries;
 
@@ -406,16 +449,14 @@ Notes:
             lphe->dwLockCount = 0;
             lphe->th32HeapID = th32HeapID;
             lphe->th32ProcessID = th32ProcessID;
-            lphe->hHandle = (HANDLE)th32HeapID; // try this way
+            lphe->hHandle = (HANDLE)th32HeapID;// try this way
 
             // walk up to first non-segment block (I am assuming there is always one)
             // skip segments - can you have 2 in a row?
             // is first block always a segment?
             // We translate the heap flags to the most appropriate LF32_xxx values
-            while (RTL_HEAP_SEGMENT & p->Flags)
-            {
-                lphe->dwAddress = (ULONG_PTR)p->u.s2.FirstBlock +
-                                  ThRawHeapDebugInfo->Heaps->Heaps[HeapListCount].EntryOverhead; // reset this
+            while(RTL_HEAP_SEGMENT & p->Flags)  {
+                lphe->dwAddress = (ULONG_PTR)p->u.s2.FirstBlock + ThRawHeapDebugInfo->Heaps->Heaps[HeapListCount].EntryOverhead;    // reset this
                 ++lphe->dwResvd;
                 ++p;
             }
@@ -425,18 +466,19 @@ Notes:
             //
 
             //----------------------------------------------
-            if ((p->Flags & RTL_HEAP_BUSY) || (p->Flags & RTL_HEAP_SETTABLE_VALUE) ||
-                (p->Flags & RTL_HEAP_SETTABLE_FLAG2) || (p->Flags & RTL_HEAP_SETTABLE_FLAG3) ||
-                (p->Flags & RTL_HEAP_SETTABLE_FLAGS) || (p->Flags & RTL_HEAP_PROTECTED_ENTRY))
-            {
+            if ((p->Flags & RTL_HEAP_BUSY)                ||
+                (p->Flags & RTL_HEAP_SETTABLE_VALUE)      ||
+                (p->Flags & RTL_HEAP_SETTABLE_FLAG2)      ||
+                (p->Flags & RTL_HEAP_SETTABLE_FLAG3)      ||
+                (p->Flags & RTL_HEAP_SETTABLE_FLAGS)      ||
+                (p->Flags & RTL_HEAP_PROTECTED_ENTRY)
+                ) {
                 lphe->dwFlags = LF32_FIXED;
             }
-            else if (p->Flags & RTL_HEAP_SETTABLE_FLAG1)
-            {
+            else if ( p->Flags & RTL_HEAP_SETTABLE_FLAG1) {
                 lphe->dwFlags = LF32_MOVEABLE;
             }
-            else if (p->Flags & RTL_HEAP_UNCOMMITTED_RANGE)
-            {
+            else if ( p->Flags & RTL_HEAP_UNCOMMITTED_RANGE) {
                 lphe->dwFlags = LF32_FREE;
             }
             //----------------------------------------------
@@ -454,10 +496,14 @@ Notes:
     RtlDestroyQueryDebugBuffer(ThRawHeapDebugInfo);
 
     return retv;
+
 }
 
 
-BOOL WINAPI Heap32Next(IN OUT LPHEAPENTRY32 lphe)
+BOOL
+WINAPI
+Heap32Next(
+   IN OUT LPHEAPENTRY32 lphe)
 /*++
 
 Routine Description:
@@ -493,8 +539,7 @@ note:
     BOOL hit_seg = FALSE;
     NTSTATUS Status = 0;
 
-    if (!lphe || lphe->dwSize != sizeof(HEAPENTRY32))
-    {
+    if (!lphe || lphe->dwSize != sizeof(HEAPENTRY32)) {
         BaseSetLastNTError(STATUS_INFO_LENGTH_MISMATCH);
         return FALSE;
     }
@@ -504,15 +549,15 @@ note:
     //
 
     ThRawHeapDebugInfo = RtlCreateQueryDebugBuffer(0, FALSE);
-    if (ThRawHeapDebugInfo == 0)
+    if(ThRawHeapDebugInfo == 0)
     {
         return STATUS_UNSUCCESSFUL;
     }
     Status = RtlQueryProcessDebugInformation((HANDLE)LongToHandle(lphe->th32ProcessID),
-                                             RTL_QUERY_PROCESS_HEAP_SUMMARY | RTL_QUERY_PROCESS_HEAP_ENTRIES,
-                                             ThRawHeapDebugInfo);
-    if (!NT_SUCCESS(Status))
-    {
+                                          RTL_QUERY_PROCESS_HEAP_SUMMARY |
+                                          RTL_QUERY_PROCESS_HEAP_ENTRIES,
+                                          ThRawHeapDebugInfo);
+    if (!NT_SUCCESS(Status))    {
         RtlDestroyQueryDebugBuffer(ThRawHeapDebugInfo);
         BaseSetLastNTError(Status);
         return FALSE;
@@ -524,7 +569,7 @@ note:
 
     for (HeapListCount = 0; HeapListCount < ThRawHeapDebugInfo->Heaps->NumberOfHeaps; ++HeapListCount)
     {
-        if ((ULONG_PTR)ThRawHeapDebugInfo->Heaps->Heaps[HeapListCount].BaseAddress == lphe->th32HeapID)
+        if((ULONG_PTR)ThRawHeapDebugInfo->Heaps->Heaps[HeapListCount].BaseAddress == lphe->th32HeapID)
         {
             break;
         }
@@ -534,7 +579,7 @@ note:
     // ran out of heaps
     //
 
-    if (HeapListCount >= ThRawHeapDebugInfo->Heaps->NumberOfHeaps)
+    if(HeapListCount >= ThRawHeapDebugInfo->Heaps->NumberOfHeaps)
     {
         RtlDestroyQueryDebugBuffer(ThRawHeapDebugInfo);
         SetLastError(ERROR_NO_MORE_FILES);
@@ -545,9 +590,9 @@ note:
     // check for last entry
     //
 
-    ++lphe->dwResvd; // point to next one
+    ++lphe->dwResvd;    // point to next one
 
-    if (lphe->dwResvd >= ThRawHeapDebugInfo->Heaps->Heaps[HeapListCount].NumberOfEntries)
+    if(lphe->dwResvd >= ThRawHeapDebugInfo->Heaps->Heaps[HeapListCount].NumberOfEntries)
     {
         RtlDestroyQueryDebugBuffer(ThRawHeapDebugInfo);
         SetLastError(ERROR_NO_MORE_FILES);
@@ -560,11 +605,9 @@ note:
     p = (PRTL_HEAP_ENTRY)&ThRawHeapDebugInfo->Heaps->Heaps[HeapListCount].Entries[lphe->dwResvd];
 
     // keep segments in lphe->hHandle
-    while (RTL_HEAP_SEGMENT & p->Flags)
-    {
-        lphe->dwAddress =
-            (ULONG_PTR)p->u.s2.FirstBlock + ThRawHeapDebugInfo->Heaps->Heaps[HeapListCount].EntryOverhead; // reset this
-        if (lphe->dwResvd >= ThRawHeapDebugInfo->Heaps->Heaps[HeapListCount].NumberOfEntries)
+    while(RTL_HEAP_SEGMENT & p->Flags)  {
+        lphe->dwAddress = (ULONG_PTR)p->u.s2.FirstBlock + ThRawHeapDebugInfo->Heaps->Heaps[HeapListCount].EntryOverhead;// reset this
+        if(lphe->dwResvd >= ThRawHeapDebugInfo->Heaps->Heaps[HeapListCount].NumberOfEntries)
         {
             RtlDestroyQueryDebugBuffer(ThRawHeapDebugInfo);
             SetLastError(ERROR_NO_MORE_FILES);
@@ -585,7 +628,7 @@ note:
     // p-> is pointing at a non-segment entry.
     //
 
-    if (hit_seg == FALSE)
+    if(hit_seg == FALSE)
     {
         lphe->dwAddress += lphe->dwBlockSize;
     }
@@ -598,18 +641,19 @@ note:
 
     // We translate the heap flags to the most appropriate LF32_xxx values
     //----------------------------------------------
-    if ((p->Flags & RTL_HEAP_BUSY) || (p->Flags & RTL_HEAP_SETTABLE_VALUE) || (p->Flags & RTL_HEAP_SETTABLE_FLAG2) ||
-        (p->Flags & RTL_HEAP_SETTABLE_FLAG3) || (p->Flags & RTL_HEAP_SETTABLE_FLAGS) ||
-        (p->Flags & RTL_HEAP_PROTECTED_ENTRY))
-    {
+    if( (p->Flags & RTL_HEAP_BUSY)                ||
+        (p->Flags & RTL_HEAP_SETTABLE_VALUE)      ||
+        (p->Flags & RTL_HEAP_SETTABLE_FLAG2)      ||
+        (p->Flags & RTL_HEAP_SETTABLE_FLAG3)      ||
+        (p->Flags & RTL_HEAP_SETTABLE_FLAGS)      ||
+        (p->Flags & RTL_HEAP_PROTECTED_ENTRY)
+        ) {
         lphe->dwFlags = LF32_FIXED;
     }
-    else if (p->Flags & RTL_HEAP_SETTABLE_FLAG1)
-    {
+    else if( p->Flags & RTL_HEAP_SETTABLE_FLAG1) {
         lphe->dwFlags = LF32_MOVEABLE;
     }
-    else if (p->Flags & RTL_HEAP_UNCOMMITTED_RANGE)
-    {
+    else if( p->Flags & RTL_HEAP_UNCOMMITTED_RANGE) {
         lphe->dwFlags = LF32_FREE;
     }
     //----------------------------------------------
@@ -622,12 +666,18 @@ note:
 
     RtlDestroyQueryDebugBuffer(ThRawHeapDebugInfo);
 
-    return (retv);
+    return(retv);
 }
 
 
-BOOL WINAPI Toolhelp32ReadProcessMemory(IN DWORD th32ProcessID, IN LPCVOID lpBaseAddress, OUT PUCHAR lpBuffer,
-                                        IN SIZE_T cbRead, OUT SIZE_T *lpNumberOfBytesRead)
+BOOL
+WINAPI
+Toolhelp32ReadProcessMemory(
+   IN DWORD th32ProcessID,
+   IN LPCVOID lpBaseAddress,
+   OUT PUCHAR lpBuffer,
+   IN SIZE_T cbRead,
+   OUT SIZE_T *lpNumberOfBytesRead)
 /*++
 
 Routine Description:
@@ -665,19 +715,26 @@ Return Value:
     BOOL RetVal;
 
     hProcess = OpenProcess(PROCESS_VM_READ, FALSE, th32ProcessID);
-    if (hProcess == NULL)
-    {
+    if (hProcess == NULL) {
         return FALSE;
     }
 
-    RetVal = ReadProcessMemory(hProcess, lpBaseAddress, lpBuffer, cbRead, lpNumberOfBytesRead);
+    RetVal = ReadProcessMemory(hProcess,
+                               lpBaseAddress,
+                               lpBuffer,
+                               cbRead,
+                               lpNumberOfBytesRead);
 
     CloseHandle(hProcess);
     return RetVal;
 }
 
 
-BOOL WINAPI Process32FirstW(IN HANDLE SnapSection, IN OUT LPPROCESSENTRY32W lppe)
+BOOL
+WINAPI
+Process32FirstW(
+   IN HANDLE SnapSection,
+   IN OUT LPPROCESSENTRY32W lppe)
 /*++
 
 Routine Description:
@@ -706,10 +763,9 @@ Return Value:
     LARGE_INTEGER SectionOffset;
     SIZE_T ViewSize;
     NTSTATUS Status = 0;
-    BOOL retv = FALSE;
+    BOOL    retv = FALSE;
 
-    if (!lppe || lppe->dwSize != sizeof(PROCESSENTRY32W))
-    {
+    if (!lppe || lppe->dwSize != sizeof(PROCESSENTRY32W)) {
         BaseSetLastNTError(STATUS_INFO_LENGTH_MISMATCH);
         return FALSE;
     }
@@ -719,23 +775,28 @@ Return Value:
     ViewSize = 0;
     SnapshotBase = 0;
 
-    Status = NtMapViewOfSection(SnapSection, NtCurrentProcess(), &SnapshotBase, 0L, 0L, &SectionOffset, &ViewSize,
-                                ViewShare, 0L, PAGE_READWRITE);
+    Status = NtMapViewOfSection(SnapSection,
+                NtCurrentProcess(),
+                &SnapshotBase,
+                0L,
+                0L,
+                &SectionOffset,
+                &ViewSize,
+                ViewShare,
+                0L,
+                PAGE_READWRITE);
 
-    if (!NT_SUCCESS(Status))
-    {
+    if (!NT_SUCCESS(Status)) {
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
-    if (SnapshotBase->ProcessCount == 0)
-    {
+    if (SnapshotBase->ProcessCount == 0) {
         memset((PUCHAR)lppe + 4, 0, lppe->dwSize - 4);
         SetLastError(ERROR_NO_MORE_FILES);
-    }
-    else
-    {
-        memcpy(lppe, (LPPROCESSENTRY32W)((ULONG_PTR)SnapshotBase + (ULONG_PTR)SnapshotBase->ProcessListHead),
+    } else {
+        memcpy(lppe,
+               (LPPROCESSENTRY32W)((ULONG_PTR)SnapshotBase + (ULONG_PTR)SnapshotBase->ProcessListHead),
                sizeof(PROCESSENTRY32W));
         SnapshotBase->ProcessListIndex = 1;
         retv = TRUE;
@@ -746,7 +807,11 @@ Return Value:
     return retv;
 }
 
-BOOL WINAPI Process32First(IN HANDLE SnapSection, IN OUT LPPROCESSENTRY32 lppe)
+BOOL
+WINAPI
+Process32First(
+   IN HANDLE SnapSection,
+   IN OUT LPPROCESSENTRY32 lppe)
 /*++
 
 Routine Description:
@@ -776,19 +841,21 @@ Return Value:
     PROCESSENTRY32W pe32w;
     BOOL b;
 
-    if (lppe == NULL || (lppe->dwSize < sizeof(PROCESSENTRY32)))
-    {
+    if (lppe == NULL || (lppe->dwSize < sizeof(PROCESSENTRY32))) {
         BaseSetLastNTError(STATUS_INFO_LENGTH_MISMATCH);
         return FALSE;
     }
 
     // Thunk to Process32FirstW
     pe32w.dwSize = sizeof(pe32w);
-    b = Process32FirstW(SnapSection, &pe32w);
+    b = Process32FirstW(SnapSection,&pe32w);
 
-    WideCharToMultiByte(CP_ACP, 0, pe32w.szExeFile, -1, lppe->szExeFile, ARRAYSIZE(lppe->szExeFile), 0, 0);
+    WideCharToMultiByte(CP_ACP, 0,
+                        pe32w.szExeFile, -1,
+                        lppe->szExeFile, ARRAYSIZE(lppe->szExeFile),
+                        0, 0);
 
-    lppe->cntUsage = pe32w.cntUsage; // meaningless on NT, copy anyway
+    lppe->cntUsage = pe32w.cntUsage;    // meaningless on NT, copy anyway
     lppe->th32ProcessID = pe32w.th32ProcessID;
     lppe->th32DefaultHeapID = pe32w.th32DefaultHeapID;
     lppe->th32ModuleID = pe32w.th32ModuleID;
@@ -801,7 +868,11 @@ Return Value:
 }
 
 
-BOOL WINAPI Process32NextW(IN HANDLE SnapSection, IN OUT LPPROCESSENTRY32W lppe)
+BOOL
+WINAPI
+Process32NextW(
+   IN HANDLE SnapSection,
+   IN OUT LPPROCESSENTRY32W lppe)
 /*++
 
 Routine Description:
@@ -825,13 +896,12 @@ Return Value:
 --*/
 {
     PSNAPSHOTSTATE SnapshotBase;
-    BOOL retv = FALSE;
+    BOOL    retv = FALSE;
     LARGE_INTEGER SectionOffset;
     SIZE_T ViewSize;
     NTSTATUS Status = 0;
 
-    if (!lppe || lppe->dwSize != sizeof(PROCESSENTRY32W))
-    {
+    if (!lppe || lppe->dwSize != sizeof(PROCESSENTRY32W)) {
         BaseSetLastNTError(STATUS_INFO_LENGTH_MISMATCH);
         return FALSE;
     }
@@ -841,25 +911,28 @@ Return Value:
     ViewSize = 0;
     SnapshotBase = 0;
 
-    Status = NtMapViewOfSection(SnapSection, NtCurrentProcess(), &SnapshotBase, 0L, 0L, &SectionOffset, &ViewSize,
-                                ViewShare, 0L, PAGE_READWRITE);
+    Status = NtMapViewOfSection(SnapSection,
+                NtCurrentProcess(),
+                &SnapshotBase,
+                0L,
+                0L,
+                &SectionOffset,
+                &ViewSize,
+                ViewShare,
+                0L,
+                PAGE_READWRITE);
 
-    if (!NT_SUCCESS(Status))
-    {
+    if (!NT_SUCCESS(Status)) {
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
-    if (SnapshotBase->ProcessListIndex < SnapshotBase->ProcessCount)
-    {
+    if (SnapshotBase->ProcessListIndex < SnapshotBase->ProcessCount) {
         memcpy(lppe,
-               (LPPROCESSENTRY32W)((ULONG_PTR)SnapshotBase +
-                                   (ULONG_PTR)(&SnapshotBase->ProcessListHead[SnapshotBase->ProcessListIndex++])),
+               (LPPROCESSENTRY32W)((ULONG_PTR)SnapshotBase + (ULONG_PTR)(&SnapshotBase->ProcessListHead[SnapshotBase->ProcessListIndex++])),
                sizeof(PROCESSENTRY32W));
         retv = TRUE;
-    }
-    else
-    {
+    } else {
         SetLastError(ERROR_NO_MORE_FILES);
     }
 
@@ -868,7 +941,11 @@ Return Value:
     return retv;
 }
 
-BOOL WINAPI Process32Next(IN HANDLE SnapSection, IN OUT LPPROCESSENTRY32 lppe)
+BOOL
+WINAPI
+Process32Next(
+   IN HANDLE SnapSection,
+   IN OUT LPPROCESSENTRY32 lppe)
 /*++
 
 Routine Description:
@@ -896,19 +973,21 @@ Return Value:
     PROCESSENTRY32W pe32w;
     BOOL b;
 
-    if (lppe == NULL || (lppe->dwSize < sizeof(PROCESSENTRY32)))
-    {
+    if (lppe == NULL || (lppe->dwSize < sizeof(PROCESSENTRY32))) {
         BaseSetLastNTError(STATUS_INFO_LENGTH_MISMATCH);
         return FALSE;
     }
 
     // Thunk to Process32NextW
     pe32w.dwSize = sizeof(pe32w);
-    b = Process32NextW(SnapSection, &pe32w);
+    b = Process32NextW(SnapSection,&pe32w);
 
-    WideCharToMultiByte(CP_ACP, 0, pe32w.szExeFile, -1, lppe->szExeFile, ARRAYSIZE(lppe->szExeFile), 0, 0);
+    WideCharToMultiByte(CP_ACP, 0,
+                        pe32w.szExeFile, -1,
+                        lppe->szExeFile, ARRAYSIZE(lppe->szExeFile),
+                        0, 0);
 
-    lppe->cntUsage = pe32w.cntUsage; // meaningless on NT, copy anyway
+    lppe->cntUsage = pe32w.cntUsage;    // meaningless on NT, copy anyway
     lppe->th32ProcessID = pe32w.th32ProcessID;
     lppe->th32DefaultHeapID = pe32w.th32DefaultHeapID;
     lppe->th32ModuleID = pe32w.th32ModuleID;
@@ -921,7 +1000,11 @@ Return Value:
 }
 
 
-BOOL WINAPI Thread32First(IN HANDLE SnapSection, IN OUT LPTHREADENTRY32 lpte)
+BOOL
+WINAPI
+Thread32First(
+   IN HANDLE SnapSection,
+   IN OUT LPTHREADENTRY32 lpte)
 /*++
 
 Routine Description:
@@ -949,10 +1032,9 @@ Return Value:
     LARGE_INTEGER SectionOffset;
     SIZE_T ViewSize;
     NTSTATUS Status = 0;
-    BOOL retv = FALSE;
+    BOOL    retv = FALSE;
 
-    if (!lpte || lpte->dwSize != sizeof(THREADENTRY32))
-    {
+    if (!lpte || lpte->dwSize != sizeof(THREADENTRY32)) {
         BaseSetLastNTError(STATUS_INFO_LENGTH_MISMATCH);
         return FALSE;
     }
@@ -962,35 +1044,44 @@ Return Value:
     ViewSize = 0;
     SnapshotBase = 0;
 
-    Status = NtMapViewOfSection(SnapSection, NtCurrentProcess(), &SnapshotBase, 0L, 0L, &SectionOffset, &ViewSize,
-                                ViewShare, 0L, PAGE_READWRITE);
+    Status = NtMapViewOfSection(SnapSection,
+                NtCurrentProcess(),
+                &SnapshotBase,
+                0L,
+                0L,
+                &SectionOffset,
+                &ViewSize,
+                ViewShare,
+                0L,
+                PAGE_READWRITE);
 
-    if (!NT_SUCCESS(Status))
-    {
+    if (!NT_SUCCESS(Status)) {
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
-    if (SnapshotBase->ThreadCount == 0)
-    {
+    if (SnapshotBase->ThreadCount == 0) {
         memset((PUCHAR)lpte + 4, 0, lpte->dwSize - 4);
         SetLastError(ERROR_NO_MORE_FILES);
-    }
-    else
-    {
-        memcpy(lpte, (LPTHREADENTRY32)((ULONG_PTR)SnapshotBase + (ULONG_PTR)SnapshotBase->ThreadListHead),
+    } else {
+        memcpy(lpte,
+               (LPTHREADENTRY32)((ULONG_PTR)SnapshotBase + (ULONG_PTR)SnapshotBase->ThreadListHead),
                sizeof(THREADENTRY32));
-        SnapshotBase->ThreadListIndex = 1;
+               SnapshotBase->ThreadListIndex = 1;
         retv = TRUE;
     }
 
     NtUnmapViewOfSection(NtCurrentProcess(), (PVOID)SnapshotBase);
 
-    return (retv);
+    return(retv);
 }
 
 
-BOOL WINAPI Thread32Next(IN HANDLE SnapSection, IN OUT LPTHREADENTRY32 lpte)
+BOOL
+WINAPI
+Thread32Next(
+   IN HANDLE SnapSection,
+   IN OUT LPTHREADENTRY32 lpte)
 /*++
 
 Routine Description:
@@ -1015,13 +1106,12 @@ Return Value:
 --*/
 {
     PSNAPSHOTSTATE SnapshotBase;
-    BOOL retv = FALSE;
+    BOOL    retv = FALSE;
     LARGE_INTEGER SectionOffset;
     SIZE_T ViewSize;
     NTSTATUS Status = 0;
 
-    if (!lpte || lpte->dwSize != sizeof(THREADENTRY32))
-    {
+    if (!lpte || lpte->dwSize != sizeof(THREADENTRY32)) {
         BaseSetLastNTError(STATUS_INFO_LENGTH_MISMATCH);
         return FALSE;
     }
@@ -1031,35 +1121,42 @@ Return Value:
     ViewSize = 0;
     SnapshotBase = 0;
 
-    Status = NtMapViewOfSection(SnapSection, NtCurrentProcess(), &SnapshotBase, 0L, 0L, &SectionOffset, &ViewSize,
-                                ViewShare, 0L, PAGE_READWRITE);
+    Status = NtMapViewOfSection(SnapSection,
+                NtCurrentProcess(),
+                &SnapshotBase,
+                0L,
+                0L,
+                &SectionOffset,
+                &ViewSize,
+                ViewShare,
+                0L,
+                PAGE_READWRITE);
 
-    if (!NT_SUCCESS(Status))
-    {
+    if (!NT_SUCCESS(Status)) {
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
-    if (SnapshotBase->ThreadListIndex < SnapshotBase->ThreadCount)
-    {
+    if (SnapshotBase->ThreadListIndex < SnapshotBase->ThreadCount) {
         memcpy(lpte,
-               (PTHREADENTRY32)((ULONG_PTR)SnapshotBase +
-                                (ULONG_PTR)(&SnapshotBase->ThreadListHead[SnapshotBase->ThreadListIndex++])),
+               (PTHREADENTRY32)((ULONG_PTR)SnapshotBase + (ULONG_PTR)(&SnapshotBase->ThreadListHead[SnapshotBase->ThreadListIndex++])),
                sizeof(THREADENTRY32));
         retv = TRUE;
-    }
-    else
-    {
+    } else {
         SetLastError(ERROR_NO_MORE_FILES);
     }
 
     NtUnmapViewOfSection(NtCurrentProcess(), (PVOID)SnapshotBase);
 
-    return (retv);
+    return(retv);
 }
 
 
-BOOL WINAPI Module32FirstW(IN HANDLE SnapSection, IN OUT LPMODULEENTRY32W lpme)
+BOOL
+WINAPI
+Module32FirstW(
+   IN HANDLE SnapSection,
+   IN OUT LPMODULEENTRY32W lpme)
 /*++
 
 Routine Description:
@@ -1086,10 +1183,9 @@ Return Value:
     LARGE_INTEGER SectionOffset;
     SIZE_T ViewSize;
     NTSTATUS Status = 0;
-    BOOL retv = FALSE;
+    BOOL    retv = FALSE;
 
-    if (!lpme || lpme->dwSize != sizeof(MODULEENTRY32W))
-    {
+    if (!lpme || lpme->dwSize != sizeof(MODULEENTRY32W)) {
         BaseSetLastNTError(STATUS_INFO_LENGTH_MISMATCH);
         return FALSE;
     }
@@ -1099,23 +1195,28 @@ Return Value:
     ViewSize = 0;
     SnapshotBase = 0;
 
-    Status = NtMapViewOfSection(SnapSection, NtCurrentProcess(), &SnapshotBase, 0L, 0L, &SectionOffset, &ViewSize,
-                                ViewShare, 0L, PAGE_READWRITE);
+    Status = NtMapViewOfSection(SnapSection,
+                NtCurrentProcess(),
+                &SnapshotBase,
+                0L,
+                0L,
+                &SectionOffset,
+                &ViewSize,
+                ViewShare,
+                0L,
+                PAGE_READWRITE);
 
-    if (!NT_SUCCESS(Status))
-    {
+    if (!NT_SUCCESS(Status)) {
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
-    if (SnapshotBase->ModuleCount == 0)
-    {
+    if (SnapshotBase->ModuleCount == 0) {
         memset((PUCHAR)lpme + 4, 0, lpme->dwSize - 4);
         SetLastError(ERROR_NO_MORE_FILES);
-    }
-    else
-    {
-        memcpy(lpme, (PMODULEENTRY32W)((ULONG_PTR)SnapshotBase + (ULONG_PTR)SnapshotBase->ModuleListHead),
+    } else {
+        memcpy(lpme,
+               (PMODULEENTRY32W)((ULONG_PTR)SnapshotBase + (ULONG_PTR)SnapshotBase->ModuleListHead),
                sizeof(MODULEENTRY32W));
         SnapshotBase->ModuleListIndex = 1;
         retv = TRUE;
@@ -1126,7 +1227,11 @@ Return Value:
     return retv;
 }
 
-BOOL WINAPI Module32First(IN HANDLE SnapSection, IN OUT LPMODULEENTRY32 lpme)
+BOOL
+WINAPI
+Module32First(
+   IN HANDLE SnapSection,
+   IN OUT LPMODULEENTRY32 lpme)
 /*++
 
 Routine Description:
@@ -1155,33 +1260,42 @@ Return Value:
     DWORD dwSizeToCopy;
     BOOL b;
 
-    if (lpme == NULL || (lpme->dwSize < sizeof(MODULEENTRY32)))
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
+    if (lpme == NULL || (lpme->dwSize < sizeof(MODULEENTRY32))) {
+         SetLastError(ERROR_INVALID_PARAMETER);
+         return FALSE;
     }
 
     // Thunk to Module32FirstW
     me32w.dwSize = sizeof(me32w);
-    b = Module32FirstW(SnapSection, &me32w);
+    b = Module32FirstW(SnapSection,&me32w);
 
-    WideCharToMultiByte(CP_ACP, 0, me32w.szExePath, -1, lpme->szExePath, ARRAYSIZE(lpme->szExePath), 0, 0);
+    WideCharToMultiByte(CP_ACP, 0,
+                        me32w.szExePath, -1,
+                        lpme->szExePath, ARRAYSIZE(lpme->szExePath),
+                        0, 0);
 
-    WideCharToMultiByte(CP_ACP, 0, me32w.szModule, -1, lpme->szModule, ARRAYSIZE(lpme->szModule), 0, 0);
+    WideCharToMultiByte(CP_ACP, 0,
+                        me32w.szModule, -1,
+                        lpme->szModule, ARRAYSIZE(lpme->szModule),
+                        0, 0);
 
-    lpme->th32ModuleID = me32w.th32ModuleID;
+    lpme->th32ModuleID  = me32w.th32ModuleID;
     lpme->th32ProcessID = me32w.th32ProcessID;
-    lpme->GlblcntUsage = me32w.GlblcntUsage;
-    lpme->ProccntUsage = me32w.ProccntUsage;
-    lpme->modBaseAddr = me32w.modBaseAddr;
-    lpme->modBaseSize = me32w.modBaseSize;
-    lpme->hModule = me32w.hModule;
+    lpme->GlblcntUsage  = me32w.GlblcntUsage;
+    lpme->ProccntUsage  = me32w.ProccntUsage;
+    lpme->modBaseAddr   = me32w.modBaseAddr;
+    lpme->modBaseSize   = me32w.modBaseSize;
+    lpme->hModule       = me32w.hModule;
 
     return b;
 }
 
 
-BOOL WINAPI Module32NextW(IN HANDLE SnapSection, IN OUT LPMODULEENTRY32W lpme)
+BOOL
+WINAPI
+Module32NextW(
+   IN HANDLE SnapSection,
+   IN OUT LPMODULEENTRY32W lpme)
 /*++
 
 Routine Description:
@@ -1205,13 +1319,12 @@ Return Value:
 --*/
 {
     PSNAPSHOTSTATE SnapshotBase;
-    BOOL retv = FALSE;
+    BOOL    retv = FALSE;
     LARGE_INTEGER SectionOffset;
     SIZE_T ViewSize;
     NTSTATUS Status = 0;
 
-    if (!lpme || lpme->dwSize != sizeof(MODULEENTRY32W))
-    {
+    if (!lpme || lpme->dwSize != sizeof(MODULEENTRY32W)) {
         BaseSetLastNTError(STATUS_INFO_LENGTH_MISMATCH);
         return FALSE;
     }
@@ -1221,35 +1334,42 @@ Return Value:
     ViewSize = 0;
     SnapshotBase = 0;
 
-    Status = NtMapViewOfSection(SnapSection, NtCurrentProcess(), &SnapshotBase, 0L, 0L, &SectionOffset, &ViewSize,
-                                ViewShare, 0L, PAGE_READWRITE);
+    Status = NtMapViewOfSection(SnapSection,
+                NtCurrentProcess(),
+                &SnapshotBase,
+                0L,
+                0L,
+                &SectionOffset,
+                &ViewSize,
+                ViewShare,
+                0L,
+                PAGE_READWRITE);
 
-    if (!NT_SUCCESS(Status))
-    {
+    if (!NT_SUCCESS(Status)) {
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
-    if (SnapshotBase->ModuleListIndex < SnapshotBase->ModuleCount)
-    {
+    if (SnapshotBase->ModuleListIndex < SnapshotBase->ModuleCount) {
         memcpy(lpme,
-               (LPMODULEENTRY32W)((ULONG_PTR)SnapshotBase +
-                                  (ULONG_PTR)(&SnapshotBase->ModuleListHead[SnapshotBase->ModuleListIndex++])),
+               (LPMODULEENTRY32W)((ULONG_PTR)SnapshotBase + (ULONG_PTR)(&SnapshotBase->ModuleListHead[SnapshotBase->ModuleListIndex++])),
                sizeof(MODULEENTRY32W));
         retv = TRUE;
-    }
-    else
-    {
+    } else {
         SetLastError(ERROR_NO_MORE_FILES);
     }
 
     NtUnmapViewOfSection(NtCurrentProcess(), (PVOID)SnapshotBase);
 
-    return (retv);
+    return(retv);
 }
 
 
-BOOL WINAPI Module32Next(IN HANDLE SnapSection, IN OUT LPMODULEENTRY32 lpme)
+BOOL
+WINAPI
+Module32Next(
+   IN HANDLE SnapSection,
+   IN OUT LPMODULEENTRY32 lpme)
 /*++
 
 Routine Description:
@@ -1277,33 +1397,42 @@ Return Value:
     MODULEENTRY32W me32w;
     BOOL b;
 
-    if (lpme == NULL || (lpme->dwSize < sizeof(MODULEENTRY32)))
-    {
-        SetLastError(ERROR_INVALID_DATA);
-        return FALSE;
+    if (lpme == NULL || (lpme->dwSize < sizeof(MODULEENTRY32))) {
+         SetLastError(ERROR_INVALID_DATA);
+         return FALSE;
     }
 
     // Thunk to Module32NextW
     me32w.dwSize = sizeof(me32w);
-    b = Module32NextW(SnapSection, &me32w);
+    b = Module32NextW(SnapSection,&me32w);
 
-    WideCharToMultiByte(CP_ACP, 0, me32w.szModule, -1, lpme->szModule, ARRAYSIZE(lpme->szModule), 0, 0);
+    WideCharToMultiByte(CP_ACP, 0,
+                        me32w.szModule, -1,
+                        lpme->szModule, ARRAYSIZE(lpme->szModule),
+                        0, 0);
 
-    WideCharToMultiByte(CP_ACP, 0, me32w.szExePath, -1, lpme->szExePath, ARRAYSIZE(lpme->szExePath), 0, 0);
+    WideCharToMultiByte(CP_ACP, 0,
+                        me32w.szExePath, -1,
+                        lpme->szExePath, ARRAYSIZE(lpme->szExePath),
+                        0, 0);
 
-    lpme->th32ModuleID = me32w.th32ModuleID;
-    lpme->GlblcntUsage = me32w.GlblcntUsage;
-    lpme->ProccntUsage = me32w.ProccntUsage;
-    lpme->modBaseAddr = me32w.modBaseAddr;
-    lpme->modBaseSize = me32w.modBaseSize;
-    lpme->hModule = me32w.hModule;
+    lpme->th32ModuleID  = me32w.th32ModuleID;
+    lpme->GlblcntUsage  = me32w.GlblcntUsage;
+    lpme->ProccntUsage  = me32w.ProccntUsage;
+    lpme->modBaseAddr   = me32w.modBaseAddr;
+    lpme->modBaseSize   = me32w.modBaseSize;
+    lpme->hModule       = me32w.hModule;
 
     return b;
 }
 
 NTSTATUS
-ThpCreateRawSnap(IN DWORD dwFlags, IN DWORD th32ProcessID, PUCHAR *RawProcess, PRTL_DEBUG_INFORMATION *RawModule,
-                 PRTL_DEBUG_INFORMATION *RawDebugInfo)
+ThpCreateRawSnap(
+    IN DWORD dwFlags,
+    IN DWORD th32ProcessID,
+    PUCHAR *RawProcess,
+    PRTL_DEBUG_INFORMATION *RawModule,
+    PRTL_DEBUG_INFORMATION *RawDebugInfo)
 /*++
 
 Routine Description:
@@ -1336,23 +1465,22 @@ Return Value:
     *RawModule = NULL;
     *RawDebugInfo = NULL;
 
-    if ((dwFlags & TH32CS_SNAPPROCESS) || (dwFlags & TH32CS_SNAPTHREAD))
-    {
-        do
-        {
-            try
-            {
+    if((dwFlags & TH32CS_SNAPPROCESS) || (dwFlags & TH32CS_SNAPTHREAD)){
+        do {
+            try {
                 stBufferSize = BufferSize;
-                Status = NtAllocateVirtualMemory(NtCurrentProcess(), RawProcess, 0, &stBufferSize, MEM_COMMIT,
+                Status = NtAllocateVirtualMemory(NtCurrentProcess(),
+                                                 RawProcess,
+                                                 0,
+                                                 &stBufferSize,
+                                                 MEM_COMMIT,
                                                  PAGE_READWRITE);
             }
-            except(EXCEPTION_EXECUTE_HANDLER)
-            {
+            except( EXCEPTION_EXECUTE_HANDLER ) {
                 Status = GetExceptionCode();
             }
 
-            if (!NT_SUCCESS(Status))
-            {
+            if (!NT_SUCCESS(Status)) {
                 break;
             }
 
@@ -1360,40 +1488,42 @@ Return Value:
             //
             // get all of the status information */
             //
-            Status = NtQuerySystemInformation(SystemProcessInformation, *RawProcess, BufferSize, NULL);
+            Status = NtQuerySystemInformation(SystemProcessInformation,
+                      *RawProcess,
+                      BufferSize,
+                      NULL);
 
-            if (Status == STATUS_INFO_LENGTH_MISMATCH)
-            {
-                NtFreeVirtualMemory(NtCurrentProcess(), RawProcess, &stBufferSize, MEM_RELEASE);
+            if (Status == STATUS_INFO_LENGTH_MISMATCH)   {
+                NtFreeVirtualMemory(NtCurrentProcess(),
+                                    RawProcess,
+                                    &stBufferSize,
+                                    MEM_RELEASE);
                 *RawProcess = NULL;
                 BufferSize += 8192;
             }
 
-        } while (Status == STATUS_INFO_LENGTH_MISMATCH);
+        } while(Status == STATUS_INFO_LENGTH_MISMATCH);
     }
 
     //
     // get module information
     //
 
-    if ((dwFlags & TH32CS_SNAPMODULE) || (dwFlags & TH32CS_SNAPMODULE32))
+    if((dwFlags & TH32CS_SNAPMODULE) || (dwFlags & TH32CS_SNAPMODULE32))
     {
-        if (NT_SUCCESS(Status))
-        {
+        if (NT_SUCCESS(Status))    {
             *RawModule = RtlCreateQueryDebugBuffer(0, FALSE);
-            if (!*RawModule)
-            {
+            if (!*RawModule) {
                 Status = STATUS_UNSUCCESSFUL;
             }
         }
 
-        if (NT_SUCCESS(Status))
-        {
-            Status = RtlQueryProcessDebugInformation(
-                (HANDLE)LongToHandle(th32ProcessID),
-                RTL_QUERY_PROCESS_NONINVASIVE | ((dwFlags & TH32CS_SNAPMODULE) ? RTL_QUERY_PROCESS_MODULES : 0) |
-                    ((dwFlags & TH32CS_SNAPMODULE32) ? RTL_QUERY_PROCESS_MODULES32 : 0),
-                *RawModule);
+        if (NT_SUCCESS(Status)) {
+            Status = RtlQueryProcessDebugInformation((HANDLE)LongToHandle(th32ProcessID),
+                                                     RTL_QUERY_PROCESS_NONINVASIVE |
+                                                     ((dwFlags & TH32CS_SNAPMODULE) ? RTL_QUERY_PROCESS_MODULES : 0) |
+                                                     ((dwFlags & TH32CS_SNAPMODULE32) ? RTL_QUERY_PROCESS_MODULES32 : 0),
+                                                      *RawModule);
         }
     }
 
@@ -1401,40 +1531,36 @@ Return Value:
     // get the heap summary information for the specified process */
     //
 
-    if (dwFlags & TH32CS_SNAPHEAPLIST)
-    {
-        if (NT_SUCCESS(Status))
-        {
+    if (dwFlags & TH32CS_SNAPHEAPLIST)   {
+        if (NT_SUCCESS(Status))    {
 
             *RawDebugInfo = RtlCreateQueryDebugBuffer(0, FALSE);
-            if (!*RawDebugInfo)
-            {
+            if (!*RawDebugInfo) {
                 Status = STATUS_UNSUCCESSFUL;
             }
         }
-        if (NT_SUCCESS(Status))
-        {
+        if (NT_SUCCESS(Status)) {
             Status = RtlQueryProcessDebugInformation((HANDLE)LongToHandle(th32ProcessID),
-                                                     RTL_QUERY_PROCESS_HEAP_SUMMARY, *RawDebugInfo);
+                                                      RTL_QUERY_PROCESS_HEAP_SUMMARY,
+                                                      *RawDebugInfo);
         }
     }
 
 
-    if (!NT_SUCCESS(Status))
-    {
-        if (*RawProcess)
-        {
+    if (!NT_SUCCESS(Status))    {
+        if (*RawProcess) {
             SIZE_T Size = 0;
-            NtFreeVirtualMemory(NtCurrentProcess(), RawProcess, &Size, MEM_RELEASE);
+            NtFreeVirtualMemory(NtCurrentProcess(),
+                                RawProcess,
+                                &Size,
+                                MEM_RELEASE);
             *RawProcess = NULL;
         }
-        if (*RawModule)
-        {
+        if (*RawModule) {
             RtlDestroyQueryDebugBuffer(*RawModule);
             *RawModule = NULL;
         }
-        if (*RawDebugInfo)
-        {
+        if (*RawDebugInfo) {
             RtlDestroyQueryDebugBuffer(*RawDebugInfo);
             *RawDebugInfo = NULL;
         }
@@ -1445,8 +1571,13 @@ Return Value:
 
 
 NTSTATUS
-ThpAllocateSnapshotSection(OUT PHANDLE SnapSection, IN DWORD dwFlags, IN DWORD th32ProcessID, PUCHAR RawProcess,
-                           PRTL_DEBUG_INFORMATION RawModule, PRTL_DEBUG_INFORMATION RawDebugInfo)
+ThpAllocateSnapshotSection(
+    OUT PHANDLE SnapSection,
+    IN DWORD dwFlags,
+    IN DWORD th32ProcessID,
+    PUCHAR RawProcess,
+    PRTL_DEBUG_INFORMATION RawModule,
+    PRTL_DEBUG_INFORMATION RawDebugInfo)
 /*++
 
 Routine Description:
@@ -1501,34 +1632,28 @@ Return Value:
     // calculate the required snapshot size
     //
 
-    if ((dwFlags & TH32CS_SNAPPROCESS) || (dwFlags & TH32CS_SNAPTHREAD))
-    {
-        do
-        {
+    if ((dwFlags & TH32CS_SNAPPROCESS) || (dwFlags & TH32CS_SNAPTHREAD)) {
+        do {
             ProcessCount++;
             ProcessInfo = (PSYSTEM_PROCESS_INFORMATION)&RawProcess[Offset1];
             Offset1 += ProcessInfo->NextEntryOffset;
             ThreadCount += ProcessInfo->NumberOfThreads;
         } while (ProcessInfo->NextEntryOffset != 0);
 
-        if (dwFlags & TH32CS_SNAPPROCESS)
-        {
+        if (dwFlags & TH32CS_SNAPPROCESS) {
             SnapShotSize += ProcessCount * sizeof(PROCESSENTRY32W);
         }
-        if (dwFlags & TH32CS_SNAPTHREAD)
-        {
+        if (dwFlags & TH32CS_SNAPTHREAD) {
             SnapShotSize += ThreadCount * sizeof(THREADENTRY32);
         }
     }
 
-    if (dwFlags & TH32CS_SNAPMODULE)
-    {
+    if (dwFlags & TH32CS_SNAPMODULE) {
         SnapShotSize += RawModule->Modules->NumberOfModules * sizeof(MODULEENTRY32W);
         ModuleCount = RawModule->Modules->NumberOfModules;
     }
 
-    if (dwFlags & TH32CS_SNAPHEAPLIST)
-    {
+    if (dwFlags & TH32CS_SNAPHEAPLIST)   {
         SnapShotSize += RawDebugInfo->Heaps->NumberOfHeaps * sizeof(HEAPLIST32);
         HeapListCount = RawDebugInfo->Heaps->NumberOfHeaps;
     }
@@ -1537,15 +1662,12 @@ Return Value:
     // Create a security object if needed
     //
 
-    if (dwFlags & TH32CS_INHERIT)
-    {
+    if (dwFlags & TH32CS_INHERIT) {
         SecurityAttributes.lpSecurityDescriptor = NULL;
         SecurityAttributes.nLength = sizeof(SECURITY_ATTRIBUTES);
         SecurityAttributes.bInheritHandle = TRUE;
         lpSecurityAttributes = &SecurityAttributes;
-    }
-    else
-    {
+    } else {
         lpSecurityAttributes = NULL;
     }
 
@@ -1558,12 +1680,15 @@ Return Value:
     SectionSize.LowPart = SnapShotSize;
     SectionSize.HighPart = 0;
 
-    Status =
-        NtCreateSection(SnapSection, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_WRITE,
-                        pObja, &SectionSize, PAGE_READWRITE, SEC_COMMIT, NULL);
+    Status = NtCreateSection(SnapSection,
+                STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_WRITE,
+                pObja,
+                &SectionSize,
+                PAGE_READWRITE,
+                SEC_COMMIT,
+                NULL);
 
-    if (!NT_SUCCESS(Status))
-    {
+    if ( !NT_SUCCESS(Status) ) {
         return Status;
     }
 
@@ -1572,41 +1697,49 @@ Return Value:
     ViewSize = 0;
     SnapshotBase = 0;
 
-    Status = NtMapViewOfSection(*SnapSection, NtCurrentProcess(), &SnapshotBase, 0L, 0L, &SectionOffset, &ViewSize,
-                                ViewShare, 0L, PAGE_READWRITE);
+    Status = NtMapViewOfSection(*SnapSection,
+                NtCurrentProcess(),
+                &SnapshotBase,
+                0L,
+                0L,
+                &SectionOffset,
+                &ViewSize,
+                ViewShare,
+                0L,
+                PAGE_READWRITE);
 
     //
     // free all memory if failure
     //
 
-    if (!NT_SUCCESS(Status))
-    {
+    if ( !NT_SUCCESS(Status) ) {
         CloseHandle(*SnapSection);
 
-        if ((dwFlags & TH32CS_SNAPTHREAD) || (dwFlags & TH32CS_SNAPPROCESS))
-        {
+        if ((dwFlags & TH32CS_SNAPTHREAD) || (dwFlags & TH32CS_SNAPPROCESS)){
 
-            Size = 0;
-            NtFreeVirtualMemory(NtCurrentProcess(), &RawProcess, &Size, MEM_RELEASE);
+        Size = 0;
+        NtFreeVirtualMemory(NtCurrentProcess(),
+                            &RawProcess,
+                            &Size,
+                            MEM_RELEASE);
+
         }
 
-        if (dwFlags & TH32CS_SNAPPROCESS)
-        {
+        if (dwFlags & TH32CS_SNAPPROCESS) {
             RtlDestroyQueryDebugBuffer(RawModule);
         }
 
-        if (dwFlags & TH32CS_SNAPHEAPLIST)
-        {
+        if (dwFlags & TH32CS_SNAPHEAPLIST) {
             RtlDestroyQueryDebugBuffer(RawDebugInfo);
         }
 
         return Status;
     }
 
-    SnapshotBase->ProcessCount = ProcessCount;
+    SnapshotBase->ProcessCount  = ProcessCount;
     SnapshotBase->HeapListCount = HeapListCount;
-    SnapshotBase->ModuleCount = ModuleCount;
-    SnapshotBase->ThreadCount = ThreadCount;
+    SnapshotBase->ModuleCount   = ModuleCount;
+    SnapshotBase->ThreadCount   = ThreadCount;
 
     //
     // return resources
@@ -1619,7 +1752,10 @@ Return Value:
 
 
 NTSTATUS
-ThpCopyAnsiToUnicode(PWCHAR Dest, PUCHAR Src, USHORT Max)
+ThpCopyAnsiToUnicode(
+    PWCHAR Dest,
+    PUCHAR Src,
+    USHORT Max)
 {
     UNICODE_STRING UnicodeString;
     ANSI_STRING AnsiString;
@@ -1629,13 +1765,18 @@ ThpCopyAnsiToUnicode(PWCHAR Dest, PUCHAR Src, USHORT Max)
 
     RtlInitAnsiString(&AnsiString, Src);
 
-    return RtlAnsiStringToUnicodeString(&UnicodeString, &AnsiString, FALSE);
+    return RtlAnsiStringToUnicodeString( &UnicodeString, &AnsiString, FALSE );
 }
 
 
 NTSTATUS
-ThpProcessToSnap(IN DWORD dwFlags, IN DWORD th32ProcessID, IN HANDLE SnapSection, PUCHAR RawProcess,
-                 PRTL_DEBUG_INFORMATION RawModule, PRTL_DEBUG_INFORMATION RawDebugInfo)
+ThpProcessToSnap(
+    IN DWORD dwFlags,
+    IN DWORD th32ProcessID,
+    IN HANDLE SnapSection,
+    PUCHAR RawProcess,
+    PRTL_DEBUG_INFORMATION RawModule,
+    PRTL_DEBUG_INFORMATION RawDebugInfo)
 /*++
 
 Routine Description:
@@ -1664,7 +1805,7 @@ Return Value:
 --*/
 {
     PSNAPSHOTSTATE SnapshotBase;
-    PUCHAR BufferWriteAddr; /* working pointer into out process data - usually points at end */
+    PUCHAR BufferWriteAddr;  /* working pointer into out process data - usually points at end */
     LARGE_INTEGER SectionOffset;
     SIZE_T ViewSize;
     NTSTATUS Status = 0;
@@ -1675,11 +1816,18 @@ Return Value:
     ViewSize = 0;
     SnapshotBase = 0;
 
-    Status = NtMapViewOfSection(SnapSection, NtCurrentProcess(), &SnapshotBase, 0L, 0L, &SectionOffset, &ViewSize,
-                                ViewShare, 0L, PAGE_READWRITE);
+    Status = NtMapViewOfSection(SnapSection,
+                NtCurrentProcess(),
+                &SnapshotBase,
+                0L,
+                0L,
+                &SectionOffset,
+                &ViewSize,
+                ViewShare,
+                0L,
+                PAGE_READWRITE);
 
-    if (!NT_SUCCESS(Status))
-    {
+    if (!NT_SUCCESS(Status)) {
         return Status;
     }
 
@@ -1689,8 +1837,7 @@ Return Value:
     // write heap list to snapshot
     // some of this code adapted from dh.c
     //
-    if (dwFlags & TH32CS_SNAPHEAPLIST)
-    {
+    if (dwFlags & TH32CS_SNAPHEAPLIST) {
         ULONG HeapListCount = 0;
         ULONG HeapEntryCount = 0;
         LPHEAPLIST32 pHeapList;
@@ -1699,8 +1846,7 @@ Return Value:
         pHeapList = (LPHEAPLIST32)BufferWriteAddr;
 
         // heaplist
-        for (HeapListCount = 0; HeapListCount < SnapshotBase->HeapListCount; HeapListCount++)
-        {
+        for (HeapListCount = 0; HeapListCount < SnapshotBase->HeapListCount; HeapListCount++){
             pHeapList->dwSize = sizeof(HEAPLIST32);
             pHeapList->th32ProcessID = th32ProcessID;
             /* handle = baseaddress = ID we will use internally */
@@ -1716,8 +1862,7 @@ Return Value:
     //
     // write module list to snapshot
     //
-    if (dwFlags & TH32CS_SNAPMODULE)
-    {
+    if (dwFlags & TH32CS_SNAPMODULE) {
         LPMODULEENTRY32W pModule;
         ULONG Offset1 = 0;
         ULONG mCount = 0;
@@ -1730,9 +1875,8 @@ Return Value:
         //
 
         pModule = (LPMODULEENTRY32W)(BufferWriteAddr);
-        ModuleInfo = &RawModule->Modules->Modules[0];
-        for (mCount = 0; mCount < RawModule->Modules->NumberOfModules; mCount++)
-        {
+        ModuleInfo = &RawModule->Modules->Modules[ 0 ];
+        for (mCount = 0; mCount < RawModule->Modules->NumberOfModules; mCount++)   {
 
             pModule->dwSize = sizeof(MODULEENTRY32W);
 
@@ -1754,13 +1898,16 @@ Return Value:
             // Path
             //
 
-            ThpCopyAnsiToUnicode(pModule->szExePath, ModuleInfo->FullPathName, sizeof(pModule->szExePath));
+            ThpCopyAnsiToUnicode(pModule->szExePath,
+                                 ModuleInfo->FullPathName,
+                                 sizeof(pModule->szExePath));
 
             //
             // module name
             //
 
-            ThpCopyAnsiToUnicode(pModule->szModule, &ModuleInfo->FullPathName[ModuleInfo->OffsetToFileName],
+            ThpCopyAnsiToUnicode(pModule->szModule,
+                                 &ModuleInfo->FullPathName[ModuleInfo->OffsetToFileName],
                                  sizeof(pModule->szModule));
 
             //
@@ -1781,8 +1928,8 @@ Return Value:
             //
 
             pModule->th32ModuleID = 1;
-            pModule->GlblcntUsage = ModuleInfo->LoadCount; // will be 0xffff
-            pModule->ProccntUsage = ModuleInfo->LoadCount; // will be 0xffff
+            pModule->GlblcntUsage = ModuleInfo->LoadCount;  // will be 0xffff
+            pModule->ProccntUsage = ModuleInfo->LoadCount;  // will be 0xffff
 
             ++ModuleInfo;
             ++pModule;
@@ -1798,8 +1945,7 @@ Return Value:
     //
     // write process list to snapshot
     //
-    if (dwFlags & TH32CS_SNAPPROCESS)
-    {
+    if (dwFlags & TH32CS_SNAPPROCESS) {
 
         PSYSTEM_PROCESS_INFORMATION ProcessInfo;
         LPPROCESSENTRY32W pEntry;
@@ -1809,31 +1955,26 @@ Return Value:
         SnapshotBase->ProcessListHead = (PPROCESSENTRY32W)(BufferWriteAddr - (PUCHAR)SnapshotBase);
         pEntry = (LPPROCESSENTRY32W)(BufferWriteAddr + cProcess * sizeof(PROCESSENTRY32W));
 
-        do
-        {
+        do {
             /* get process info from buffer */
             ProcessInfo = (PSYSTEM_PROCESS_INFORMATION)&RawProcess[Offset1];
 
-            pEntry->dwSize = sizeof(PROCESSENTRY32W);
-            pEntry->th32ProcessID = HandleToUlong(ProcessInfo->UniqueProcessId);
-            pEntry->pcPriClassBase = ProcessInfo->BasePriority;
-            pEntry->cntThreads = ProcessInfo->NumberOfThreads;
+            pEntry->dwSize              = sizeof(PROCESSENTRY32W);
+            pEntry->th32ProcessID       = HandleToUlong(ProcessInfo->UniqueProcessId);
+            pEntry->pcPriClassBase      = ProcessInfo->BasePriority;
+            pEntry->cntThreads          = ProcessInfo->NumberOfThreads;
             pEntry->th32ParentProcessID = HandleToUlong(ProcessInfo->InheritedFromUniqueProcessId);
-            pEntry->cntUsage = 0;
-            pEntry->th32DefaultHeapID = 0;
-            pEntry->th32ModuleID = 0;
-            pEntry->dwFlags = 0;
+            pEntry->cntUsage            = 0;
+            pEntry->th32DefaultHeapID   = 0;
+            pEntry->th32ModuleID        = 0;
+            pEntry->dwFlags             = 0;
 
             // Path
-            if (ProcessInfo->ImageName.Buffer == NULL)
-            {
+            if (ProcessInfo->ImageName.Buffer == NULL) {
                 lstrcpyW(pEntry->szExeFile, L"[System Process]");
-            }
-            else
-            {
-                if (ProcessInfo->ImageName.Length >= ARRAYSIZE(pEntry->szExeFile))
-                {
-                    ProcessInfo->ImageName.Length = ARRAYSIZE(pEntry->szExeFile) - 1;
+            } else {
+                if (ProcessInfo->ImageName.Length >= ARRAYSIZE(pEntry->szExeFile)) {
+                    ProcessInfo->ImageName.Length = ARRAYSIZE(pEntry->szExeFile)-1;
                 }
                 memcpy(pEntry->szExeFile, ProcessInfo->ImageName.Buffer, ProcessInfo->ImageName.Length);
                 pEntry->szExeFile[ProcessInfo->ImageName.Length] = TEXT('\0');
@@ -1853,8 +1994,7 @@ Return Value:
     // write thread list to snapshot
     //
 
-    if (dwFlags & TH32CS_SNAPTHREAD)
-    {
+    if (dwFlags & TH32CS_SNAPTHREAD) {
         PSYSTEM_PROCESS_INFORMATION ProcessInfo;
         PSYSTEM_THREAD_INFORMATION ThreadInfo;
         LPTHREADENTRY32 tEntry;
@@ -1864,39 +2004,38 @@ Return Value:
         SnapshotBase->ThreadListHead = (PTHREADENTRY32)(BufferWriteAddr - (PUCHAR)SnapshotBase);
         tEntry = (LPTHREADENTRY32)(BufferWriteAddr + cThread * sizeof(THREADENTRY32));
 
-        do
-        {
+        do {
             ProcessInfo = (PSYSTEM_PROCESS_INFORMATION)&RawProcess[Offset1];
             ThreadInfo = (PSYSTEM_THREAD_INFORMATION)(ProcessInfo + 1);
 
-            for (cThread = 0; cThread < ProcessInfo->NumberOfThreads; cThread++)
-            {
+            for (cThread = 0; cThread < ProcessInfo->NumberOfThreads; cThread++) {
 
-                tEntry->dwSize = sizeof(THREADENTRY32);
-                tEntry->th32ThreadID = HandleToUlong(ThreadInfo->ClientId.UniqueThread);
-                tEntry->th32OwnerProcessID = HandleToUlong(ThreadInfo->ClientId.UniqueProcess);
-                tEntry->tpBasePri = ThreadInfo->BasePriority;
-                tEntry->tpDeltaPri = 0;
-                tEntry->cntUsage = 0;
-                tEntry->dwFlags = 0;
+                tEntry->dwSize              = sizeof(THREADENTRY32);
+                tEntry->th32ThreadID        = HandleToUlong(ThreadInfo->ClientId.UniqueThread);
+                tEntry->th32OwnerProcessID  = HandleToUlong(ThreadInfo->ClientId.UniqueProcess);
+                tEntry->tpBasePri           = ThreadInfo->BasePriority;
+                tEntry->tpDeltaPri          = 0;
+                tEntry->cntUsage            = 0;
+                tEntry->dwFlags             = 0;
 
-                ++ThreadInfo;
-                ++tEntry;
+            ++ThreadInfo;
+            ++tEntry;
             }
 
             Offset1 += ProcessInfo->NextEntryOffset;
 
         } while (ProcessInfo->NextEntryOffset != 0);
 
-        BufferWriteAddr =
-            (PUCHAR)(BufferWriteAddr + cThread * sizeof(THREADENTRY32)); // update the pointer to the write area
+        BufferWriteAddr = (PUCHAR)(BufferWriteAddr + cThread * sizeof(THREADENTRY32)); // update the pointer to the write area
     }
 
-    if ((dwFlags & TH32CS_SNAPTHREAD) || (dwFlags & TH32CS_SNAPPROCESS))
-    {
+    if ((dwFlags & TH32CS_SNAPTHREAD) || (dwFlags & TH32CS_SNAPPROCESS)){
 
         Size = 0;
-        NtFreeVirtualMemory(NtCurrentProcess(), &RawProcess, &Size, MEM_RELEASE);
+        NtFreeVirtualMemory(NtCurrentProcess(),
+                            &RawProcess,
+                            &Size,
+                            MEM_RELEASE);
     }
 
     NtUnmapViewOfSection(NtCurrentProcess(), (PVOID)SnapshotBase);

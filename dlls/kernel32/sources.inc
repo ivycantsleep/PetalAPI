@@ -1,6 +1,8 @@
 MAJORCOMP=windows
 MINORCOMP=base
 
+!include $(PROJECT_ROOT)\prerelease.inc
+
 SYNCHRONIZE_DRAIN=1
 
 TARGETNAME=kernel32
@@ -20,9 +22,10 @@ LINKLIBS=\
     $(PROJECT_LIB_PATH)\dload.lib \
     $(SDK_LIB_PATH)\ntdll.lib
 
-
 TARGETLIBS=\
-    $(PROJECT_ROOT)\win32\lz32\winlza\$(O)\winlza.lib
+	$(WINDOWS_LIB_PATH)\conlibk.lib \
+    $(PROJECT_ROOT)\win32\lz32\winlza\$(O)\winlza.lib \
+    $(SDK_LIB_PATH)\uuid.lib
 
 DLLENTRY=BaseDllInitialize
 
@@ -59,6 +62,7 @@ SOURCES= \
     ..\dir.c      \
     ..\dllatom.c  \
     ..\dllini.c   \
+    ..\dload.c   \
     ..\dosdev.c   \
     ..\error.c    \
     ..\filefind.c \
@@ -104,7 +108,19 @@ SOURCES= \
     ..\sxsfind.c  \
     ..\csrsxs.c   \
     ..\compsup.c  \
-    ..\ahcache.c
+    ..\ahcache.c  \
+    ..\csrahcache.c \
+    ..\webblade.c \
+	..\_file.c \
+	..\_list.c \
+	..\_loader.c \
+	..\_kernelbase_debug.c \
+	..\_kernelbase_locale.c \
+	..\_memory.c \
+	..\_process.c \
+	..\_synchapi.c \
+	..\_security.c \
+	..\_system.c
 
 UMTYPE=console
 OPTIONAL_UMTEST=tatom*tprof*taskstrs*winperf*tbase*tprof*tfile*ttask*tmem*tlfn
@@ -112,3 +128,8 @@ OPTIONAL_UMTEST=tatom*tprof*taskstrs*winperf*tbase*tprof*tfile*ttask*tmem*tlfn
 PRECOMPILED_INCLUDE=..\basedll.h
 PRECOMPILED_PCH=basedll.pch
 PRECOMPILED_OBJ=basedll.obj
+
+# No overflow checking for kernel32.dll
+BUFFER_OVERFLOW_CHECKS=0
+
+LINKER_FLAGS=/ignore:4217

@@ -6,10 +6,15 @@
 #include <nturtl.h>
 #include <windows.h>
 
-int main(int argc, char *argv[], char *envp[])
+int
+main(
+    int argc,
+    char *argv[],
+    char *envp[]
+    )
 {
 
-    int i = 0;
+    int i=0;
     SMALL_RECT Window;
 
     Window.Left = 0;
@@ -17,11 +22,14 @@ int main(int argc, char *argv[], char *envp[])
     Window.Right = 10;
     Window.Bottom = 5;
 
-    SetConsoleWindowInfo(GetStdHandle(STD_OUTPUT_HANDLE), TRUE, &Window);
+    SetConsoleWindowInfo(GetStdHandle(STD_OUTPUT_HANDLE),
+                         TRUE,
+                         &Window
+                        );
 
 
-    while (TRUE)
-    {
-        printf("%d\n", ++i);
+    while ( TRUE ) {
+        printf("%d\n",++i);
     }
+
 }

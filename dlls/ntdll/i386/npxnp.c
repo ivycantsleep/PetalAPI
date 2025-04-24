@@ -30,8 +30,10 @@ static UCHAR MOD16[] = { 0, 1, 2, 0 };
 static UCHAR MOD32[] = { 0, 1, 4, 0 };
 
 UCHAR
-NpxNpReadCSEip(IN PCONTEXT Context)
-#pragma warning(disable : 4035)
+NpxNpReadCSEip (
+    IN PCONTEXT Context
+    )
+#pragma warning(disable:4035)
 {
     _asm {
         push    es
@@ -44,10 +46,13 @@ NpxNpReadCSEip(IN PCONTEXT Context)
         pop     es
     }
 }
-#pragma warning(default : 4035)
+#pragma warning(default:4035)
 
 
-VOID NpxNpSkipInstruction(IN PCONTEXT Context)
+VOID
+NpxNpSkipInstruction (
+    IN PCONTEXT Context
+    )
 /*++
 
 Routine Description:
@@ -68,12 +73,12 @@ Return Value:
 
 --*/
 {
-    BOOLEAN fPrefix;
-    UCHAR ibyte, Mod, rm;
-    UCHAR Address32Bits;
-    ULONG CallerCs;
+    BOOLEAN     fPrefix;
+    UCHAR       ibyte, Mod, rm;
+    UCHAR       Address32Bits;
+    ULONG       CallerCs;
 
-    Address32Bits = 0; // assume called from 16:16
+    Address32Bits = 0;                          // assume called from 16:16
 
     //
     // Lookup and determine callers default mode
@@ -104,29 +109,27 @@ IsDefault16Bit:
     //
 
     fPrefix = TRUE;
-    while (fPrefix)
-    {
+    while (fPrefix) {
         ibyte = NpxNpReadCSEip(Context);
 
-        switch (ibyte)
-        {
-        case 0x2e: // cs override, skip it
-        case 0x36: // ss override, skip it
-        case 0x3e: // ds override, skip it
-        case 0x26: // es override, skip it
-        case 0x64: // fs override, skip it
-        case 0x65: // gs override, skip it
-        case 0x66: // operand size override, skip it
-            break;
+        switch (ibyte) {
+            case 0x2e:  // cs override, skip it
+            case 0x36:  // ss override, skip it
+            case 0x3e:  // ds override, skip it
+            case 0x26:  // es override, skip it
+            case 0x64:  // fs override, skip it
+            case 0x65:  // gs override, skip it
+            case 0x66:  // operand size override, skip it
+                break;
 
-        case 0x67:
-            // address size override
-            Address32Bits ^= 1;
-            break;
+            case 0x67:
+                // address size override
+                Address32Bits ^= 1;
+                break;
 
-        default:
-            fPrefix = FALSE;
-            break;
+            default:
+                fPrefix = FALSE;
+                break;
         }
     }
 
@@ -134,8 +137,7 @@ IsDefault16Bit:
     // Handle first byte of NPX instruction
     //
 
-    if (ibyte == 0x9b)
-    {
+    if (ibyte == 0x9b) {
 
         //
         // FWait instruction - single byte opcode - all done
@@ -144,15 +146,14 @@ IsDefault16Bit:
         return;
     }
 
-    if (ibyte < 0xD8 || ibyte > 0xDF)
-    {
+    if (ibyte < 0xD8 || ibyte > 0xDF) {
 
         //
         // Not an ESC instruction
         //
 
 #if DBG
-        DbgPrint("P5_FPU_PATCH: 16: Not NPX ESC instruction\n");
+        DbgPrint ("P5_FPU_PATCH: 16: Not NPX ESC instruction\n");
 #endif
         return;
     }
@@ -163,8 +164,7 @@ IsDefault16Bit:
 
     ibyte = NpxNpReadCSEip(Context);
 
-    if (ibyte > 0xbf)
-    {
+    if (ibyte > 0xbf) {
         //
         // Outside of ModR/M range for addressing, all done
         //
@@ -173,12 +173,10 @@ IsDefault16Bit:
     }
 
     Mod = ibyte >> 6;
-    rm = ibyte & 0x7;
-    if (Address32Bits)
-    {
-        Context->Eip += MOD32[Mod];
-        if (Mod == 0 && rm == 5)
-        {
+    rm  = ibyte & 0x7;
+    if (Address32Bits) {
+        Context->Eip += MOD32 [Mod];
+        if (Mod == 0  &&  rm == 5) {
             // disp 32
             Context->Eip += 4;
         }
@@ -187,22 +185,18 @@ IsDefault16Bit:
         // If SIB byte, read it
         //
 
-        if (rm == 4)
-        {
+        if (rm == 4) {
             ibyte = NpxNpReadCSEip(Context);
 
-            if (Mod == 0 && (ibyte & 7) == 5)
-            {
+            if (Mod == 0  &&  (ibyte & 7) == 5) {
                 // disp 32
                 Context->Eip += 4;
             }
         }
-    }
-    else
-    {
-        Context->Eip += MOD16[Mod];
-        if (Mod == 0 && rm == 6)
-        {
+
+    } else {
+        Context->Eip += MOD16 [Mod];
+        if (Mod == 0  &&  rm == 6) {
             // disp 16
             Context->Eip += 2;
         }

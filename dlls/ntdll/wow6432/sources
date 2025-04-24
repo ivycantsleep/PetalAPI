@@ -1,3 +1,4 @@
+NT_UP=0
 !include $(PROJECT_ROOT)\ntdll\ntdll.inc
 ALT_PROJECT=WOW6432
 ALT_PROJECT_TARGET=WOW6432
@@ -5,33 +6,29 @@ ALT_PROJECT_TARGET=WOW6432
 MAJORCOMP=ntos
 MINORCOMP=dll_
 
+BUILD_CONSUMES=ntosrtlwow6432 NtosWmiNtdllWow6432
+
 TARGETNAME=ntdll
 TARGETPATH=obj
 TARGETTYPE=DYNLINK
 DLLDEF=$(O)\ntdll.def
 LINKLIBS= \
-    $(PROJECT_ROOT)\ntos\rtl\wow6432\$(O)\rtl.lib \
+    $(PROJECT_ROOT)\ntos\rtl\$(ALT_PROJECT_TARGET)\$(O)\rtl.lib \
     $(SDK_LIB_PATH)\libcntpr.lib \
     $(SDK_LIB_PATH)\uuid.lib \
-    $(PROJECT_ROOT)\wmi\ntdll\$(O)\etwclnt.lib \
+    $(PROJECT_ROOT)\wmi\ntdll\$(ALT_PROJECT_TARGET)\$(O)\etwclnt.lib \
     $(DS_LIB_PATH)\rsa32.lib
-
-#    $(PROJECT_ROOT)\crts\crtw32\eh\nt\$(O)\eh.lib
-
-#DLLLIBOBJECTS= \
-# $(DLLLIBOBJECTS) \
-# $(PROJECT_ROOT)\crts\crtw32\eh\nt\$(O)\ehvecctr.obj \
-# $(PROJECT_ROOT)\crts\crtw32\eh\nt\$(O)\ehveccvb.obj \
-# $(PROJECT_ROOT)\crts\crtw32\eh\nt\$(O)\ehvecdtr.obj
 
 INCLUDES=..;\
          $(PROJECT_ROOT)\ntos\inc;\
+         $(PROJECT_ROOT)\win32\inc;\
          $(PROJECT_ROOT)\published\$(O);\
          ..\i386;\
          $(PROJECT_ROOT)\ntos\wow64\inc;\
          $(SDKTOOLS_INC_PATH); \
          $(WINDOWS_INC_PATH); \
-         $(COM_INC_PATH)
+         $(COM_INC_PATH);\
+         $(DS_INC_PATH)\crypto
 
 WIMPMASM=1
 
@@ -47,14 +44,16 @@ SOURCES=\
         ..\buffer.c    \
         ..\curdir.c    \
         ..\dllssstb.c  \
-        ..\filestm.c   \
+        ..\error.c     \
         ..\frame.c     \
+        ..\hotpatch.c  \
         ..\ldrapi.c    \
         ..\ldrinit.c   \
         ..\ldrsnap.c   \
         ..\ldrutil.c   \
         ..\memstm.c    \
         ..\ntdll.rc    \
+        ..\ntdll_data.c \
         ..\resource.c  \
         ..\seurtl.c    \
         ..\uilist.c    \
@@ -66,18 +65,22 @@ SOURCES=\
         ..\verifier.c  \
         ..\dlluistb.c \
         ..\wow64apc.c  \
-        ..\sxsactctx.c \
-        ..\sxsctxact.c \
-        ..\sxsctxsrch.c \
-        ..\sxsquery.c \
-        ..\sxsstorage.c \
-        ..\sxsstoragemap.c \
-        ..\ImportTableHash.c \
+        ..\sxsisol.cpp \
+        ..\sxsactctxcpp.cpp \
+        ..\sxsctxactcpp.cpp \
+        ..\sxsctxsrchcpp.cpp \
+        ..\sxsquerycpp.cpp \
+        ..\sxsstoragecpp.cpp \
+        ..\sxsstoragemapcpp.cpp \
+        ..\importtablehash.c \
+        ..\rtlgetactivationcontextdata.c \
+        ..\rtltheemptyactivationcontextdata.c \
+        ..\w64misc.c \
         wow64csr.c \
         wow64nt.c \
-
-#        ..\BugCheck.c  \
-#        ..\crtptd.c    \
+		..\_obfuscated_pointers.c \
+		..\_synchapi.c \
+		..\_eventlog.c \
 
 LINKER_FLAGS=$(LINKER_FLAGS) /align:65536 -ignore:4108 /pdb:$(O)\wntdll.pdb
 

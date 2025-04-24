@@ -21,8 +21,14 @@ Revision History:
 #include "basedll.h"
 HANDLE
 APIENTRY
-CreateFileMappingA(HANDLE hFile, LPSECURITY_ATTRIBUTES lpFileMappingAttributes, DWORD flProtect,
-                   DWORD dwMaximumSizeHigh, DWORD dwMaximumSizeLow, LPCSTR lpName)
+CreateFileMappingA(
+    HANDLE hFile,
+    LPSECURITY_ATTRIBUTES lpFileMappingAttributes,
+    DWORD flProtect,
+    DWORD dwMaximumSizeHigh,
+    DWORD dwMaximumSizeLow,
+    LPCSTR lpName
+    )
 
 /*++
 
@@ -39,34 +45,42 @@ Routine Description:
     LPCWSTR NameBuffer;
 
     NameBuffer = NULL;
-    if (ARGUMENT_PRESENT(lpName))
-    {
+    if ( ARGUMENT_PRESENT(lpName) ) {
         Unicode = &NtCurrentTeb()->StaticUnicodeString;
-        RtlInitAnsiString(&AnsiString, lpName);
-        Status = RtlAnsiStringToUnicodeString(Unicode, &AnsiString, FALSE);
-        if (!NT_SUCCESS(Status))
-        {
-            if (Status == STATUS_BUFFER_OVERFLOW)
-            {
+        RtlInitAnsiString(&AnsiString,lpName);
+        Status = RtlAnsiStringToUnicodeString(Unicode,&AnsiString,FALSE);
+        if ( !NT_SUCCESS(Status) ) {
+            if ( Status == STATUS_BUFFER_OVERFLOW ) {
                 SetLastError(ERROR_FILENAME_EXCED_RANGE);
-            }
-            else
-            {
+                }
+            else {
                 BaseSetLastNTError(Status);
-            }
+                }
             return NULL;
-        }
+            }
         NameBuffer = (LPCWSTR)Unicode->Buffer;
-    }
+        }
 
-    return CreateFileMappingW(hFile, lpFileMappingAttributes, flProtect, dwMaximumSizeHigh, dwMaximumSizeLow,
-                              NameBuffer);
+    return CreateFileMappingW(
+                hFile,
+                lpFileMappingAttributes,
+                flProtect,
+                dwMaximumSizeHigh,
+                dwMaximumSizeLow,
+                NameBuffer
+                );
 }
 
 HANDLE
 APIENTRY
-CreateFileMappingW(HANDLE hFile, LPSECURITY_ATTRIBUTES lpFileMappingAttributes, DWORD flProtect,
-                   DWORD dwMaximumSizeHigh, DWORD dwMaximumSizeLow, LPCWSTR lpName)
+CreateFileMappingW(
+    HANDLE hFile,
+    LPSECURITY_ATTRIBUTES lpFileMappingAttributes,
+    DWORD flProtect,
+    DWORD dwMaximumSizeHigh,
+    DWORD dwMaximumSizeLow,
+    LPCWSTR lpName
+    )
 /*++
 
 Routine Description:
@@ -173,95 +187,92 @@ Return Value:
     DesiredAccess = STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ;
     AllocationAttributes = flProtect & (SEC_FILE | SEC_IMAGE | SEC_RESERVE | SEC_COMMIT | SEC_NOCACHE);
     flProtect ^= AllocationAttributes;
-    if (AllocationAttributes == 0)
-    {
+    if (AllocationAttributes == 0) {
         AllocationAttributes = SEC_COMMIT;
-    }
+        }
 
-    if (flProtect == PAGE_READWRITE)
-    {
+    if ( flProtect == PAGE_READWRITE ) {
         DesiredAccess |= (SECTION_MAP_READ | SECTION_MAP_WRITE);
-    }
-    else if (flProtect != PAGE_READONLY && flProtect != PAGE_WRITECOPY)
-    {
+        }
+    else
+    if ( flProtect != PAGE_READONLY && flProtect != PAGE_WRITECOPY ) {
         SetLastError(ERROR_INVALID_PARAMETER);
         return NULL;
-    }
-
-    if (ARGUMENT_PRESENT(lpName))
-    {
-        if (gpTermsrvFormatObjectName && (pstrNewObjName = gpTermsrvFormatObjectName(lpName)))
-        {
-
-            RtlInitUnicodeString(&ObjectName, pstrNewObjName);
-        }
-        else
-        {
-
-            RtlInitUnicodeString(&ObjectName, lpName);
         }
 
-        pObja = BaseFormatObjectAttributes(&Obja, lpFileMappingAttributes, &ObjectName);
-    }
-    else
-    {
-        pObja = BaseFormatObjectAttributes(&Obja, lpFileMappingAttributes, NULL);
-    }
+    if ( ARGUMENT_PRESENT(lpName) ) {
+        if (gpTermsrvFormatObjectName && 
+            (pstrNewObjName = gpTermsrvFormatObjectName(lpName))) {
+    
+            RtlInitUnicodeString(&ObjectName,pstrNewObjName);
+    
+        } else {
+    
+            RtlInitUnicodeString(&ObjectName,lpName);
+        }
 
-    if (dwMaximumSizeLow || dwMaximumSizeHigh)
-    {
+        pObja = BaseFormatObjectAttributes(&Obja,lpFileMappingAttributes,&ObjectName);
+        }
+    else {
+        pObja = BaseFormatObjectAttributes(&Obja,lpFileMappingAttributes,NULL);
+        }
+
+    if ( dwMaximumSizeLow || dwMaximumSizeHigh ) {
         SectionSize = &SectionSizeData;
         SectionSize->LowPart = dwMaximumSizeLow;
         SectionSize->HighPart = dwMaximumSizeHigh;
-    }
-    else
-    {
+        }
+    else {
         SectionSize = NULL;
-    }
+        }
 
-    if (hFile == INVALID_HANDLE_VALUE)
-    {
+    if (hFile == INVALID_HANDLE_VALUE) {
         hFile = NULL;
-        if (!SectionSize)
-        {
+        if ( !SectionSize ) {
             SetLastError(ERROR_INVALID_PARAMETER);
-            if (pstrNewObjName)
-            {
+            if (pstrNewObjName) {
                 RtlFreeHeap(RtlProcessHeap(), 0, pstrNewObjName);
             }
             return NULL;
+            }
         }
-    }
 
-    Status = NtCreateSection(&Section, DesiredAccess, pObja, SectionSize, flProtect, AllocationAttributes, hFile);
+    Status = NtCreateSection(
+                &Section,
+                DesiredAccess,
+                pObja,
+                SectionSize,
+                flProtect,
+                AllocationAttributes,
+                hFile
+                );
 
-    if (pstrNewObjName)
-    {
+    if (pstrNewObjName) {
         RtlFreeHeap(RtlProcessHeap(), 0, pstrNewObjName);
     }
 
-    if (!NT_SUCCESS(Status))
-    {
+    if ( !NT_SUCCESS(Status) ) {
         BaseSetLastNTError(Status);
         return Section = NULL;
-    }
-    else
-    {
-        if (Status == STATUS_OBJECT_NAME_EXISTS)
-        {
+        }
+    else {
+        if ( Status == STATUS_OBJECT_NAME_EXISTS ) {
             SetLastError(ERROR_ALREADY_EXISTS);
-        }
-        else
-        {
+            }
+        else {
             SetLastError(0);
+            }
         }
-    }
     return Section;
 }
 
 HANDLE
 APIENTRY
-OpenFileMappingA(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCSTR lpName)
+OpenFileMappingA(
+    DWORD dwDesiredAccess,
+    BOOL bInheritHandle,
+    LPCSTR lpName
+    )
 
 /*++
 
@@ -276,36 +287,39 @@ Routine Description:
     ANSI_STRING AnsiString;
     NTSTATUS Status;
 
-    if (ARGUMENT_PRESENT(lpName))
-    {
+    if ( ARGUMENT_PRESENT(lpName) ) {
         Unicode = &NtCurrentTeb()->StaticUnicodeString;
-        RtlInitAnsiString(&AnsiString, lpName);
-        Status = RtlAnsiStringToUnicodeString(Unicode, &AnsiString, FALSE);
-        if (!NT_SUCCESS(Status))
-        {
-            if (Status == STATUS_BUFFER_OVERFLOW)
-            {
+        RtlInitAnsiString(&AnsiString,lpName);
+        Status = RtlAnsiStringToUnicodeString(Unicode,&AnsiString,FALSE);
+        if ( !NT_SUCCESS(Status) ) {
+            if ( Status == STATUS_BUFFER_OVERFLOW ) {
                 SetLastError(ERROR_FILENAME_EXCED_RANGE);
-            }
-            else
-            {
+                }
+            else {
                 BaseSetLastNTError(Status);
-            }
+                }
             return NULL;
+            }
         }
-    }
-    else
-    {
+    else {
         BaseSetLastNTError(STATUS_INVALID_PARAMETER);
         return NULL;
-    }
+        }
 
-    return OpenFileMappingW(dwDesiredAccess, bInheritHandle, (LPCWSTR)Unicode->Buffer);
+    return OpenFileMappingW(
+                dwDesiredAccess,
+                bInheritHandle,
+                (LPCWSTR)Unicode->Buffer
+                );
 }
 
 HANDLE
 APIENTRY
-OpenFileMappingW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName)
+OpenFileMappingW(
+    DWORD dwDesiredAccess,
+    BOOL bInheritHandle,
+    LPCWSTR lpName
+    )
 {
     OBJECT_ATTRIBUTES Obja;
     UNICODE_STRING ObjectName;
@@ -313,51 +327,60 @@ OpenFileMappingW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName)
     HANDLE Object;
     PWCHAR pstrNewObjName = NULL;
 
-    if (!lpName)
-    {
+    if ( !lpName ) {
         BaseSetLastNTError(STATUS_INVALID_PARAMETER);
         return NULL;
+        }
+
+    if (gpTermsrvFormatObjectName && 
+        (pstrNewObjName = gpTermsrvFormatObjectName(lpName))) {
+
+        RtlInitUnicodeString(&ObjectName,pstrNewObjName);
+
+    } else {
+
+        RtlInitUnicodeString(&ObjectName,lpName);
     }
 
-    if (gpTermsrvFormatObjectName && (pstrNewObjName = gpTermsrvFormatObjectName(lpName)))
-    {
+    InitializeObjectAttributes(
+        &Obja,
+        &ObjectName,
+        (bInheritHandle ? OBJ_INHERIT : 0),
+        BaseGetNamedObjectDirectory(),
+        NULL
+        );
 
-        RtlInitUnicodeString(&ObjectName, pstrNewObjName);
-    }
-    else
-    {
-
-        RtlInitUnicodeString(&ObjectName, lpName);
-    }
-
-    InitializeObjectAttributes(&Obja, &ObjectName, (bInheritHandle ? OBJ_INHERIT : 0), BaseGetNamedObjectDirectory(),
-                               NULL);
-
-    if (dwDesiredAccess == FILE_MAP_COPY)
-    {
+    if ( dwDesiredAccess == FILE_MAP_COPY ) {
         dwDesiredAccess = FILE_MAP_READ;
-    }
+        }
 
-    Status = NtOpenSection(&Object, dwDesiredAccess, &Obja);
+    Status = NtOpenSection(
+                &Object,
+                dwDesiredAccess,
+                &Obja
+                );
 
-    if (pstrNewObjName)
-    {
+    if (pstrNewObjName) {
         RtlFreeHeap(RtlProcessHeap(), 0, pstrNewObjName);
     }
-
-    if (!NT_SUCCESS(Status))
-    {
+    
+    if ( !NT_SUCCESS(Status) ) {
         BaseSetLastNTError(Status);
         return NULL;
-    }
+        }
     return Object;
 }
 
 
 LPVOID
 APIENTRY
-MapViewOfFile(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow,
-              SIZE_T dwNumberOfBytesToMap)
+MapViewOfFile(
+    HANDLE hFileMappingObject,
+    DWORD dwDesiredAccess,
+    DWORD dwFileOffsetHigh,
+    DWORD dwFileOffsetLow,
+    SIZE_T dwNumberOfBytesToMap
+    )
 
 /*++
 
@@ -431,14 +454,26 @@ Return Value:
 --*/
 
 {
-    return MapViewOfFileEx(hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap,
-                           NULL);
+    return MapViewOfFileEx(
+            hFileMappingObject,
+            dwDesiredAccess,
+            dwFileOffsetHigh,
+            dwFileOffsetLow,
+            dwNumberOfBytesToMap,
+            NULL
+            );
 }
 
 LPVOID
 APIENTRY
-MapViewOfFileEx(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow,
-                SIZE_T dwNumberOfBytesToMap, LPVOID lpBaseAddress)
+MapViewOfFileEx(
+    HANDLE hFileMappingObject,
+    DWORD dwDesiredAccess,
+    DWORD dwFileOffsetHigh,
+    DWORD dwFileOffsetLow,
+    SIZE_T dwNumberOfBytesToMap,
+    LPVOID lpBaseAddress
+    )
 
 /*++
 
@@ -534,35 +569,46 @@ Return Value:
     ViewSize = dwNumberOfBytesToMap;
     ViewBase = lpBaseAddress;
 
-    if (dwDesiredAccess == FILE_MAP_COPY)
-    {
+    if ( dwDesiredAccess == FILE_MAP_COPY ) {
         Protect = PAGE_WRITECOPY;
-    }
-    else if (dwDesiredAccess & FILE_MAP_WRITE)
-    {
-        Protect = PAGE_READWRITE;
-    }
-    else if (dwDesiredAccess & FILE_MAP_READ)
-    {
-        Protect = PAGE_READONLY;
-    }
+        }
     else
-    {
+    if ( dwDesiredAccess & FILE_MAP_WRITE ) {
+        Protect = PAGE_READWRITE;
+        }
+    else if ( dwDesiredAccess & FILE_MAP_READ ) {
+        Protect = PAGE_READONLY;
+        }
+    else {
         Protect = PAGE_NOACCESS;
-    }
+        }
 
-    Status = NtMapViewOfSection(hFileMappingObject, NtCurrentProcess(), &ViewBase, 0L, 0L, &SectionOffset, &ViewSize,
-                                ViewShare, 0L, Protect);
-    if (!NT_SUCCESS(Status))
-    {
+    Status = NtMapViewOfSection(
+                hFileMappingObject,
+                NtCurrentProcess(),
+                &ViewBase,
+                0L,
+                0L,
+                &SectionOffset,
+                &ViewSize,
+                ViewShare,
+                0L,
+                Protect
+                );
+    if ( !NT_SUCCESS(Status) ) {
         BaseSetLastNTError(Status);
         return NULL;
-    }
+        }
     return ViewBase;
 }
 
 
-BOOL APIENTRY FlushViewOfFile(LPCVOID lpBaseAddress, SIZE_T dwNumberOfBytesToFlush)
+BOOL
+APIENTRY
+FlushViewOfFile(
+    LPCVOID lpBaseAddress,
+    SIZE_T dwNumberOfBytesToFlush
+    )
 
 /*++
 
@@ -607,21 +653,28 @@ Return Value:
     BaseAddress = (PVOID)lpBaseAddress;
     RegionSize = dwNumberOfBytesToFlush;
 
-    Status = NtFlushVirtualMemory(NtCurrentProcess(), &BaseAddress, &RegionSize, &IoStatus);
-    if (!NT_SUCCESS(Status))
-    {
-        if (Status == STATUS_NOT_MAPPED_DATA)
-        {
+    Status = NtFlushVirtualMemory(
+                NtCurrentProcess(),
+                &BaseAddress,
+                &RegionSize,
+                &IoStatus
+                );
+    if ( !NT_SUCCESS(Status) ) {
+        if ( Status == STATUS_NOT_MAPPED_DATA ) {
             return TRUE;
-        }
+            }
         BaseSetLastNTError(Status);
         return FALSE;
-    }
+        }
 
     return TRUE;
 }
 
-BOOL APIENTRY UnmapViewOfFile(LPCVOID lpBaseAddress)
+BOOL
+APIENTRY
+UnmapViewOfFile(
+    LPCVOID lpBaseAddress
+    )
 
 /*++
 
@@ -651,31 +704,29 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = NtUnmapViewOfSection(NtCurrentProcess(), (PVOID)lpBaseAddress);
+    Status = NtUnmapViewOfSection(NtCurrentProcess(),(PVOID)lpBaseAddress);
 
-    if (!NT_SUCCESS(Status))
-    {
-        if (Status == STATUS_INVALID_PAGE_PROTECTION)
-        {
+    if ( !NT_SUCCESS(Status) ) {
+        if (Status == STATUS_INVALID_PAGE_PROTECTION) {
 
             //
             // Unlock any pages that were locked with MmSecureVirtualMemory.
             // This is useful for SANs.
             //
 
-            if (RtlFlushSecureMemoryCache((PVOID)lpBaseAddress, 0))
-            {
-                Status = NtUnmapViewOfSection(NtCurrentProcess(), (PVOID)lpBaseAddress);
+            if (RtlFlushSecureMemoryCache((PVOID)lpBaseAddress, 0)) {
+                Status = NtUnmapViewOfSection(NtCurrentProcess(),
+                                              (PVOID)lpBaseAddress
+                                            );
 
-                if (NT_SUCCESS(Status))
-                {
-                    return (TRUE);
+                if (NT_SUCCESS( Status )) {
+                    return( TRUE );
+                    }
                 }
             }
-        }
         BaseSetLastNTError(Status);
         return FALSE;
-    }
+        }
 
     return TRUE;
 }

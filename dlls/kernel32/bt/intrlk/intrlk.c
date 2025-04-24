@@ -31,7 +31,10 @@ Revision History:
 // Main program.
 //
 
-void test(void)
+void
+test (
+    void
+    )
 
 {
 

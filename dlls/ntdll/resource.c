@@ -38,200 +38,218 @@ Revision History:
 // Define the desired access for semaphores.
 //
 
-#define DESIRED_EVENT_ACCESS (EVENT_QUERY_STATE | EVENT_MODIFY_STATE | SYNCHRONIZE)
+#define DESIRED_EVENT_ACCESS \
+                (EVENT_QUERY_STATE | EVENT_MODIFY_STATE | SYNCHRONIZE)
 
-#define DESIRED_SEMAPHORE_ACCESS (SEMAPHORE_QUERY_STATE | SEMAPHORE_MODIFY_STATE | SYNCHRONIZE)
+#define DESIRED_SEMAPHORE_ACCESS \
+                (SEMAPHORE_QUERY_STATE | SEMAPHORE_MODIFY_STATE | SYNCHRONIZE)
 
-VOID RtlDumpResource(IN PRTL_RESOURCE Resource);
+VOID RtlDumpResource( IN PRTL_RESOURCE Resource );
 
 extern BOOLEAN LdrpShutdownInProgress;
 extern HANDLE LdrpShutdownThreadId;
 
 NTSTATUS
-RtlpInitDeferedCriticalSection(VOID);
+RtlpInitDeferedCriticalSection( VOID );
 RTL_CRITICAL_SECTION DeferedCriticalSection;
 
-HANDLE GlobalKeyedEventHandle = NULL;
+HANDLE GlobalKeyedEventHandle=NULL;
 
 //#define RTLP_USE_GLOBAL_KEYED_EVENT 1
 
-#define RtlpIsKeyedEvent(xxHandle) ((((ULONG_PTR)xxHandle) & 1) != 0)
-#define RtlpSetKeyedEventHandle(xxHandle) ((HANDLE)(((ULONG_PTR)xxHandle) | 1))
+#define RtlpIsKeyedEvent(xxHandle) ((((ULONG_PTR)xxHandle)&1) != 0)
+#define RtlpSetKeyedEventHandle(xxHandle) ((HANDLE)(((ULONG_PTR)xxHandle)|1))
 
 #if DBG
 BOOLEAN
-ProtectHandle(HANDLE hObject)
+ProtectHandle(
+    HANDLE hObject
+    )
 {
     NTSTATUS Status;
     OBJECT_HANDLE_FLAG_INFORMATION HandleInfo;
 
-    Status = NtQueryObject(hObject, ObjectHandleFlagInformation, &HandleInfo, sizeof(HandleInfo), NULL);
-    if (NT_SUCCESS(Status))
-    {
+    Status = NtQueryObject( hObject,
+                            ObjectHandleFlagInformation,
+                            &HandleInfo,
+                            sizeof( HandleInfo ),
+                            NULL
+                          );
+    if (NT_SUCCESS( Status )) {
         HandleInfo.ProtectFromClose = TRUE;
 
-        Status = NtSetInformationObject(hObject, ObjectHandleFlagInformation, &HandleInfo, sizeof(HandleInfo));
-        if (NT_SUCCESS(Status))
-        {
+        Status = NtSetInformationObject( hObject,
+                                         ObjectHandleFlagInformation,
+                                         &HandleInfo,
+                                         sizeof( HandleInfo )
+                                       );
+        if (NT_SUCCESS( Status )) {
             return TRUE;
+            }
         }
-    }
 
     return FALSE;
 }
 
 
 BOOLEAN
-UnProtectHandle(HANDLE hObject)
+UnProtectHandle(
+    HANDLE hObject
+    )
 {
     NTSTATUS Status;
     OBJECT_HANDLE_FLAG_INFORMATION HandleInfo;
 
-    Status = NtQueryObject(hObject, ObjectHandleFlagInformation, &HandleInfo, sizeof(HandleInfo), NULL);
-    if (NT_SUCCESS(Status))
-    {
+    Status = NtQueryObject( hObject,
+                            ObjectHandleFlagInformation,
+                            &HandleInfo,
+                            sizeof( HandleInfo ),
+                            NULL
+                          );
+    if (NT_SUCCESS( Status )) {
         HandleInfo.ProtectFromClose = FALSE;
 
-        Status = NtSetInformationObject(hObject, ObjectHandleFlagInformation, &HandleInfo, sizeof(HandleInfo));
-        if (NT_SUCCESS(Status))
-        {
+        Status = NtSetInformationObject( hObject,
+                                         ObjectHandleFlagInformation,
+                                         &HandleInfo,
+                                         sizeof( HandleInfo )
+                                       );
+        if (NT_SUCCESS( Status )) {
             return TRUE;
+            }
         }
-    }
 
     return FALSE;
 }
 #endif // DBG
 
-RTL_CRITICAL_SECTION_DEBUG RtlpStaticDebugInfo[64];
+RTL_CRITICAL_SECTION_DEBUG RtlpStaticDebugInfo[ 64 ];
 PRTL_CRITICAL_SECTION_DEBUG RtlpDebugInfoFreeList;
 BOOLEAN RtlpCritSectInitialized;
 
 PRTL_CRITICAL_SECTION_DEBUG
-RtlpChainDebugInfo(IN PVOID BaseAddress, IN ULONG Size)
+RtlpChainDebugInfo(
+    IN PVOID BaseAddress,
+    IN ULONG Size
+    )
 {
     PRTL_CRITICAL_SECTION_DEBUG p, p1;
 
-    Size = Size / sizeof(RTL_CRITICAL_SECTION_DEBUG);
+    Size = Size / sizeof( RTL_CRITICAL_SECTION_DEBUG );
 
     p = NULL;
 
-    if (Size)
-    {
+    if (Size) {
         p = (PRTL_CRITICAL_SECTION_DEBUG)BaseAddress + Size - 1;
         *(PRTL_CRITICAL_SECTION_DEBUG *)p = NULL;
-        while (--Size)
-        {
+        while (--Size) {
             p1 = p - 1;
             *(PRTL_CRITICAL_SECTION_DEBUG *)p1 = p;
             p = p1;
+            }
         }
-    }
 
     return p;
 }
 
 
 PVOID
-RtlpAllocateDebugInfo(VOID);
+RtlpAllocateDebugInfo( VOID );
 
-VOID RtlpFreeDebugInfo(IN PRTL_CRITICAL_SECTION_DEBUG DebugInfo);
+VOID
+RtlpFreeDebugInfo(
+    IN PRTL_CRITICAL_SECTION_DEBUG DebugInfo
+    );
 
 PVOID
-RtlpAllocateDebugInfo(VOID)
+RtlpAllocateDebugInfo( VOID )
 {
     PRTL_CRITICAL_SECTION_DEBUG p;
     PPEB Peb;
 
 
-    if (RtlpCritSectInitialized)
-    {
+    if (RtlpCritSectInitialized) {
         RtlEnterCriticalSection(&DeferedCriticalSection);
-    }
-    try
-    {
+        }
+    try {
         p = RtlpDebugInfoFreeList;
-        if (p == NULL)
-        {
+        if (p == NULL) {
             Peb = NtCurrentPeb();
-            p = RtlAllocateHeap(Peb->ProcessHeap, 0, sizeof(RTL_CRITICAL_SECTION_DEBUG));
-            if (!p)
-            {
-                KdPrint(("NTDLL: Unable to allocate debug information from heap\n"));
+            p = RtlAllocateHeap(Peb->ProcessHeap,
+                                0,
+                                sizeof(RTL_CRITICAL_SECTION_DEBUG));
+            if ( !p ) {
+                KdPrint(( "NTDLL: Unable to allocate debug information from heap\n"));
+                }
+            }
+        else {
+            RtlpDebugInfoFreeList = *(PRTL_CRITICAL_SECTION_DEBUG *)p;
             }
         }
-        else
-        {
-            RtlpDebugInfoFreeList = *(PRTL_CRITICAL_SECTION_DEBUG *)p;
-        }
-    }
-    finally
-    {
-        if (RtlpCritSectInitialized)
-        {
+    finally {
+        if (RtlpCritSectInitialized) {
             RtlLeaveCriticalSection(&DeferedCriticalSection);
+            }
         }
-    }
 
     return p;
 }
 
 
-VOID RtlpFreeDebugInfo(IN PRTL_CRITICAL_SECTION_DEBUG DebugInfo)
+VOID
+RtlpFreeDebugInfo(
+    IN PRTL_CRITICAL_SECTION_DEBUG DebugInfo
+    )
 {
     RtlEnterCriticalSection(&DeferedCriticalSection);
-    try
-    {
-        RtlZeroMemory(DebugInfo, sizeof(RTL_CRITICAL_SECTION_DEBUG));
-        if ((RtlpStaticDebugInfo <= DebugInfo) &&
-            ((char *)DebugInfo < (((char *)RtlpStaticDebugInfo) + sizeof(RtlpStaticDebugInfo))))
-        {
-            //
-            // It came from our static debug info; save it away...
-            //
-            *(PRTL_CRITICAL_SECTION_DEBUG *)DebugInfo = RtlpDebugInfoFreeList;
-            RtlpDebugInfoFreeList = DebugInfo;
+    try {
+        RtlZeroMemory( DebugInfo, sizeof( RTL_CRITICAL_SECTION_DEBUG ) );
+	if ( (RtlpStaticDebugInfo <= DebugInfo)
+	     && ((char *)DebugInfo < (((char *)RtlpStaticDebugInfo)
+				      + sizeof(RtlpStaticDebugInfo)))) {
+	    //
+	    // It came from our static debug info; save it away...
+	    //
+	    *(PRTL_CRITICAL_SECTION_DEBUG *)DebugInfo = RtlpDebugInfoFreeList;
+	    RtlpDebugInfoFreeList = DebugInfo;
+	    }
+	else {
+	    //
+	    // We allocated this debug info from the heap; give it back.
+	    //
+	    RtlFreeHeap(NtCurrentPeb()->ProcessHeap, 0, DebugInfo);
+	    }
         }
-        else
-        {
-            //
-            // We allocated this debug info from the heap; give it back.
-            //
-            RtlFreeHeap(NtCurrentPeb()->ProcessHeap, 0, DebugInfo);
-        }
-    }
-    finally
-    {
+    finally {
         RtlLeaveCriticalSection(&DeferedCriticalSection);
-    }
+        }
 
     return;
 }
 
 
 NTSTATUS
-RtlpInitDeferedCriticalSection(VOID)
+RtlpInitDeferedCriticalSection( VOID )
 {
     NTSTATUS Status;
 
-    InitializeListHead(&RtlCriticalSectionList);
+    InitializeListHead( &RtlCriticalSectionList );
 
-    if (sizeof(RTL_CRITICAL_SECTION_DEBUG) != sizeof(RTL_RESOURCE_DEBUG))
-    {
-        DbgPrint("NTDLL: Critical Section & Resource Debug Info length mismatch.\n");
+    if (sizeof( RTL_CRITICAL_SECTION_DEBUG ) != sizeof( RTL_RESOURCE_DEBUG )) {
+        DbgPrint( "NTDLL: Critical Section & Resource Debug Info length mismatch.\n" );
         return STATUS_INVALID_PARAMETER;
     }
 
-    RtlpDebugInfoFreeList = RtlpChainDebugInfo(RtlpStaticDebugInfo, sizeof(RtlpStaticDebugInfo));
+    RtlpDebugInfoFreeList = RtlpChainDebugInfo( RtlpStaticDebugInfo,
+                                                sizeof( RtlpStaticDebugInfo )
+                                              );
 
-    Status = RtlInitializeCriticalSectionAndSpinCount(&RtlCriticalSectionLock, 1000);
-    if (NT_SUCCESS(Status))
-    {
-        Status = RtlInitializeCriticalSectionAndSpinCount(&DeferedCriticalSection, 1000);
+    Status = RtlInitializeCriticalSectionAndSpinCount( &RtlCriticalSectionLock, 1000 );
+    if (NT_SUCCESS (Status)) {
+        Status = RtlInitializeCriticalSectionAndSpinCount( &DeferedCriticalSection, 1000 );
     }
 
-    if (NT_SUCCESS(Status))
-    {
+    if (NT_SUCCESS (Status)) {
         RtlpCritSectInitialized = TRUE;
     }
     return Status;
@@ -239,13 +257,20 @@ RtlpInitDeferedCriticalSection(VOID)
 
 
 BOOLEAN
-NtdllOkayToLockRoutine(IN PVOID Lock)
+NtdllOkayToLockRoutine(
+    IN PVOID Lock
+    )
 {
     return TRUE;
 }
 
 
-VOID RtlInitializeResource(IN PRTL_RESOURCE Resource)
+
+
+VOID
+RtlInitializeResource(
+    IN PRTL_RESOURCE Resource
+    )
 
 /*++
 
@@ -276,23 +301,20 @@ Return Value:
     //
 
     SpinCount = 1024 * (NtCurrentPeb()->NumberOfProcessors - 1);
-    if (SpinCount > 12000)
-    {
+    if (SpinCount > 12000) {
         SpinCount = 12000;
     }
 
-    Status = RtlInitializeCriticalSectionAndSpinCount(&Resource->CriticalSection, SpinCount);
-    if (!NT_SUCCESS(Status))
-    {
+    Status = RtlInitializeCriticalSectionAndSpinCount (&Resource->CriticalSection, SpinCount);
+    if (!NT_SUCCESS (Status)){
         RtlRaiseStatus(Status);
     }
 
     Resource->CriticalSection.DebugInfo->Type = RTL_RESOURCE_TYPE;
-    ResourceDebugInfo = (PRTL_RESOURCE_DEBUG)RtlpAllocateDebugInfo();
+    ResourceDebugInfo = (PRTL_RESOURCE_DEBUG) RtlpAllocateDebugInfo();
 
-    if (ResourceDebugInfo == NULL)
-    {
-        RtlDeleteCriticalSection(&Resource->CriticalSection);
+    if (ResourceDebugInfo == NULL) {
+        RtlDeleteCriticalSection (&Resource->CriticalSection);
         RtlRaiseStatus(STATUS_NO_MEMORY);
     }
 
@@ -316,24 +338,34 @@ Return Value:
     //  side if count if not updated before the critical section is exited.
     //
 
-    Status = NtCreateSemaphore(&Resource->SharedSemaphore, DESIRED_SEMAPHORE_ACCESS, NULL, 0, MAXLONG);
-    if (!NT_SUCCESS(Status))
-    {
-        RtlDeleteCriticalSection(&Resource->CriticalSection);
-        RtlpFreeDebugInfo(Resource->DebugInfo);
+    Status = NtCreateSemaphore(
+                 &Resource->SharedSemaphore,
+                 DESIRED_SEMAPHORE_ACCESS,
+                 NULL,
+                 0,
+                 MAXLONG
+                 );
+    if ( !NT_SUCCESS(Status) ){
+        RtlDeleteCriticalSection (&Resource->CriticalSection);
+        RtlpFreeDebugInfo( Resource->DebugInfo );
         RtlRaiseStatus(Status);
     }
 
     Resource->NumberOfWaitingShared = 0;
 
-    Status = NtCreateSemaphore(&Resource->ExclusiveSemaphore, DESIRED_SEMAPHORE_ACCESS, NULL, 0, MAXLONG);
-    if (!NT_SUCCESS(Status))
-    {
-        RtlDeleteCriticalSection(&Resource->CriticalSection);
+    Status = NtCreateSemaphore(
+                 &Resource->ExclusiveSemaphore,
+                 DESIRED_SEMAPHORE_ACCESS,
+                 NULL,
+                 0,
+                 MAXLONG
+                 );
+    if ( !NT_SUCCESS(Status) ){
+        RtlDeleteCriticalSection (&Resource->CriticalSection);
         NtClose(Resource->SharedSemaphore);
-        RtlpFreeDebugInfo(Resource->DebugInfo);
+        RtlpFreeDebugInfo( Resource->DebugInfo );
         RtlRaiseStatus(Status);
-    }
+        }
 
     Resource->NumberOfWaitingExclusive = 0;
 
@@ -348,9 +380,12 @@ Return Value:
     return;
 }
 
-
+
 BOOLEAN
-RtlAcquireResourceShared(IN PRTL_RESOURCE Resource, IN BOOLEAN Wait)
+RtlAcquireResourceShared(
+    IN PRTL_RESOURCE Resource,
+    IN BOOLEAN Wait
+    )
 
 /*++
 
@@ -396,8 +431,7 @@ Return Value:
     //          (Resource->NumberOfActive >= 0)) {
     //
 
-    if (Resource->NumberOfActive >= 0)
-    {
+    if (Resource->NumberOfActive >= 0) {
 
         //
         //  The resource is ours, so indicate that we have it and
@@ -408,15 +442,14 @@ Return Value:
 
         RtlLeaveCriticalSection(&Resource->CriticalSection);
 
-        //
-        //  Otherwise check to see if this thread is the one currently holding
-        //  exclusive access to the resource.  And if it is then we change
-        //  this shared request to an exclusive recusive request and grant
-        //  access to the resource.
-        //
-    }
-    else if (Resource->ExclusiveOwnerThread == NtCurrentTeb()->ClientId.UniqueThread)
-    {
+    //
+    //  Otherwise check to see if this thread is the one currently holding
+    //  exclusive access to the resource.  And if it is then we change
+    //  this shared request to an exclusive recusive request and grant
+    //  access to the resource.
+    //
+
+    } else if (Resource->ExclusiveOwnerThread == NtCurrentTeb()->ClientId.UniqueThread) {
 
         //
         //  The resource is ours (recusively) so indicate that we have it
@@ -427,24 +460,23 @@ Return Value:
 
         RtlLeaveCriticalSection(&Resource->CriticalSection);
 
-        //
-        //  Otherwise we'll have to wait for access.
-        //
-    }
-    else
-    {
+    //
+    //  Otherwise we'll have to wait for access.
+    //
+
+    } else {
 
         //
         //  Check if we are allowed to wait or must return immedately, and
         //  indicate that we didn't acquire the resource
         //
 
-        if (!Wait)
-        {
+        if (!Wait) {
 
             RtlLeaveCriticalSection(&Resource->CriticalSection);
 
             return FALSE;
+
         }
 
         //
@@ -458,20 +490,21 @@ Return Value:
 
         RtlLeaveCriticalSection(&Resource->CriticalSection);
 
-    rewait:
-        if (Resource->Flags & RTL_RESOURCE_FLAG_LONG_TERM)
-        {
+rewait:
+        if ( Resource->Flags & RTL_RESOURCE_FLAG_LONG_TERM ) {
             TimeoutTime = NULL;
         }
-        Status = NtWaitForSingleObject(Resource->SharedSemaphore, FALSE, TimeoutTime);
-        if (Status == STATUS_TIMEOUT)
-        {
-            DbgPrint("RTL: Acquire Shared Sem Timeout %d(%I64u secs)\n", TimeoutCount,
-                     TimeoutTime->QuadPart / (-10000000));
-            DbgPrint("RTL: Resource at %p\n", Resource);
+        Status = NtWaitForSingleObject(
+                    Resource->SharedSemaphore,
+                    FALSE,
+                    TimeoutTime
+                    );
+        if ( Status == STATUS_TIMEOUT ) {
+            DbgPrint("RTL: Acquire Shared Sem Timeout %d(%I64u secs)\n",
+                     TimeoutCount, TimeoutTime->QuadPart / (-10000000));
+            DbgPrint("RTL: Resource at %p\n",Resource);
             TimeoutCount++;
-            if (TimeoutCount > 2)
-            {
+            if ( TimeoutCount > 2 ) {
                 PIMAGE_NT_HEADERS NtHeaders;
 
                 //
@@ -482,8 +515,7 @@ Return Value:
                 NtHeaders = RtlImageNtHeader(NtCurrentPeb()->ImageBaseAddress);
 
                 if (NtHeaders->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI ||
-                    NtHeaders->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI)
-                {
+                    NtHeaders->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI) {
                     EXCEPTION_RECORD ExceptionRecord;
 
                     ExceptionRecord.ExceptionCode = STATUS_POSSIBLE_DEADLOCK;
@@ -493,19 +525,17 @@ Return Value:
                     ExceptionRecord.NumberParameters = 1;
                     ExceptionRecord.ExceptionInformation[0] = (ULONG_PTR)Resource;
                     RtlRaiseException(&ExceptionRecord);
-                }
-                else
-                {
+                    }
+                else {
                     DbgBreakPoint();
+                    }
                 }
-            }
             DbgPrint("RTL: Re-Waiting\n");
             goto rewait;
         }
-        if (!NT_SUCCESS(Status))
-        {
+        if ( !NT_SUCCESS(Status) ) {
             RtlRaiseStatus(Status);
-        }
+            }
     }
 
     //
@@ -513,11 +543,15 @@ Return Value:
     //
 
     return TRUE;
+
 }
 
-
+
 BOOLEAN
-RtlAcquireResourceExclusive(IN PRTL_RESOURCE Resource, IN BOOLEAN Wait)
+RtlAcquireResourceExclusive(
+    IN PRTL_RESOURCE Resource,
+    IN BOOLEAN Wait
+    )
 
 /*++
 
@@ -548,8 +582,7 @@ Return Value:
     //  Loop until the resource is ours or exit if we cannot wait.
     //
 
-    while (TRUE)
-    {
+    while (TRUE) {
 
         //
         //  Enter the critical section
@@ -566,10 +599,10 @@ Return Value:
 
         if ((Resource->NumberOfActive == 0)
 
-            ||
+                ||
 
-            ((Resource->NumberOfActive == -1) && (Resource->ExclusiveOwnerThread == NULL)))
-        {
+            ((Resource->NumberOfActive == -1) &&
+             (Resource->ExclusiveOwnerThread == NULL))) {
 
             //
             //  The resource is ours, so indicate that we have it and
@@ -583,6 +616,7 @@ Return Value:
             RtlLeaveCriticalSection(&Resource->CriticalSection);
 
             return TRUE;
+
         }
 
         //
@@ -590,8 +624,7 @@ Return Value:
         //  resource and can simply recusively acquire it again.
         //
 
-        if (Resource->ExclusiveOwnerThread == NtCurrentTeb()->ClientId.UniqueThread)
-        {
+        if (Resource->ExclusiveOwnerThread == NtCurrentTeb()->ClientId.UniqueThread) {
 
             //
             //  The resource is ours (recusively) so indicate that we have it
@@ -603,6 +636,7 @@ Return Value:
             RtlLeaveCriticalSection(&Resource->CriticalSection);
 
             return TRUE;
+
         }
 
         //
@@ -610,12 +644,12 @@ Return Value:
         //  indicate that we didn't acquire the resource
         //
 
-        if (!Wait)
-        {
+        if (!Wait) {
 
             RtlLeaveCriticalSection(&Resource->CriticalSection);
 
             return FALSE;
+
         }
 
         //
@@ -629,20 +663,21 @@ Return Value:
 
         RtlLeaveCriticalSection(&Resource->CriticalSection);
 
-    rewait:
-        if (Resource->Flags & RTL_RESOURCE_FLAG_LONG_TERM)
-        {
+rewait:
+        if ( Resource->Flags & RTL_RESOURCE_FLAG_LONG_TERM ) {
             TimeoutTime = NULL;
         }
-        Status = NtWaitForSingleObject(Resource->ExclusiveSemaphore, FALSE, TimeoutTime);
-        if (Status == STATUS_TIMEOUT)
-        {
-            DbgPrint("RTL: Acquire Exclusive Sem Timeout %d (%I64u secs)\n", TimeoutCount,
-                     TimeoutTime->QuadPart / (-10000000));
-            DbgPrint("RTL: Resource at %p\n", Resource);
+        Status = NtWaitForSingleObject(
+                    Resource->ExclusiveSemaphore,
+                    FALSE,
+                    TimeoutTime
+                    );
+        if ( Status == STATUS_TIMEOUT ) {
+            DbgPrint("RTL: Acquire Exclusive Sem Timeout %d (%I64u secs)\n",
+                     TimeoutCount, TimeoutTime->QuadPart / (-10000000));
+            DbgPrint("RTL: Resource at %p\n",Resource);
             TimeoutCount++;
-            if (TimeoutCount > 2)
-            {
+            if ( TimeoutCount > 2 ) {
                 PIMAGE_NT_HEADERS NtHeaders;
 
                 //
@@ -653,8 +688,7 @@ Return Value:
                 NtHeaders = RtlImageNtHeader(NtCurrentPeb()->ImageBaseAddress);
 
                 if (NtHeaders->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI ||
-                    NtHeaders->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI)
-                {
+                    NtHeaders->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI) {
                     EXCEPTION_RECORD ExceptionRecord;
 
                     ExceptionRecord.ExceptionCode = STATUS_POSSIBLE_DEADLOCK;
@@ -664,24 +698,25 @@ Return Value:
                     ExceptionRecord.NumberParameters = 1;
                     ExceptionRecord.ExceptionInformation[0] = (ULONG_PTR)Resource;
                     RtlRaiseException(&ExceptionRecord);
-                }
-                else
-                {
+                    }
+                else {
                     DbgBreakPoint();
+                    }
                 }
-            }
             DbgPrint("RTL: Re-Waiting\n");
             goto rewait;
         }
-        if (!NT_SUCCESS(Status))
-        {
+        if ( !NT_SUCCESS(Status) ) {
             RtlRaiseStatus(Status);
-        }
+            }
     }
 }
 
-
-VOID RtlReleaseResource(IN PRTL_RESOURCE Resource)
+
+VOID
+RtlReleaseResource(
+    IN PRTL_RESOURCE Resource
+    )
 
 /*++
 
@@ -714,8 +749,7 @@ Return Value:
     //  Test if the resource is acquired for shared or exclusive access
     //
 
-    if (Resource->NumberOfActive > 0)
-    {
+    if (Resource->NumberOfActive > 0) {
 
         //
         //  Releasing shared access to the resource, so decrement
@@ -729,8 +763,8 @@ Return Value:
         //  exclusive user then give the resource to the waiting thread
         //
 
-        if ((Resource->NumberOfActive == 0) && (Resource->NumberOfWaitingExclusive > 0))
-        {
+        if ((Resource->NumberOfActive == 0) &&
+            (Resource->NumberOfWaitingExclusive > 0)) {
 
             //
             //  Set the resource state to exclusive (but not owned),
@@ -743,15 +777,17 @@ Return Value:
 
             Resource->NumberOfWaitingExclusive -= 1;
 
-            Status = NtReleaseSemaphore(Resource->ExclusiveSemaphore, 1, &PreviousCount);
-            if (!NT_SUCCESS(Status))
-            {
+            Status = NtReleaseSemaphore(
+                         Resource->ExclusiveSemaphore,
+                         1,
+                         &PreviousCount
+                         );
+            if ( !NT_SUCCESS(Status) ) {
                 RtlRaiseStatus(Status);
-            }
+                }
         }
-    }
-    else if (Resource->NumberOfActive < 0)
-    {
+
+    } else if (Resource->NumberOfActive < 0) {
 
         //
         //  Releasing exclusive access to the resource, so increment the
@@ -761,8 +797,7 @@ Return Value:
 
         Resource->NumberOfActive += 1;
 
-        if (Resource->NumberOfActive == 0)
-        {
+        if (Resource->NumberOfActive == 0) {
 
             //
             //  The resource is now available.  Remove ourselves as the
@@ -776,8 +811,7 @@ Return Value:
             //  to it.
             //
 
-            if (Resource->NumberOfWaitingExclusive > 0)
-            {
+            if (Resource->NumberOfWaitingExclusive > 0) {
 
                 //
                 //  Set the resource to exclusive, and its owner undefined.
@@ -788,19 +822,21 @@ Return Value:
                 Resource->NumberOfActive = -1;
                 Resource->NumberOfWaitingExclusive -= 1;
 
-                Status = NtReleaseSemaphore(Resource->ExclusiveSemaphore, 1, &PreviousCount);
-                if (!NT_SUCCESS(Status))
-                {
+                Status = NtReleaseSemaphore(
+                             Resource->ExclusiveSemaphore,
+                             1,
+                             &PreviousCount
+                             );
+                if ( !NT_SUCCESS(Status) ) {
                     RtlRaiseStatus(Status);
-                }
+                    }
 
-                //
-                //  Check to see if there are waiting shared, who should now get
-                //  the resource
-                //
-            }
-            else if (Resource->NumberOfWaitingShared > 0)
-            {
+            //
+            //  Check to see if there are waiting shared, who should now get
+            //  the resource
+            //
+
+            } else if (Resource->NumberOfWaitingShared > 0) {
 
                 //
                 //  Set the new state to indicate that all of the shared
@@ -813,18 +849,19 @@ Return Value:
 
                 Resource->NumberOfWaitingShared = 0;
 
-                Status = NtReleaseSemaphore(Resource->SharedSemaphore, Resource->NumberOfActive, &PreviousCount);
-                if (!NT_SUCCESS(Status))
-                {
+                Status = NtReleaseSemaphore(
+                             Resource->SharedSemaphore,
+                             Resource->NumberOfActive,
+                             &PreviousCount
+                             );
+                if ( !NT_SUCCESS(Status) ) {
                     RtlRaiseStatus(Status);
-                }
+                    }
             }
         }
 
 #if DBG
-    }
-    else
-    {
+    } else {
 
         //
         //  The resource isn't current acquired, there is nothing to release
@@ -846,8 +883,11 @@ Return Value:
     return;
 }
 
-
-VOID RtlConvertSharedToExclusive(IN PRTL_RESOURCE Resource)
+
+VOID
+RtlConvertSharedToExclusive(
+    IN PRTL_RESOURCE Resource
+    )
 
 /*++
 
@@ -883,8 +923,7 @@ Return Value:
     //  resource for exclusive access.
     //
 
-    if (Resource->NumberOfActive == 1)
-    {
+    if (Resource->NumberOfActive == 1) {
 
         //
         //  The resource is ours, so indicate that we have it and
@@ -905,8 +944,8 @@ Return Value:
     //  we already have exclusive access
     //
 
-    if ((Resource->NumberOfActive < 0) && (Resource->ExclusiveOwnerThread == NtCurrentTeb()->ClientId.UniqueThread))
-    {
+    if ((Resource->NumberOfActive < 0) &&
+        (Resource->ExclusiveOwnerThread == NtCurrentTeb()->ClientId.UniqueThread)) {
 
         //
         //  We already have exclusive access to the resource so we'll just
@@ -923,8 +962,7 @@ Return Value:
     //  to wait to get exclusive access to the resource
     //
 
-    if (Resource->NumberOfActive > 1)
-    {
+    if (Resource->NumberOfActive > 1) {
 
         //
         //  To wait we will decrement the fact that we have the resource for
@@ -934,8 +972,7 @@ Return Value:
 
         Resource->NumberOfActive -= 1;
 
-        while (TRUE)
-        {
+        while (TRUE) {
 
             //
             //  Increment the number of waiting exclusive, exit and critical
@@ -946,50 +983,49 @@ Return Value:
             Resource->DebugInfo->ContentionCount++;
 
             RtlLeaveCriticalSection(&Resource->CriticalSection);
-        rewait:
-            Status = NtWaitForSingleObject(Resource->ExclusiveSemaphore, FALSE, &RtlpTimeout);
-            if (Status == STATUS_TIMEOUT)
-            {
-                DbgPrint("RTL: Convert Exclusive Sem Timeout %d (%I64u secs)\n", TimeoutCount,
-                         RtlpTimeout.QuadPart / (-10000000));
-                DbgPrint("RTL: Resource at %p\n", Resource);
-                TimeoutCount++;
-                if (TimeoutCount > 2)
-                {
-                    PIMAGE_NT_HEADERS NtHeaders;
+rewait:
+        Status = NtWaitForSingleObject(
+                    Resource->ExclusiveSemaphore,
+                    FALSE,
+                    &RtlpTimeout
+                    );
+        if ( Status == STATUS_TIMEOUT ) {
+            DbgPrint("RTL: Convert Exclusive Sem Timeout %d (%I64u secs)\n",
+                     TimeoutCount, RtlpTimeout.QuadPart / (-10000000));
+            DbgPrint("RTL: Resource at %p\n",Resource);
+            TimeoutCount++;
+            if ( TimeoutCount > 2 ) {
+                PIMAGE_NT_HEADERS NtHeaders;
 
-                    //
-                    // If the image is a Win32 image, then raise an exception and try to get to the
-                    // uae popup
-                    //
+                //
+                // If the image is a Win32 image, then raise an exception and try to get to the
+                // uae popup
+                //
 
-                    NtHeaders = RtlImageNtHeader(NtCurrentPeb()->ImageBaseAddress);
+                NtHeaders = RtlImageNtHeader(NtCurrentPeb()->ImageBaseAddress);
 
-                    if (NtHeaders->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI ||
-                        NtHeaders->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI)
-                    {
-                        EXCEPTION_RECORD ExceptionRecord;
+                if (NtHeaders->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI ||
+                    NtHeaders->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI) {
+                    EXCEPTION_RECORD ExceptionRecord;
 
-                        ExceptionRecord.ExceptionCode = STATUS_POSSIBLE_DEADLOCK;
-                        ExceptionRecord.ExceptionFlags = 0;
-                        ExceptionRecord.ExceptionRecord = NULL;
-                        ExceptionRecord.ExceptionAddress = (PVOID)RtlRaiseException;
-                        ExceptionRecord.NumberParameters = 1;
-                        ExceptionRecord.ExceptionInformation[0] = (ULONG_PTR)Resource;
-                        RtlRaiseException(&ExceptionRecord);
+                    ExceptionRecord.ExceptionCode = STATUS_POSSIBLE_DEADLOCK;
+                    ExceptionRecord.ExceptionFlags = 0;
+                    ExceptionRecord.ExceptionRecord = NULL;
+                    ExceptionRecord.ExceptionAddress = (PVOID)RtlRaiseException;
+                    ExceptionRecord.NumberParameters = 1;
+                    ExceptionRecord.ExceptionInformation[0] = (ULONG_PTR)Resource;
+                    RtlRaiseException(&ExceptionRecord);
                     }
-                    else
-                    {
-                        DbgBreakPoint();
+                else {
+                    DbgBreakPoint();
                     }
                 }
-                DbgPrint("RTL: Re-Waiting\n");
-                goto rewait;
-            }
-            if (!NT_SUCCESS(Status))
-            {
+            DbgPrint("RTL: Re-Waiting\n");
+            goto rewait;
+        }
+            if ( !NT_SUCCESS(Status) ) {
                 RtlRaiseStatus(Status);
-            }
+                }
 
             //
             //  Enter the critical section
@@ -1006,10 +1042,10 @@ Return Value:
 
             if ((Resource->NumberOfActive == 0)
 
-                ||
+                    ||
 
-                ((Resource->NumberOfActive == -1) && (Resource->ExclusiveOwnerThread == NULL)))
-            {
+                ((Resource->NumberOfActive == -1) &&
+                 (Resource->ExclusiveOwnerThread == NULL))) {
 
                 //
                 //  The resource is ours, so indicate that we have it and
@@ -1030,8 +1066,7 @@ Return Value:
             //  the resource and can simply recusively acquire it again.
             //
 
-            if (Resource->ExclusiveOwnerThread == NtCurrentTeb()->ClientId.UniqueThread)
-            {
+            if (Resource->ExclusiveOwnerThread == NtCurrentTeb()->ClientId.UniqueThread) {
 
                 //
                 //  The resource is ours (recusively) so indicate that we have
@@ -1045,6 +1080,7 @@ Return Value:
                 return;
             }
         }
+
     }
 
     //
@@ -1058,8 +1094,11 @@ Return Value:
 #endif
 }
 
-
-VOID RtlConvertExclusiveToShared(IN PRTL_RESOURCE Resource)
+
+VOID
+RtlConvertExclusiveToShared(
+    IN PRTL_RESOURCE Resource
+    )
 
 /*++
 
@@ -1095,8 +1134,7 @@ Return Value:
     //  resource for exclusive access.
     //
 
-    if (Resource->NumberOfActive == -1)
-    {
+    if (Resource->NumberOfActive == -1) {
 
         Resource->ExclusiveOwnerThread = NULL;
 
@@ -1105,8 +1143,7 @@ Return Value:
         //  resource along with us
         //
 
-        if (Resource->NumberOfWaitingShared > 0)
-        {
+        if (Resource->NumberOfWaitingShared > 0) {
 
             //
             //  Set the new state to indicate that all of the shared requesters
@@ -1118,25 +1155,29 @@ Return Value:
 
             Resource->NumberOfWaitingShared = 0;
 
-            Status = NtReleaseSemaphore(Resource->SharedSemaphore, Resource->NumberOfActive - 1, &PreviousCount);
-            if (!NT_SUCCESS(Status))
-            {
+            Status = NtReleaseSemaphore(
+                         Resource->SharedSemaphore,
+                         Resource->NumberOfActive - 1,
+                         &PreviousCount
+                         );
+            if ( !NT_SUCCESS(Status) ) {
                 RtlRaiseStatus(Status);
-            }
-        }
-        else
-        {
+                }
+
+        } else {
 
             //
             //  There is no one waiting for shared access so it's only ours
             //
 
             Resource->NumberOfActive = 1;
+
         }
 
         RtlLeaveCriticalSection(&Resource->CriticalSection);
 
         return;
+
     }
 
     //
@@ -1150,8 +1191,11 @@ Return Value:
 #endif
 }
 
-
-VOID RtlDeleteResource(IN PRTL_RESOURCE Resource)
+
+VOID
+RtlDeleteResource (
+    IN PRTL_RESOURCE Resource
+    )
 
 /*++
 
@@ -1171,18 +1215,22 @@ Return Value:
 --*/
 
 {
-    RtlDeleteCriticalSection(&Resource->CriticalSection);
+    RtlDeleteCriticalSection( &Resource->CriticalSection );
     NtClose(Resource->SharedSemaphore);
     NtClose(Resource->ExclusiveSemaphore);
 
-    RtlpFreeDebugInfo(Resource->DebugInfo);
-    RtlZeroMemory(Resource, sizeof(*Resource));
+    RtlpFreeDebugInfo( Resource->DebugInfo );
+    RtlZeroMemory( Resource, sizeof( *Resource ) );
 
     return;
 }
 
 
-VOID RtlDumpResource(IN PRTL_RESOURCE Resource)
+
+VOID
+RtlDumpResource(
+    IN PRTL_RESOURCE Resource
+    )
 
 {
     DbgPrint("Resource @ %lx\n", Resource);
@@ -1195,9 +1243,11 @@ VOID RtlDumpResource(IN PRTL_RESOURCE Resource)
     return;
 }
 
-
+
 NTSTATUS
-RtlInitializeCriticalSection(IN PRTL_CRITICAL_SECTION CriticalSection)
+RtlInitializeCriticalSection(
+    IN PRTL_CRITICAL_SECTION CriticalSection
+    )
 
 /*++
 
@@ -1216,14 +1266,18 @@ Return Value:
 --*/
 
 {
-    return RtlInitializeCriticalSectionAndSpinCount(CriticalSection, 0);
+    return RtlInitializeCriticalSectionAndSpinCount(CriticalSection,0);
 }
 
 
-#define MAX_SPIN_COUNT 0x00ffffff
-#define PREALLOCATE_EVENT_MASK 0x80000000
+
+#define MAX_SPIN_COUNT          0x00ffffff
+#define PREALLOCATE_EVENT_MASK  0x80000000
 
-VOID RtlEnableEarlyCriticalSectionEventCreation(VOID)
+VOID
+RtlEnableEarlyCriticalSectionEventCreation(
+    VOID
+    )
 /*++
 
 Routine Description:
@@ -1243,12 +1297,16 @@ Return Value:
 
 --*/
 {
-    NtCurrentPeb()->NtGlobalFlag |= FLG_CRITSEC_EVENT_CREATION;
+    NtCurrentPeb ()->NtGlobalFlag |= FLG_CRITSEC_EVENT_CREATION;
 }
 
 
+
 NTSTATUS
-RtlInitializeCriticalSectionAndSpinCount(IN PRTL_CRITICAL_SECTION CriticalSection, ULONG SpinCount)
+RtlInitializeCriticalSectionAndSpinCount(
+    IN PRTL_CRITICAL_SECTION CriticalSection,
+    ULONG SpinCount
+    )
 
 /*++
 
@@ -1281,42 +1339,39 @@ Return Value:
     CriticalSection->RecursionCount = 0;
     CriticalSection->OwningThread = 0;
     CriticalSection->LockSemaphore = 0;
-    if (NtCurrentPeb()->NumberOfProcessors > 1)
-    {
+    if ( NtCurrentPeb()->NumberOfProcessors > 1 ) {
         CriticalSection->SpinCount = SpinCount & MAX_SPIN_COUNT;
-    }
-    else
-    {
+    } else {
         CriticalSection->SpinCount = 0;
     }
+
 
 
     //
     // Open the global out of memory keyed event if its not already set up.
     //
-    if (GlobalKeyedEventHandle == NULL)
-    {
+    if (GlobalKeyedEventHandle == NULL) {
         OBJECT_ATTRIBUTES oa;
         UNICODE_STRING Name;
         HANDLE Handle;
 
-        RtlInitUnicodeString(&Name, L"\\KernelObjects\\CritSecOutOfMemoryEvent");
-        InitializeObjectAttributes(&oa, &Name, 0, NULL, NULL);
+        RtlInitUnicodeString (&Name, L"\\KernelObjects\\CritSecOutOfMemoryEvent");
+        InitializeObjectAttributes (&oa, &Name, 0, NULL, NULL);
 
-        Status = NtOpenKeyedEvent(&Handle, MAXIMUM_ALLOWED, &oa);
-        if (!NT_SUCCESS(Status))
-        {
+        Status = NtOpenKeyedEvent (&Handle,
+                                   MAXIMUM_ALLOWED,
+                                   &oa);
+        if (!NT_SUCCESS (Status)) {
             return Status;
         }
-        if (InterlockedCompareExchangePointer(&GlobalKeyedEventHandle, RtlpSetKeyedEventHandle(Handle), NULL) != NULL)
-        {
-            Status = NtClose(Handle);
-            ASSERT(NT_SUCCESS(Status));
-        }
-        else
-        {
+        if (InterlockedCompareExchangePointer (&GlobalKeyedEventHandle,
+                                               RtlpSetKeyedEventHandle (Handle),
+                                               NULL) != NULL) {
+            Status = NtClose (Handle);
+            ASSERT (NT_SUCCESS (Status));
+        } else {
 #if DBG
-            ProtectHandle(Handle);
+            ProtectHandle (Handle);
 #endif // DBG
         }
     }
@@ -1325,8 +1380,7 @@ Return Value:
     //
 
     DebugInfo = (PRTL_CRITICAL_SECTION_DEBUG)RtlpAllocateDebugInfo();
-    if (DebugInfo == NULL)
-    {
+    if (DebugInfo == NULL) {
         return STATUS_NO_MEMORY;
     }
 
@@ -1336,7 +1390,7 @@ Return Value:
 
     //
     // It is important to set critical section pointers and potential
-    // stack trace before we insert the resource in the process'
+    // stack trace before we insert the resource in the process' 
     // resource list because the list can be randomly traversed from
     // other threads that check for orphaned resources.
     //
@@ -1357,23 +1411,25 @@ Return Value:
     // list. Otherwise, insert the critical section with no synchronization.
     //
 
-    if ((CriticalSection != &RtlCriticalSectionLock) && (RtlpCritSectInitialized != FALSE))
-    {
+    if ((CriticalSection != &RtlCriticalSectionLock) &&
+         (RtlpCritSectInitialized != FALSE)) {
         RtlEnterCriticalSection(&RtlCriticalSectionLock);
         InsertTailList(&RtlCriticalSectionList, &DebugInfo->ProcessLocksList);
-        RtlLeaveCriticalSection(&RtlCriticalSectionLock);
-    }
-    else
-    {
+        RtlLeaveCriticalSection(&RtlCriticalSectionLock );
+
+    } else {
         InsertTailList(&RtlCriticalSectionList, &DebugInfo->ProcessLocksList);
     }
 
     return STATUS_SUCCESS;
 }
 
-
+
 ULONG
-RtlSetCriticalSectionSpinCount(IN PRTL_CRITICAL_SECTION CriticalSection, ULONG SpinCount)
+RtlSetCriticalSectionSpinCount(
+    IN PRTL_CRITICAL_SECTION CriticalSection,
+    ULONG SpinCount
+    )
 
 /*++
 
@@ -1396,12 +1452,9 @@ Return Value:
 
     OldSpinCount = (ULONG)CriticalSection->SpinCount;
 
-    if (NtCurrentPeb()->NumberOfProcessors > 1)
-    {
+    if ( NtCurrentPeb()->NumberOfProcessors > 1 ) {
         CriticalSection->SpinCount = SpinCount;
-    }
-    else
-    {
+    } else {
         CriticalSection->SpinCount = 0;
     }
 
@@ -1410,52 +1463,58 @@ Return Value:
 
 
 BOOLEAN
-RtlpCreateCriticalSectionSem(IN PRTL_CRITICAL_SECTION CriticalSection)
+RtlpCreateCriticalSectionSem(
+    IN PRTL_CRITICAL_SECTION CriticalSection
+    )
 {
     NTSTATUS Status, Status1;
     HANDLE SemHandle;
 
-#if defined(RTLP_USE_GLOBAL_KEYED_EVENT)
+#if defined (RTLP_USE_GLOBAL_KEYED_EVENT)
     Status = STATUS_INSUFFICIENT_RESOURCES;
     SemHandle = NULL;
 #else
-    Status = NtCreateEvent(&SemHandle, DESIRED_EVENT_ACCESS, NULL, SynchronizationEvent, FALSE);
+    Status = NtCreateEvent (&SemHandle,
+                            DESIRED_EVENT_ACCESS,
+                            NULL,
+                            SynchronizationEvent,
+                            FALSE);
 
 #endif
-    if (NT_SUCCESS(Status))
-    {
-        if (InterlockedCompareExchangePointer(&CriticalSection->LockSemaphore, SemHandle, NULL) != NULL)
-        {
-            Status1 = NtClose(SemHandle);
-            ASSERT(NT_SUCCESS(Status1));
-        }
-        else
-        {
+    if (NT_SUCCESS (Status)) {
+        if (InterlockedCompareExchangePointer (&CriticalSection->LockSemaphore,  SemHandle, NULL) != NULL) {
+            Status1 = NtClose (SemHandle);
+            ASSERT (NT_SUCCESS (Status1));
+        } else {
 #if DBG
             ProtectHandle(SemHandle);
 #endif // DBG
         }
-    }
-    else
-    {
-        ASSERT(GlobalKeyedEventHandle != NULL);
-        InterlockedCompareExchangePointer(&CriticalSection->LockSemaphore, GlobalKeyedEventHandle, NULL);
+    } else {
+        ASSERT (GlobalKeyedEventHandle != NULL);
+        InterlockedCompareExchangePointer (&CriticalSection->LockSemaphore,
+                                           GlobalKeyedEventHandle,
+                                           NULL);
     }
     return TRUE;
 }
 
-VOID RtlpCheckDeferedCriticalSection(IN PRTL_CRITICAL_SECTION CriticalSection)
+VOID
+RtlpCheckDeferedCriticalSection(
+    IN PRTL_CRITICAL_SECTION CriticalSection
+    )
 {
-    if (CriticalSection->LockSemaphore == NULL)
-    {
+    if (CriticalSection->LockSemaphore == NULL) {
         RtlpCreateCriticalSectionSem(CriticalSection);
     }
     return;
 }
 
-
+
 NTSTATUS
-RtlDeleteCriticalSection(IN PRTL_CRITICAL_SECTION CriticalSection)
+RtlDeleteCriticalSection(
+    IN PRTL_CRITICAL_SECTION CriticalSection
+    )
 
 /*++
 
@@ -1481,15 +1540,12 @@ Return Value:
     HANDLE LockSemaphore;
 
     LockSemaphore = CriticalSection->LockSemaphore;
-    if (LockSemaphore != NULL && !RtlpIsKeyedEvent(LockSemaphore))
-    {
+    if (LockSemaphore != NULL && !RtlpIsKeyedEvent (LockSemaphore)) {
 #if DBG
-        UnProtectHandle(LockSemaphore);
+        UnProtectHandle (LockSemaphore);
 #endif // DBG
-        Status = NtClose(LockSemaphore);
-    }
-    else
-    {
+        Status = NtClose (LockSemaphore);
+    } else {
         Status = STATUS_SUCCESS;
     }
 
@@ -1497,30 +1553,27 @@ Return Value:
     // Remove critical section from the list
     //
 
-    RtlEnterCriticalSection(&RtlCriticalSectionLock);
-    try
-    {
+    RtlEnterCriticalSection( &RtlCriticalSectionLock );
+    try {
         DebugInfo = CriticalSection->DebugInfo;
-        if (DebugInfo != NULL)
-        {
-            RemoveEntryList(&DebugInfo->ProcessLocksList);
-            RtlZeroMemory(DebugInfo, sizeof(*DebugInfo));
+        if (DebugInfo != NULL) {
+            RemoveEntryList( &DebugInfo->ProcessLocksList );
+            RtlZeroMemory( DebugInfo, sizeof( *DebugInfo ) );
         }
+    } finally {
+        RtlLeaveCriticalSection( &RtlCriticalSectionLock );
     }
-    finally
-    {
-        RtlLeaveCriticalSection(&RtlCriticalSectionLock);
+    if (DebugInfo != NULL) {
+        RtlpFreeDebugInfo( DebugInfo );
     }
-    if (DebugInfo != NULL)
-    {
-        RtlpFreeDebugInfo(DebugInfo);
-    }
-    RtlZeroMemory(CriticalSection, FIELD_OFFSET(RTL_CRITICAL_SECTION, SpinCount) + sizeof(ULONG));
+    RtlZeroMemory( CriticalSection,
+                   FIELD_OFFSET(RTL_CRITICAL_SECTION, SpinCount) + sizeof(ULONG) );
 
     return Status;
 }
 
 
+
 //
 // The following support routines are called from the machine language
 // implementations of RtlEnterCriticalSection and RtlLeaveCriticalSection
@@ -1528,7 +1581,10 @@ Return Value:
 // or releasing a critical section to a waiting thread.
 //
 
-void RtlpWaitForCriticalSection(IN PRTL_CRITICAL_SECTION CriticalSection)
+void
+RtlpWaitForCriticalSection(
+    IN PRTL_CRITICAL_SECTION CriticalSection
+    )
 {
     NTSTATUS st;
     ULONG TimeoutCount = 0;
@@ -1544,9 +1600,9 @@ void RtlpWaitForCriticalSection(IN PRTL_CRITICAL_SECTION CriticalSection)
     CsIsLoaderLock = (CriticalSection == &LdrpLoaderLock);
     NtCurrentTeb()->WaitingOnLoaderLock = (ULONG)CsIsLoaderLock;
 
-    if (LdrpShutdownInProgress &&
-        ((!CsIsLoaderLock) || (CsIsLoaderLock && LdrpShutdownThreadId == NtCurrentTeb()->ClientId.UniqueThread)))
-    {
+    if ( LdrpShutdownInProgress &&
+        ((!CsIsLoaderLock) ||
+         (CsIsLoaderLock && LdrpShutdownThreadId == NtCurrentTeb()->ClientId.UniqueThread) ) ) {
 
         //
         // slimey reinitialization of the critical section with the count biased by one
@@ -1563,27 +1619,23 @@ void RtlpWaitForCriticalSection(IN PRTL_CRITICAL_SECTION CriticalSection)
         NtCurrentTeb()->WaitingOnLoaderLock = 0;
 
         return;
+
     }
 
-    if (RtlpTimoutDisable)
-    {
+    if (RtlpTimoutDisable) {
         TimeoutTime = NULL;
-    }
-    else
-    {
+    } else {
         TimeoutTime = &RtlpTimeout;
     }
 
     LockSemaphore = CriticalSection->LockSemaphore;
-    if (LockSemaphore == NULL)
-    {
-        RtlpCheckDeferedCriticalSection(CriticalSection);
+    if (LockSemaphore == NULL) {
+        RtlpCheckDeferedCriticalSection (CriticalSection);
         LockSemaphore = CriticalSection->LockSemaphore;
     }
 
     CriticalSection->DebugInfo->EntryCount++;
-    while (TRUE)
-    {
+    while( TRUE ) {
 
         CriticalSection->DebugInfo->ContentionCount++;
 
@@ -1596,60 +1648,62 @@ void RtlpWaitForCriticalSection(IN PRTL_CRITICAL_SECTION CriticalSection)
                 );
 #endif
 
-        if (IsCritSecLogging(CriticalSection))
-        {
+        if( IsCritSecLogging(CriticalSection)){
 
-            PTHREAD_LOCAL_DATA pThreadLocalData = NULL;
-            PPERFINFO_TRACE_HEADER pEventHeader = NULL;
-            USHORT ReqSize = sizeof(CRIT_SEC_COLLISION_EVENT_DATA) + FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data);
+	        PTHREAD_LOCAL_DATA pThreadLocalData = NULL;
+	        PPERFINFO_TRACE_HEADER pEventHeader = NULL;
+	        USHORT ReqSize = sizeof(CRIT_SEC_COLLISION_EVENT_DATA) + FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data);
 
-            AcquireBufferLocation(&pEventHeader, &pThreadLocalData, &ReqSize);
+	        AcquireBufferLocation(&pEventHeader, &pThreadLocalData, &ReqSize );
 
-            if (pEventHeader && pThreadLocalData)
-            {
+	        if(pEventHeader && pThreadLocalData) {
 
-                PCRIT_SEC_COLLISION_EVENT_DATA pCritSecCollEvent =
-                    (PCRIT_SEC_COLLISION_EVENT_DATA)((SIZE_T)pEventHeader +
-                                                     (SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data));
+		        PCRIT_SEC_COLLISION_EVENT_DATA pCritSecCollEvent = (PCRIT_SEC_COLLISION_EVENT_DATA)( (SIZE_T)pEventHeader
+														           +(SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data ));
 
-                pEventHeader->Packet.Size = ReqSize;
-                pEventHeader->Packet.HookId = (USHORT)PERFINFO_LOG_TYPE_CRITSEC_COLLISION;
+		        pEventHeader->Packet.Size = ReqSize;
+		        pEventHeader->Packet.HookId= (USHORT) PERFINFO_LOG_TYPE_CRITSEC_COLLISION;
 
-                pCritSecCollEvent->Address = (PVOID)CriticalSection;
-                pCritSecCollEvent->SpinCount = (PVOID)CriticalSection->SpinCount;
-                pCritSecCollEvent->LockCount = CriticalSection->LockCount;
-                pCritSecCollEvent->OwningThread = (PVOID)CriticalSection->OwningThread;
+		        pCritSecCollEvent->Address		    = (PVOID)CriticalSection;
+		        pCritSecCollEvent->SpinCount	    = (PVOID)CriticalSection->SpinCount;
+		        pCritSecCollEvent->LockCount	    = CriticalSection->LockCount;
+		        pCritSecCollEvent->OwningThread	    = (PVOID)CriticalSection->OwningThread;
 
-                ReleaseBufferLocation(pThreadLocalData);
-            }
+		        ReleaseBufferLocation(pThreadLocalData);
+	        }
+
         }
 
-        if (!RtlpIsKeyedEvent(LockSemaphore))
-        {
-            st = NtWaitForSingleObject(LockSemaphore, FALSE, TimeoutTime);
+        if (!RtlpIsKeyedEvent (LockSemaphore)) {
+            st = NtWaitForSingleObject (LockSemaphore,
+                                        FALSE,
+                                        TimeoutTime);
+        } else {
+            st = NtWaitForKeyedEvent (LockSemaphore,
+                                      CriticalSection,
+                                      FALSE,
+                                      TimeoutTime);
         }
-        else
-        {
-            st = NtWaitForKeyedEvent(LockSemaphore, CriticalSection, FALSE, TimeoutTime);
-        }
-        if (st == STATUS_TIMEOUT)
-        {
+        if ( st == STATUS_TIMEOUT ) {
 
             //
             // This code path will be taken only if the TimeoutTime parameter for
             // Wait() was not null.
             //
 
-            DbgPrint("RTL: Enter Critical Section Timeout (%I64u secs) %d\n", TimeoutTime->QuadPart / (-10000000),
-                     TimeoutCount);
-            DbgPrint("RTL: Pid.Tid %x.%x, owner tid %x Critical Section %p - ContentionCount == %lu\n",
-                     NtCurrentTeb()->ClientId.UniqueProcess, NtCurrentTeb()->ClientId.UniqueThread,
-                     CriticalSection->OwningThread, CriticalSection, CriticalSection->DebugInfo->ContentionCount);
+            DbgPrint( "RTL: Enter Critical Section Timeout (%I64u secs) %d\n",
+                      TimeoutTime->QuadPart / (-10000000), TimeoutCount
+                    );
+            DbgPrint( "RTL: Pid.Tid %x.%x, owner tid %x Critical Section %p - ContentionCount == %lu\n",
+                    NtCurrentTeb()->ClientId.UniqueProcess,
+                    NtCurrentTeb()->ClientId.UniqueThread,
+                    CriticalSection->OwningThread,
+                    CriticalSection, CriticalSection->DebugInfo->ContentionCount
+                    );
 
             TimeoutCount++;
 
-            if ((TimeoutCount > 2) && (CriticalSection != &LdrpLoaderLock))
-            {
+            if ((TimeoutCount > 2) && (CriticalSection != &LdrpLoaderLock)) {
                 PIMAGE_NT_HEADERS NtHeaders;
 
                 //
@@ -1660,8 +1714,7 @@ void RtlpWaitForCriticalSection(IN PRTL_CRITICAL_SECTION CriticalSection)
                 NtHeaders = RtlImageNtHeader(NtCurrentPeb()->ImageBaseAddress);
 
                 if (NtHeaders->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI ||
-                    NtHeaders->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI)
-                {
+                    NtHeaders->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI) {
                     EXCEPTION_RECORD ExceptionRecord;
 
                     ExceptionRecord.ExceptionCode = STATUS_POSSIBLE_DEADLOCK;
@@ -1671,18 +1724,13 @@ void RtlpWaitForCriticalSection(IN PRTL_CRITICAL_SECTION CriticalSection)
                     ExceptionRecord.NumberParameters = 1;
                     ExceptionRecord.ExceptionInformation[0] = (ULONG_PTR)CriticalSection;
                     RtlRaiseException(&ExceptionRecord);
-                }
-                else
-                {
+                } else {
                     DbgBreakPoint();
                 }
             }
             DbgPrint("RTL: Re-Waiting\n");
-        }
-        else
-        {
-            if (NT_SUCCESS(st))
-            {
+        } else {
+            if ( NT_SUCCESS(st) ) {
                 //
                 // If some errant thread calls SetEvent on a bogus handle
                 // which happens to match the handle we are using in the critical
@@ -1691,22 +1739,22 @@ void RtlpWaitForCriticalSection(IN PRTL_CRITICAL_SECTION CriticalSection)
                 // owns the lock if we have been granted ownership.
                 //
                 ASSERT(CriticalSection->OwningThread == 0);
-                if (CsIsLoaderLock)
-                {
+                if ( CsIsLoaderLock ) {
                     CriticalSection->OwningThread = NtCurrentTeb()->ClientId.UniqueThread;
                     NtCurrentTeb()->WaitingOnLoaderLock = 0;
                 }
                 return;
-            }
-            else
-            {
+            } else {
                 RtlRaiseStatus(st);
             }
         }
     }
 }
 
-void RtlpUnWaitCriticalSection(IN PRTL_CRITICAL_SECTION CriticalSection)
+void
+RtlpUnWaitCriticalSection(
+    IN PRTL_CRITICAL_SECTION CriticalSection
+    )
 {
     NTSTATUS st;
     HANDLE LockSemaphore;
@@ -1718,33 +1766,32 @@ void RtlpUnWaitCriticalSection(IN PRTL_CRITICAL_SECTION CriticalSection)
 #endif
 
     LockSemaphore = CriticalSection->LockSemaphore;
-    if (LockSemaphore == NULL)
-    {
+    if (LockSemaphore == NULL) {
         RtlpCheckDeferedCriticalSection(CriticalSection);
         LockSemaphore = CriticalSection->LockSemaphore;
     }
 
-    if (!RtlpIsKeyedEvent(LockSemaphore))
-    {
-        st = NtSetEventBoostPriority(LockSemaphore);
-    }
-    else
-    {
-        st = NtReleaseKeyedEvent(LockSemaphore, CriticalSection, FALSE, 0);
+    if (!RtlpIsKeyedEvent (LockSemaphore)) {
+        st = NtSetEventBoostPriority (LockSemaphore);
+    } else {
+        st = NtReleaseKeyedEvent (LockSemaphore,
+                                  CriticalSection,
+                                  FALSE,
+                                  0);
     }
 
-    if (NT_SUCCESS(st))
-    {
+    if (NT_SUCCESS (st)) {
         return;
-    }
-    else
-    {
+    } else {
         RtlRaiseStatus(st);
     }
 }
 
 
-void RtlpNotOwnerCriticalSection(IN PRTL_CRITICAL_SECTION CriticalSection)
+void
+RtlpNotOwnerCriticalSection(
+    IN PRTL_CRITICAL_SECTION CriticalSection
+    )
 {
     BOOLEAN CsIsLoaderLock;
 
@@ -1755,24 +1802,29 @@ void RtlpNotOwnerCriticalSection(IN PRTL_CRITICAL_SECTION CriticalSection)
 
     CsIsLoaderLock = (CriticalSection == &LdrpLoaderLock);
 
-    if (LdrpShutdownInProgress &&
-        ((!CsIsLoaderLock) || (CsIsLoaderLock && LdrpShutdownThreadId == NtCurrentTeb()->ClientId.UniqueThread)))
-    {
+    if ( LdrpShutdownInProgress &&
+        ((!CsIsLoaderLock) ||
+         (CsIsLoaderLock && LdrpShutdownThreadId == NtCurrentTeb()->ClientId.UniqueThread) ) ) {
         return;
     }
 
-    if (NtCurrentPeb()->BeingDebugged)
-    {
-        DbgPrint("NTDLL: Calling thread (%X) not owner of CritSect: %p  Owner ThreadId: %X\n",
-                 NtCurrentTeb()->ClientId.UniqueThread, CriticalSection, CriticalSection->OwningThread);
+    if (NtCurrentPeb()->BeingDebugged) {
+        DbgPrint( "NTDLL: Calling thread (%X) not owner of CritSect: %p  Owner ThreadId: %X\n",
+                  NtCurrentTeb()->ClientId.UniqueThread,
+                  CriticalSection,
+                  CriticalSection->OwningThread
+                );
         DbgBreakPoint();
     }
-    RtlRaiseStatus(STATUS_RESOURCE_NOT_OWNED);
+    RtlRaiseStatus( STATUS_RESOURCE_NOT_OWNED );
 }
 
 
 #if DBG
-void RtlpCriticalSectionIsOwned(IN PRTL_CRITICAL_SECTION CriticalSection)
+void
+RtlpCriticalSectionIsOwned(
+    IN PRTL_CRITICAL_SECTION CriticalSection
+    )
 {
     //
     // The loader lock gets handled differently, so don't assert on it
@@ -1786,10 +1838,12 @@ void RtlpCriticalSectionIsOwned(IN PRTL_CRITICAL_SECTION CriticalSection)
     // If we're being debugged, throw up a warning
     //
 
-    if (NtCurrentPeb()->BeingDebugged)
-    {
-        DbgPrint("NTDLL: Calling thread (%X) shouldn't enter CritSect: %p  Owner ThreadId: %X\n",
-                 NtCurrentTeb()->ClientId.UniqueThread, CriticalSection, CriticalSection->OwningThread);
+    if (NtCurrentPeb()->BeingDebugged) {
+        DbgPrint( "NTDLL: Calling thread (%X) shouldn't enter CritSect: %p  Owner ThreadId: %X\n",
+                  NtCurrentTeb()->ClientId.UniqueThread,
+                  CriticalSection,
+                  CriticalSection->OwningThread
+                );
         DbgBreakPoint();
     }
 }
@@ -1801,7 +1855,7 @@ void RtlpCriticalSectionIsOwned(IN PRTL_CRITICAL_SECTION CriticalSection)
 
 //
 // This variable enables the critical section verifier (abandoned locks,
-// terminatethread() while holding locks, etc.).
+// terminatethread() while holding locks, etc.). 
 //
 
 BOOLEAN RtlpCriticalSectionVerifier;
@@ -1812,7 +1866,10 @@ BOOLEAN RtlpCriticalSectionVerifier;
 
 BOOLEAN RtlpCsVerifyDoNotBreak;
 
-VOID RtlCheckForOrphanedCriticalSections(IN HANDLE hThread)
+VOID
+RtlCheckForOrphanedCriticalSections(
+    IN HANDLE hThread
+    )
 /*++
 
 Routine Description:
@@ -1830,7 +1887,7 @@ Return Value:
     None.
 
 --*/
-
+    
 {
     NTSTATUS Status;
     THREAD_BASIC_INFORMATION ThreadInfo;
@@ -1844,8 +1901,7 @@ Return Value:
     // We do not check anything if critical section verifier is not on.
     //
 
-    if (RtlpCriticalSectionVerifier == FALSE || RtlpCsVerifyDoNotBreak == TRUE)
-    {
+    if (RtlpCriticalSectionVerifier == FALSE || RtlpCsVerifyDoNotBreak == TRUE ) {
         return;
     }
 
@@ -1853,14 +1909,16 @@ Return Value:
     // We do not do anything if we are shutting down the process.
     //
 
-    if (LdrpShutdownInProgress)
-    {
+    if (LdrpShutdownInProgress) {
         return;
     }
 
-    Status = NtQueryInformationThread(hThread, ThreadBasicInformation, &ThreadInfo, sizeof(ThreadInfo), NULL);
-    if (!NT_SUCCESS(Status))
-    {
+    Status = NtQueryInformationThread (hThread,
+                                       ThreadBasicInformation,
+                                       &ThreadInfo,
+                                       sizeof(ThreadInfo),
+                                       NULL);
+    if (! NT_SUCCESS(Status)) {
         return;
     }
 
@@ -1868,20 +1926,22 @@ Return Value:
     // Iterate the global list of critical sections
     //
 
-    RtlEnterCriticalSection(&RtlCriticalSectionLock);
+    RtlEnterCriticalSection( &RtlCriticalSectionLock );
 
-    try
-    {
+    try {
 
-        for (Entry = RtlCriticalSectionList.Flink; Entry != &RtlCriticalSectionList; Entry = Entry->Flink)
-        {
+        for (Entry = RtlCriticalSectionList.Flink;
+            Entry != &RtlCriticalSectionList;
+            Entry = Entry->Flink) {
 
-            DebugInfo = CONTAINING_RECORD(Entry, RTL_CRITICAL_SECTION_DEBUG, ProcessLocksList);
+            DebugInfo = CONTAINING_RECORD (Entry,
+                                           RTL_CRITICAL_SECTION_DEBUG,
+                                           ProcessLocksList);
 
             CriticalSection = DebugInfo->CriticalSection;
 
-            if (CriticalSection == &RtlCriticalSectionLock || CriticalSection == &LdrpLoaderLock)
-            {
+            if (CriticalSection == &RtlCriticalSectionLock ||
+                CriticalSection == &LdrpLoaderLock) {
 
                 //
                 // Skip these critsects.
@@ -1896,10 +1956,12 @@ Return Value:
             // memory has been freed without an RtlDeleteCriticalSection call.
             //
 
-            Status =
-                NtReadVirtualMemory(NtCurrentProcess(), CriticalSection, &CritSectCopy, sizeof(CritSectCopy), NULL);
-            if (!NT_SUCCESS(Status))
-            {
+            Status = NtReadVirtualMemory(NtCurrentProcess(),
+                                         CriticalSection,
+                                         &CritSectCopy,
+                                         sizeof(CritSectCopy),
+                                         NULL);
+            if (!NT_SUCCESS(Status)) {
 
                 //
                 // Error reading the contents of the critsect.  The critsect
@@ -1912,99 +1974,110 @@ Return Value:
                 // points at this DebugInfo.  In that case, when that critsect
                 // is deleted, the RtlCriticalSectionList is corrupted.
                 //
-                // We will skip over null critical sections since there is
+                // We will skip over null critical sections since there is 
                 // a small window in RtlInitializeCriticalSection where this can happen.
                 //
 
-                if (CriticalSection)
-                {
+                if (CriticalSection) {
 
-                    VERIFIER_STOP(APPLICATION_VERIFIER_LOCK_IN_FREED_MEMORY,
-                                  "undeleted critical section in freed memory", CriticalSection,
-                                  "Critical section address", DebugInfo, "Critical section debug info address",
-                                  RtlpGetStackTraceAddress(DebugInfo->CreatorBackTraceIndex),
-                                  "Initialization stack trace. Use dds to dump it if non-NULL.", NULL, "");
+                    VERIFIER_STOP (APPLICATION_VERIFIER_LOCK_IN_FREED_MEMORY,
+                                   "undeleted critical section in freed memory",
+                                   CriticalSection, "Critical section address",
+                                   DebugInfo, "Critical section debug info address",
+                                   RtlpGetStackTraceAddress (DebugInfo->CreatorBackTraceIndex), 
+                                   "Initialization stack trace. Use dds to dump it if non-NULL.",
+                                   NULL, "" );
                 }
             }
-            else if (CritSectCopy.DebugInfo != DebugInfo)
-            {
+            else if(CritSectCopy.DebugInfo != DebugInfo) {
 
                 //
                 // Successfully read the critical section structure but
                 // the current debug info field of this critical section doesn't point
                 // to the current DebugInfo - it was probably initialized more than
                 // one time or simply corrupted.
-                //
-                // Try to make a copy of the DebugInfo currently pointed
+                // 
+                // Try to make a copy of the DebugInfo currently pointed 
                 // by our critical section. This might fail if the critical section is
                 // corrupted.
                 //
 
-                Status = NtReadVirtualMemory(NtCurrentProcess(), CritSectCopy.DebugInfo, &ExtraDebugInfoCopy,
-                                             sizeof(ExtraDebugInfoCopy), NULL);
+                Status = NtReadVirtualMemory(NtCurrentProcess(),
+                                             CritSectCopy.DebugInfo,
+                                             &ExtraDebugInfoCopy,
+                                             sizeof(ExtraDebugInfoCopy),
+                                             NULL);
 
-                if (!NT_SUCCESS(Status))
-                {
+                if (!NT_SUCCESS(Status)) {
 
                     //
                     // Error reading the contents of the debug info.
                     // The current critical section structure is corrupted.
                     //
 
-                    VERIFIER_STOP(APPLICATION_VERIFIER_LOCK_CORRUPTED, "corrupted critical section", CriticalSection,
-                                  "Critical section address", CritSectCopy.DebugInfo,
-                                  "Invalid debug info address of this critical section", DebugInfo,
-                                  "Address of the debug info found in the active list.",
-                                  RtlpGetStackTraceAddress(DebugInfo->CreatorBackTraceIndex),
-                                  "Initialization stack trace. Use dds to dump it if non-NULL.");
+                    VERIFIER_STOP (APPLICATION_VERIFIER_LOCK_CORRUPTED,
+                                   "corrupted critical section",
+                                   CriticalSection, 
+                                   "Critical section address",
+                                   CritSectCopy.DebugInfo, 
+                                   "Invalid debug info address of this critical section",
+                                   DebugInfo, 
+                                   "Address of the debug info found in the active list.",
+                                   RtlpGetStackTraceAddress (DebugInfo->CreatorBackTraceIndex), 
+                                   "Initialization stack trace. Use dds to dump it if non-NULL." );
                 }
-                else
-                {
+                else {
 
-                    //
-                    // Successfully read this second debug info
-                    // of the same critical section.
+                    // 
+                    // Successfully read this second debug info 
+                    // of the same critical section. 
                     //
 
-                    VERIFIER_STOP(APPLICATION_VERIFIER_LOCK_DOUBLE_INITIALIZE,
-                                  "double initialized or corrupted critical section", CriticalSection,
-                                  "Critical section address.", DebugInfo,
-                                  "Address of the debug info found in the active list.",
-                                  RtlpGetStackTraceAddress(DebugInfo->CreatorBackTraceIndex),
-                                  "First initialization stack trace. Use dds to dump it if non-NULL.",
-                                  RtlpGetStackTraceAddress(ExtraDebugInfoCopy.CreatorBackTraceIndex),
-                                  "Second initialization stack trace. Use dds to dump it if non-NULL.");
+                    VERIFIER_STOP (APPLICATION_VERIFIER_LOCK_DOUBLE_INITIALIZE,
+                                   "double initialized or corrupted critical section",
+                                   CriticalSection, 
+                                   "Critical section address.",
+                                   DebugInfo, 
+                                   "Address of the debug info found in the active list.",
+                                   RtlpGetStackTraceAddress (DebugInfo->CreatorBackTraceIndex), 
+                                   "First initialization stack trace. Use dds to dump it if non-NULL.",
+                                   RtlpGetStackTraceAddress (ExtraDebugInfoCopy.CreatorBackTraceIndex), 
+                                   "Second initialization stack trace. Use dds to dump it if non-NULL.");
                 }
             }
-            else if (CritSectCopy.OwningThread == ThreadInfo.ClientId.UniqueThread && CritSectCopy.LockCount != -1)
-            {
+            else if (CritSectCopy.OwningThread == ThreadInfo.ClientId.UniqueThread
+                     && CritSectCopy.LockCount != -1) {
 
-                //
-                // The thread is about to die with a critical section locked.
-                //
+                    //
+                    // The thread is about to die with a critical section locked.
+                    //
 
-                VERIFIER_STOP(APPLICATION_VERIFIER_EXIT_THREAD_OWNS_LOCK,
-                              "Thread is terminated while owning a critical section", ThreadInfo.ClientId.UniqueThread,
-                              "Thread identifier", CriticalSection, "Critical section address", DebugInfo,
-                              "Critical section debug info address",
-                              RtlpGetStackTraceAddress(DebugInfo->CreatorBackTraceIndex),
-                              "Initialization stack trace. Use dds to dump it if non-NULL.");
-            }
+                    VERIFIER_STOP (APPLICATION_VERIFIER_EXIT_THREAD_OWNS_LOCK,
+                                   "Thread is terminated while owning a critical section",
+                                   ThreadInfo.ClientId.UniqueThread, "Thread identifier",
+                                   CriticalSection, "Critical section address",
+                                   DebugInfo, "Critical section debug info address",
+                                   RtlpGetStackTraceAddress (DebugInfo->CreatorBackTraceIndex), "Initialization stack trace. Use dds to dump it if non-NULL." );
+                }
         }
     }
-    finally
-    {
+    finally {
 
         //
         // Release the CS list lock.
         //
 
-        RtlLeaveCriticalSection(&RtlCriticalSectionLock);
+        RtlLeaveCriticalSection( &RtlCriticalSectionLock );
     }
 }
 
 
-VOID RtlpCheckForCriticalSectionsInMemoryRange(IN PVOID StartAddress, IN SIZE_T RegionSize, IN PVOID Information)
+VOID
+RtlpCheckForCriticalSectionsInMemoryRange(
+    IN PVOID StartAddress,
+    IN SIZE_T RegionSize,
+    IN PVOID Information
+    )
 /*++
 
 Routine Description:
@@ -2036,18 +2109,16 @@ Return Value:
     // If lock verifier is not active we do nothing.
     //
 
-    if (RtlpCriticalSectionVerifier == FALSE || RtlpCsVerifyDoNotBreak == TRUE)
-    {
+    if (RtlpCriticalSectionVerifier == FALSE || RtlpCsVerifyDoNotBreak == TRUE) {
         return;
     }
 
     //
     // Skip if we are shutting down the process.
     //
-
-    if (LdrpShutdownInProgress)
-    {
-
+     
+    if (LdrpShutdownInProgress) {
+        
         return;
     }
 
@@ -2055,25 +2126,27 @@ Return Value:
     // Grab the CS list lock.
     //
 
-    RtlEnterCriticalSection(&RtlCriticalSectionLock);
+    RtlEnterCriticalSection( &RtlCriticalSectionLock );
 
     //
     // Iterate the CS list.
     //
 
-    try
-    {
+    try {
 
 
-        for (Entry = RtlCriticalSectionList.Flink; Entry != &RtlCriticalSectionList; Entry = Entry->Flink)
-        {
+        for (Entry = RtlCriticalSectionList.Flink;
+            Entry != &RtlCriticalSectionList;
+            Entry = Entry->Flink) {
 
-            DebugInfo = CONTAINING_RECORD(Entry, RTL_CRITICAL_SECTION_DEBUG, ProcessLocksList);
+            DebugInfo = CONTAINING_RECORD(Entry,
+                                          RTL_CRITICAL_SECTION_DEBUG,
+                                          ProcessLocksList);
 
             CriticalSection = DebugInfo->CriticalSection;
 
-            if (CriticalSection == &RtlCriticalSectionLock || CriticalSection == &LdrpLoaderLock)
-            {
+            if (CriticalSection == &RtlCriticalSectionLock ||
+                CriticalSection == &LdrpLoaderLock) {
 
                 //
                 // Skip the CS list lock and the loader lock.
@@ -2083,53 +2156,56 @@ Return Value:
             }
 
             if ((SIZE_T)CriticalSection >= (SIZE_T)StartAddress &&
-                (SIZE_T)CriticalSection < (SIZE_T)StartAddress + RegionSize)
-            {
+                (SIZE_T)CriticalSection < (SIZE_T)StartAddress + RegionSize) {
 
                 //
                 // Ooops, we have found a CS live in a memory region that will
                 // be discarded.
                 //
 
-                TraceAddress = RtlpGetStackTraceAddress(DebugInfo->CreatorBackTraceIndex);
+                TraceAddress = RtlpGetStackTraceAddress (DebugInfo->CreatorBackTraceIndex);
 
-                if (Information == NULL)
-                {
+                if (Information == NULL) {
 
                     //
                     // We are releasing a heap block that contains this critical section
                     //
 
-                    VERIFIER_STOP(APPLICATION_VERIFIER_LOCK_IN_FREED_HEAP,
-                                  "releasing heap allocation containing active critical section", CriticalSection,
-                                  "Critical section address", TraceAddress,
-                                  "Initialization stack trace. Use dds to dump it if non-NULL.", StartAddress,
-                                  "Heap block address", RegionSize, "Heap block size");
+                    VERIFIER_STOP (APPLICATION_VERIFIER_LOCK_IN_FREED_HEAP,
+                                   "releasing heap allocation containing active critical section",
+                                   CriticalSection, "Critical section address",
+                                   TraceAddress, "Initialization stack trace. Use dds to dump it if non-NULL.",
+                                   StartAddress, "Heap block address",
+                                   RegionSize, "Heap block size" );
+
                 }
-                else
-                {
+                else {
 
                     //
                     // We are unloading a DLL that contained this critical section
                     //
 
-                    VERIFIER_STOP(
-                        APPLICATION_VERIFIER_LOCK_IN_UNLOADED_DLL, "unloading dll containing active critical section",
-                        CriticalSection, "Critical section address", TraceAddress,
-                        "Initialization stack trace. Use dds to dump it if non-NULL.",
-                        ((PLDR_DATA_TABLE_ENTRY)Information)->BaseDllName.Buffer,
-                        "DLL name address (use `du ADDRESS' to dump if not null)", StartAddress, "DLL base address", );
+                    VERIFIER_STOP (APPLICATION_VERIFIER_LOCK_IN_UNLOADED_DLL,
+                                   "unloading dll containing active critical section",
+                                   CriticalSection, "Critical section address",
+                                   TraceAddress, "Initialization stack trace. Use dds to dump it if non-NULL.",
+                                   ((PLDR_DATA_TABLE_ENTRY)Information)->BaseDllName.Buffer, "DLL name address (use `du ADDRESS' to dump if not null)",
+                                   StartAddress, "DLL base address",
+                                   );
+
                 }
             }
         }
     }
-    finally
-    {
+    finally {
 
         //
         // Release the CS list lock.
         //
 
-        RtlLeaveCriticalSection(&RtlCriticalSectionLock);
+        RtlLeaveCriticalSection( &RtlCriticalSectionLock );
     }
 }
+
+
+

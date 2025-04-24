@@ -25,8 +25,14 @@ Revision History:
 
 #include "basedll.h"
 
-VOID BaseInitializeContext(OUT PCONTEXT Context, IN PVOID Parameter OPTIONAL, IN PVOID InitialPc OPTIONAL,
-                           IN PVOID InitialSp OPTIONAL, IN BASE_CONTEXT_TYPE ContextType)
+VOID
+BaseInitializeContext (
+    OUT PCONTEXT Context,
+    IN PVOID Parameter OPTIONAL,
+    IN PVOID InitialPc OPTIONAL,
+    IN PVOID InitialSp OPTIONAL,
+    IN BASE_CONTEXT_TYPE ContextType
+    )
 
 /*++
 
@@ -70,29 +76,31 @@ Return Value:
     Context->IntSp = (ULONGLONG)(LONG_PTR)InitialSp;
     Context->IntRa = 1;
     Context->ContextFlags = CONTEXT_FULL;
-    if (ContextType != BaseContextTypeProcess)
-    {
-        if (ContextType == BaseContextTypeThread)
-        {
+    if ( ContextType != BaseContextTypeProcess ) {
+        if ( ContextType == BaseContextTypeThread ) {
             Context->Fir = (ULONGLONG)(LONG_PTR)BaseThreadStart;
-        }
-        else
-        {
+        } else {
             Context->Fir = (ULONGLONG)(LONG_PTR)BaseFiberStart;
         }
         Context->IntA0 = (ULONGLONG)(LONG_PTR)InitialPc;
         Context->IntA1 = (ULONGLONG)(LONG_PTR)Parameter;
-        Context->IntGp = (ULONGLONG)(LONG_PTR)RtlImageDirectoryEntryToData(Peb->ImageBaseAddress, TRUE,
-                                                                           IMAGE_DIRECTORY_ENTRY_GLOBALPTR, &temp);
-    }
-    else
-    {
+        Context->IntGp = (ULONGLONG)(LONG_PTR)RtlImageDirectoryEntryToData(
+                           Peb->ImageBaseAddress,
+                           TRUE,
+                           IMAGE_DIRECTORY_ENTRY_GLOBALPTR,
+                           &temp
+                           );
+        }
+    else {
         Context->Fir = (ULONGLONG)(LONG_PTR)BaseProcessStart;
         Context->IntA0 = (ULONGLONG)(LONG_PTR)InitialPc;
-    }
+        }
 }
-
-VOID BaseFiberStart(VOID)
+
+VOID
+BaseFiberStart(
+    VOID
+    )
 
 /*++
 
@@ -116,5 +124,6 @@ Return Value:
     PFIBER Fiber;
 
     Fiber = GetCurrentFiber();
-    BaseThreadStart((LPTHREAD_START_ROUTINE)Fiber->FiberContext.IntA0, (LPVOID)Fiber->FiberContext.IntA1);
+    BaseThreadStart( (LPTHREAD_START_ROUTINE)Fiber->FiberContext.IntA0,
+                     (LPVOID)Fiber->FiberContext.IntA1 );
 }

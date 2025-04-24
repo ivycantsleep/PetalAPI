@@ -21,8 +21,8 @@
 #include <windows.h>
 
 
-#define CWCMAX_STREAMNAME 512
-#define CB_NAMELESSHEADER FIELD_OFFSET(WIN32_STREAM_ID, cStreamName)
+#define CWCMAX_STREAMNAME        512
+#define CB_NAMELESSHEADER        FIELD_OFFSET(WIN32_STREAM_ID, cStreamName)
 
 typedef struct
 {
@@ -33,7 +33,7 @@ typedef struct
 
 //
 //  BACKUPCONTEXT is the structure used to note the state of the backup.
-//
+//  
 
 typedef struct
 {
@@ -42,58 +42,57 @@ typedef struct
     //  a variable-length stream name, we must reserve space for that name
     //  following the header.
     //
-
+    
     WIN32_STREAM_ID head;
-    union
-    {
-        WCHAR awcName[CWCMAX_STREAMNAME];
-    } ex;
+    union {
+         WCHAR            awcName[CWCMAX_STREAMNAME];
+    } ex ;
 
-    LARGE_INTEGER cbSparseOffset;
+    LARGE_INTEGER    cbSparseOffset ;
 
     //
     //  Offset in the current segment of the backup stream.  This includes
     //  the size of the above header (including variable length name).
     //
 
-    LONGLONG liStreamOffset;
+    LONGLONG        liStreamOffset;
 
     //
     //  BackupRead machine state
     //
-
-    DWORD StreamIndex;
-
+    
+    DWORD            StreamIndex;
+    
     //
     //  Calculated size of the above header.
     //
 
-    DWORD cbHeader;
-
+    DWORD            cbHeader;
+    
     //
     //  Handle to alternate data stream
     //
 
-    HANDLE hAlternate;
+    HANDLE            hAlternate;
 
     //
     //  Buffers
     //
 
-    BUFFER DataBuffer;         //  Data buffer
-    DWORD dwSparseMapSize;     //  size of the sparse file map
-    DWORD dwSparseMapOffset;   //  offset into the sparse map
-    BOOLEAN fSparseBlockStart; //  TRUE if start of sparse block
-    BOOLEAN fSparseHandAlt;    //  TRUE if sparse stream is alt stream
+    BUFFER          DataBuffer;         //  Data buffer
+    DWORD           dwSparseMapSize ;   //  size of the sparse file map
+    DWORD           dwSparseMapOffset ; //  offset into the sparse map
+    BOOLEAN         fSparseBlockStart ; //  TRUE if start of sparse block
+    BOOLEAN         fSparseHandAlt  ;   //  TRUE if sparse stream is alt stream
 
-    DWORD iNameBuffer;       //  Offset into stream name buffer
-    BUFFER StreamNameBuffer; //  Stream name buffer
-    BOOLEAN NamesReady;      //  TRUE if stream name buffer has data in it
-
-    BOOLEAN fStreamStart;     //  TRUE if start of new stream
-    BOOLEAN fMultiStreamType; //  TRUE if stream type has > 1 stream hdr
-    BOOLEAN fAccessError;     //  TRUE if access to a stream was denied
-    DWORD fAttribs;           //  object attributes...
+    DWORD           iNameBuffer;        //  Offset into stream name buffer
+    BUFFER          StreamNameBuffer;   //  Stream name buffer
+    BOOLEAN            NamesReady;         //  TRUE if stream name buffer has data in it
+    
+    BOOLEAN            fStreamStart;       //  TRUE if start of new stream
+    BOOLEAN            fMultiStreamType;   //  TRUE if stream type has > 1 stream hdr
+    BOOLEAN            fAccessError;       //  TRUE if access to a stream was denied
+    DWORD              fAttribs;           //  object attributes...
 } BACKUPCONTEXT;
 
 
@@ -103,24 +102,33 @@ typedef struct
 
 typedef struct
 {
-    BYTE *pIoBuffer;
-    DWORD *pcbTransferred;
-    DWORD cbRequest;
+    BYTE   *pIoBuffer;
+    DWORD  *pcbTransferred;
+    DWORD   cbRequest;
     BOOLEAN fProcessSecurity;
 } BACKUPIOFRAME;
 
 
-#define CBMIN_BUFFER 1024
+#define CBMIN_BUFFER  1024
 
-#define BufferOverflow(s) ((s) == STATUS_BUFFER_OVERFLOW || (s) == STATUS_BUFFER_TOO_SMALL)
+#define BufferOverflow(s) \
+    ((s) == STATUS_BUFFER_OVERFLOW || (s) == STATUS_BUFFER_TOO_SMALL)
 
-int mwStreamList[] = {
-    BACKUP_SECURITY_DATA,  BACKUP_REPARSE_DATA, BACKUP_DATA,    BACKUP_EA_DATA,
-    BACKUP_ALTERNATE_DATA, BACKUP_OBJECT_ID,    BACKUP_INVALID,
+int mwStreamList[] =
+{
+    BACKUP_SECURITY_DATA,
+    BACKUP_REPARSE_DATA,
+    BACKUP_DATA,
+    BACKUP_EA_DATA,
+    BACKUP_ALTERNATE_DATA,
+    BACKUP_OBJECT_ID,
+    BACKUP_INVALID,
 };
 
 
-__inline VOID *BackupAlloc(DWORD cb)
+
+__inline VOID *
+BackupAlloc (DWORD cb)
 /*++
 
 Routine Description:
@@ -137,11 +145,12 @@ Return Value:
 
 --*/
 {
-    return RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(BACKUP_TAG), cb);
+    return RtlAllocateHeap( RtlProcessHeap( ), MAKE_TAG( BACKUP_TAG ), cb );
 }
 
 
-__inline VOID BackupFree(IN VOID *pv)
+__inline VOID
+BackupFree (IN VOID *pv)
 /*++
 
 Routine Description:
@@ -158,11 +167,12 @@ Return Value:
 
 --*/
 {
-    RtlFreeHeap(RtlProcessHeap(), 0, pv);
+    RtlFreeHeap( RtlProcessHeap( ), 0, pv );
 }
 
 
-BOOL GrowBuffer(IN OUT BUFFER *Buffer, IN DWORD cbNew)
+BOOL
+GrowBuffer (IN OUT BUFFER *Buffer, IN DWORD cbNew)
 /*++
 
 Routine Description:
@@ -183,30 +193,29 @@ Return Value:
 {
     VOID *pv;
 
-    if (Buffer->AllocSize < cbNew)
-    {
-        pv = BackupAlloc(cbNew);
+    if ( Buffer->AllocSize < cbNew ) {
+         pv = BackupAlloc( cbNew );
+    
+         if (pv == NULL) {
+             SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+             return FALSE;                                                     
+         }
+    
+         RtlCopyMemory( pv, Buffer->Buffer, Buffer->BufferSize );
+         
+         BackupFree( Buffer->Buffer );
+    
+         Buffer->Buffer = pv;
+         Buffer->AllocSize = cbNew ;
+     }
+    
+     Buffer->BufferSize = cbNew;
 
-        if (pv == NULL)
-        {
-            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-            return FALSE;
-        }
-
-        RtlCopyMemory(pv, Buffer->Buffer, Buffer->BufferSize);
-
-        BackupFree(Buffer->Buffer);
-
-        Buffer->Buffer = pv;
-        Buffer->AllocSize = cbNew;
-    }
-
-    Buffer->BufferSize = cbNew;
-
-    return TRUE;
+     return TRUE;
 }
 
-__inline VOID FreeBuffer(IN OUT BUFFER *Buffer)
+__inline VOID
+FreeBuffer (IN OUT BUFFER *Buffer)
 /*++
 
 Routine Description:
@@ -223,29 +232,33 @@ Return Value:
 
 --*/
 {
-    if (Buffer->Buffer != NULL)
-    {
-        BackupFree(Buffer->Buffer);
+    if (Buffer->Buffer != NULL) {
+        BackupFree( Buffer->Buffer );
         Buffer->Buffer = NULL;
     }
 }
 
-VOID ResetAccessDate(HANDLE hand)
+VOID ResetAccessDate( HANDLE hand )
 {
+        
+   LONGLONG tmp_time = -1 ;
+   FILETIME *time_ptr ;
 
-    LONGLONG tmp_time = -1;
-    FILETIME *time_ptr;
+   time_ptr = (FILETIME *)(&tmp_time);
 
-    time_ptr = (FILETIME *)(&tmp_time);
+   if (hand != INVALID_HANDLE_VALUE) {
+       SetFileTime( hand,
+             time_ptr, 
+             time_ptr, 
+             time_ptr ) ; 
 
-    if (hand != INVALID_HANDLE_VALUE)
-    {
-        SetFileTime(hand, time_ptr, time_ptr, time_ptr);
-    }
+   }
+   
 }
 
-
-VOID FreeContext(IN OUT LPVOID *lpContext)
+
+VOID
+FreeContext (IN OUT LPVOID *lpContext)
 /*++
 
 Routine Description:
@@ -264,27 +277,26 @@ Return Value:
 {
     BACKUPCONTEXT *pbuc = *lpContext;
 
-    if (pbuc != INVALID_HANDLE_VALUE)
-    {
+    if (pbuc != INVALID_HANDLE_VALUE) {
+        
+        FreeBuffer( &pbuc->DataBuffer );
+        FreeBuffer( &pbuc->StreamNameBuffer );
+        
+        ResetAccessDate( pbuc->hAlternate ) ;
+        if (pbuc->hAlternate != INVALID_HANDLE_VALUE) {
 
-        FreeBuffer(&pbuc->DataBuffer);
-        FreeBuffer(&pbuc->StreamNameBuffer);
-
-        ResetAccessDate(pbuc->hAlternate);
-        if (pbuc->hAlternate != INVALID_HANDLE_VALUE)
-        {
-
-            CloseHandle(pbuc->hAlternate);
+            CloseHandle( pbuc->hAlternate );
         }
-
+        
         BackupFree(pbuc);
-
+        
         *lpContext = INVALID_HANDLE_VALUE;
     }
 }
 
 
-BACKUPCONTEXT *AllocContext(IN DWORD cbBuffer)
+BACKUPCONTEXT *
+AllocContext (IN DWORD cbBuffer)
 /*++
 
 Routine Description:
@@ -303,31 +315,29 @@ Return Value:
 {
     BACKUPCONTEXT *pbuc;
 
-    pbuc = BackupAlloc(sizeof(*pbuc));
+    pbuc = BackupAlloc( sizeof( *pbuc ));
 
-    if (pbuc != NULL)
-    {
-        RtlZeroMemory(pbuc, sizeof(*pbuc));
+    if (pbuc != NULL) {
+        RtlZeroMemory( pbuc, sizeof( *pbuc ));
         pbuc->fStreamStart = TRUE;
 
-        if (cbBuffer != 0 && !GrowBuffer(&pbuc->DataBuffer, cbBuffer))
-        {
-            BackupFree(pbuc);
+        if (cbBuffer != 0 && !GrowBuffer( &pbuc->DataBuffer, cbBuffer )) {
+            BackupFree( pbuc );
             pbuc = NULL;
         }
     }
-
-    if (pbuc == NULL)
-    {
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+    
+    if (pbuc == NULL) {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
     }
 
-    return (pbuc);
+    return(pbuc);
 }
 
 
+
 LONGLONG
-ComputeRemainingSize(IN BACKUPCONTEXT *pbuc)
+ComputeRemainingSize (IN BACKUPCONTEXT *pbuc)
 /*++
 
 Routine Description:
@@ -347,27 +357,27 @@ Return Value:
 
 --*/
 {
-    LARGE_INTEGER ret_size;
+    LARGE_INTEGER ret_size ;
 
-    ret_size.QuadPart = pbuc->cbHeader + pbuc->head.Size.QuadPart - pbuc->liStreamOffset;
+    ret_size.QuadPart = pbuc->cbHeader + pbuc->head.Size.QuadPart 
+                               - pbuc->liStreamOffset;
 
     //
-    // since the internally we treat the sparse buffer offset
+    // since the internally we treat the sparse buffer offset 
     // as part of the header and since the caller need to see it
     // as part of the data, this code make the internal correction.
     //
-    if (pbuc->head.dwStreamId == BACKUP_SPARSE_BLOCK)
-    {
+    if ( pbuc->head.dwStreamId == BACKUP_SPARSE_BLOCK  ) {
 
-        ret_size.QuadPart -= sizeof(LARGE_INTEGER);
+         ret_size.QuadPart -= sizeof(LARGE_INTEGER) ;
     }
 
-    return ret_size.QuadPart;
+    return ret_size.QuadPart ; 
 }
 
 
 DWORD
-ComputeRequestSize(BACKUPCONTEXT *pbuc, DWORD cbrequest)
+ComputeRequestSize (BACKUPCONTEXT *pbuc, DWORD cbrequest)
 /*++
 
 Routine Description:
@@ -390,13 +400,14 @@ Return Value:
 {
     LONGLONG licbRemain;
 
-    licbRemain = ComputeRemainingSize(pbuc);
-
-    return (DWORD)min(cbrequest, licbRemain);
+    licbRemain = ComputeRemainingSize( pbuc );
+    
+    return (DWORD) min( cbrequest, licbRemain );
 }
 
 
-VOID ReportTransfer(BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif, DWORD cbtransferred)
+VOID
+ReportTransfer(BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif, DWORD cbtransferred)
 /*++
 
 Routine Description:
@@ -424,7 +435,9 @@ Return Value:
 }
 
 
-VOID BackupReadBuffer(BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
+
+VOID
+BackupReadBuffer (BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
 /*++
 
 Routine Description:
@@ -451,25 +464,27 @@ Return Value:
     //  Determine size of allowable transfer and pointer to source
     //  data
     //
-
-    cbrequest = ComputeRequestSize(pbuc, pbif->cbRequest);
-    pb = &pbuc->DataBuffer.Buffer[pbuc->liStreamOffset - pbuc->cbHeader];
+    
+    cbrequest = ComputeRequestSize( pbuc, pbif->cbRequest );
+    pb = &pbuc->DataBuffer.Buffer[ pbuc->liStreamOffset - pbuc->cbHeader ];
 
     //
     //  Move the data to the user's buffer
     //
-
+    
     RtlCopyMemory(pbif->pIoBuffer, pb, cbrequest);
 
     //
     //  Update statistics
     //
-
+    
     ReportTransfer(pbuc, pbif, cbrequest);
 }
 
 
-BOOL BackupReadStream(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
+
+BOOL
+BackupReadStream (HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
 /*++
 
 Routine Description:
@@ -494,26 +509,25 @@ Return Value:
     DWORD cbtransferred;
     BOOL fSuccess;
 
-    if (pbuc->fSparseBlockStart)
-    {
+    if (pbuc->fSparseBlockStart) {
 
-        PFILE_ALLOCATED_RANGE_BUFFER range_buf;
-        LARGE_INTEGER licbFile;
+        PFILE_ALLOCATED_RANGE_BUFFER range_buf ;
+        LARGE_INTEGER licbFile ;
 
-        range_buf = (PFILE_ALLOCATED_RANGE_BUFFER)(pbuc->DataBuffer.Buffer + pbuc->dwSparseMapOffset);
+        range_buf = (PFILE_ALLOCATED_RANGE_BUFFER)(pbuc->DataBuffer.Buffer + pbuc->dwSparseMapOffset) ;
 
-        pbuc->head.Size.QuadPart = range_buf->Length.QuadPart + sizeof(LARGE_INTEGER);
+        pbuc->head.Size.QuadPart = range_buf->Length.QuadPart + sizeof(LARGE_INTEGER) ;
 
-        pbuc->head.dwStreamId = BACKUP_SPARSE_BLOCK;
+        pbuc->head.dwStreamId = BACKUP_SPARSE_BLOCK ;
         pbuc->head.dwStreamAttributes = STREAM_SPARSE_ATTRIBUTE;
 
         pbuc->head.dwStreamNameSize = 0;
 
-        pbuc->cbHeader = CB_NAMELESSHEADER + sizeof(LARGE_INTEGER);
+        pbuc->cbHeader = CB_NAMELESSHEADER + sizeof( LARGE_INTEGER ) ;
 
-        pbuc->cbSparseOffset = range_buf->FileOffset;
+        pbuc->cbSparseOffset = range_buf->FileOffset ;
 
-        RtlCopyMemory(pbuc->head.cStreamName, &pbuc->cbSparseOffset, sizeof(LARGE_INTEGER));
+        RtlCopyMemory( pbuc->head.cStreamName, &pbuc->cbSparseOffset, sizeof( LARGE_INTEGER ) ) ;
 
         pbuc->fSparseBlockStart = FALSE;
 
@@ -521,47 +535,46 @@ Return Value:
 
         licbFile.HighPart = range_buf->FileOffset.HighPart;
 
-        licbFile.LowPart = SetFilePointer(hFile, range_buf->FileOffset.LowPart, &licbFile.HighPart, FILE_BEGIN);
+        licbFile.LowPart = SetFilePointer( hFile,
+                              range_buf->FileOffset.LowPart,
+                              &licbFile.HighPart,
+                              FILE_BEGIN );
 
-        if (licbFile.QuadPart != range_buf->FileOffset.QuadPart)
-        {
+        if ( licbFile.QuadPart != range_buf->FileOffset.QuadPart ) {
             pbuc->fAccessError = TRUE;
-            return FALSE;
+            return FALSE ;
+        } else {
+            return TRUE ;
         }
-        else
-        {
-            return TRUE;
-        }
+    }    
+
+
+    if (pbuc->liStreamOffset < pbuc->cbHeader) {
+
+       return TRUE ;
     }
 
+    cbrequest = ComputeRequestSize( pbuc, pbif->cbRequest );
 
-    if (pbuc->liStreamOffset < pbuc->cbHeader)
-    {
+    fSuccess = ReadFile( hFile, pbif->pIoBuffer, cbrequest, &cbtransferred, NULL );
 
-        return TRUE;
-    }
-
-    cbrequest = ComputeRequestSize(pbuc, pbif->cbRequest);
-
-    fSuccess = ReadFile(hFile, pbif->pIoBuffer, cbrequest, &cbtransferred, NULL);
-
-    if (cbtransferred != 0)
-    {
-
-        ReportTransfer(pbuc, pbif, cbtransferred);
-    }
-    else if (fSuccess && cbrequest != 0)
-    {
-
-        SetLastError(ERROR_IO_DEVICE);
+    if (cbtransferred != 0) {
+        
+        ReportTransfer( pbuc, pbif, cbtransferred );
+    
+    } else if (fSuccess && cbrequest != 0) {
+        
+        SetLastError( ERROR_IO_DEVICE );
         fSuccess = FALSE;
     }
-
-    return (fSuccess);
+    
+    return(fSuccess);
 }
 
 
-BOOL BackupGetSparseMap(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
+
+BOOL
+BackupGetSparseMap (HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
 /*++
 
 Routine Description:
@@ -582,137 +595,138 @@ Return Value:
 
 --*/
 {
-    FILE_ALLOCATED_RANGE_BUFFER req_buf;
-    PFILE_ALLOCATED_RANGE_BUFFER last_ret_buf;
-    DWORD out_buf_size;
-    DWORD data_size = 4096;
-    IO_STATUS_BLOCK iosb;
-    LARGE_INTEGER file_size;
-    NTSTATUS Status;
-    BOOLEAN empty_file = FALSE;
+     FILE_ALLOCATED_RANGE_BUFFER  req_buf ;
+     PFILE_ALLOCATED_RANGE_BUFFER last_ret_buf ;
+     DWORD     out_buf_size ;
+     DWORD     data_size = 4096 ;
+     IO_STATUS_BLOCK iosb ;
+     LARGE_INTEGER   file_size ;
+     NTSTATUS        Status ;
+     BOOLEAN         empty_file = FALSE ;
 
-    req_buf.FileOffset.QuadPart = 0;
+     req_buf.FileOffset.QuadPart = 0 ;
 
-    pbuc->dwSparseMapSize = 0;
-    pbuc->dwSparseMapOffset = 0;
-    pbuc->fSparseBlockStart = FALSE;
+     pbuc->dwSparseMapSize   = 0 ;
+     pbuc->dwSparseMapOffset = 0 ;
+     pbuc->fSparseBlockStart = FALSE ;
 
-    req_buf.Length.LowPart = GetFileSize(hFile, &req_buf.Length.HighPart);
+     req_buf.Length.LowPart = GetFileSize( hFile, 
+                                           &req_buf.Length.HighPart );
 
-    file_size = req_buf.Length;
+     file_size = req_buf.Length ;
 
-    do
-    {
-        if (GrowBuffer(&pbuc->DataBuffer, data_size))
-        {
+     do {
+          if ( GrowBuffer( &pbuc->DataBuffer, 
+                           data_size ) ) {
+          
+               iosb.Information = 0 ;
 
-            iosb.Information = 0;
+               Status = NtFsControlFile( hFile,
+                                NULL,  // overlapped event handle
+                                NULL,  // Apc routine
+                                NULL,  // overlapped structure
+                                &iosb,
+                                FSCTL_QUERY_ALLOCATED_RANGES,   
+                                &req_buf,
+                                sizeof( req_buf ),
+                                pbuc->DataBuffer.Buffer + pbuc->dwSparseMapSize,
+                                pbuc->DataBuffer.AllocSize - pbuc->dwSparseMapSize ) ;
 
-            Status = NtFsControlFile(hFile,
-                                     NULL, // overlapped event handle
-                                     NULL, // Apc routine
-                                     NULL, // overlapped structure
-                                     &iosb, FSCTL_QUERY_ALLOCATED_RANGES, &req_buf, sizeof(req_buf),
-                                     pbuc->DataBuffer.Buffer + pbuc->dwSparseMapSize,
-                                     pbuc->DataBuffer.AllocSize - pbuc->dwSparseMapSize);
+               out_buf_size = 0 ;
 
-            out_buf_size = 0;
+               if ((Status == STATUS_BUFFER_OVERFLOW) || NT_SUCCESS( Status ) ) {
+                    out_buf_size = (DWORD)iosb.Information ;
+                    if ( out_buf_size == 0 ) {
+                         empty_file = TRUE ;
+                    }
+               }
 
-            if ((Status == STATUS_BUFFER_OVERFLOW) || NT_SUCCESS(Status))
-            {
-                out_buf_size = (DWORD)iosb.Information;
-                if (out_buf_size == 0)
-                {
-                    empty_file = TRUE;
-                }
-            }
+               if ( out_buf_size != 0 ) {
+                    pbuc->dwSparseMapSize += out_buf_size ;
 
-            if (out_buf_size != 0)
-            {
-                pbuc->dwSparseMapSize += out_buf_size;
+                    last_ret_buf = 
+                         (PFILE_ALLOCATED_RANGE_BUFFER)(pbuc->DataBuffer.Buffer +
+                                                    pbuc->dwSparseMapSize -
+                                                    sizeof(FILE_ALLOCATED_RANGE_BUFFER)) ;
 
-                last_ret_buf = (PFILE_ALLOCATED_RANGE_BUFFER)(pbuc->DataBuffer.Buffer + pbuc->dwSparseMapSize -
-                                                              sizeof(FILE_ALLOCATED_RANGE_BUFFER));
+                    req_buf.FileOffset = last_ret_buf->FileOffset ;
+                    req_buf.FileOffset.QuadPart += last_ret_buf->Length.QuadPart ;
 
-                req_buf.FileOffset = last_ret_buf->FileOffset;
-                req_buf.FileOffset.QuadPart += last_ret_buf->Length.QuadPart;
+                    //
+                    // if we can't fit any more in the buffer lets increase
+                    //   the size and get more data otherwise assume were done.
+                    //
+                    if ( pbuc->dwSparseMapSize + sizeof(FILE_ALLOCATED_RANGE_BUFFER) >
+                         pbuc->DataBuffer.AllocSize ) {
+                         data_size += 4096 ;
 
-                //
-                // if we can't fit any more in the buffer lets increase
-                //   the size and get more data otherwise assume were done.
-                //
-                if (pbuc->dwSparseMapSize + sizeof(FILE_ALLOCATED_RANGE_BUFFER) > pbuc->DataBuffer.AllocSize)
-                {
-                    data_size += 4096;
-                }
-                else
-                {
+                    } else {
 
-                    break;
-                }
-            }
-            else
-            {
+                         break ;
+                    }
 
-                // reallocate for one more buffer entry
-                if (out_buf_size + sizeof(FILE_ALLOCATED_RANGE_BUFFER) > data_size)
-                {
-                    data_size += 4096;
-                    continue;
-                }
+               } else {
 
-                break;
-            }
-        }
-        else
-        {
+                    // reallocate for one more buffer entry
+                    if ( out_buf_size + sizeof(FILE_ALLOCATED_RANGE_BUFFER) > data_size ) {
+                         data_size += 4096 ;
+                         continue ;
+                    }
 
-            pbuc->dwSparseMapSize = 0;
-            break;
-        }
+                    break ;
+               }
+          
+          } else {
 
-    } while (TRUE);
+               pbuc->dwSparseMapSize = 0 ;
+               break ;
 
-    //
-    // if there are RANGE_BUFFERS and it isn't simply the whole file, then
-    //     go into sparse read mode.
-    //
+          }
+               
+     } while ( TRUE ) ;
 
-    // hold on to your hat...
+     //
+     // if there are RANGE_BUFFERS and it isn't simply the whole file, then
+     //     go into sparse read mode.
+     //
 
-    //  If there are no allocated ranges and the file is NOT 0 length
-    //    then we want to manufacture a record for the file length.
-    //
+     // hold on to your hat...   
 
-    if ((empty_file && (file_size.QuadPart != 0)) || (pbuc->dwSparseMapSize >= sizeof(FILE_ALLOCATED_RANGE_BUFFER)))
-    {
+     //  If there are no allocated ranges and the file is NOT 0 length
+     //    then we want to manufacture a record for the file length.
+     //
 
-        last_ret_buf = (PFILE_ALLOCATED_RANGE_BUFFER)(pbuc->DataBuffer.Buffer);
+     if ( (empty_file && ( file_size.QuadPart != 0 )) || (pbuc->dwSparseMapSize >= sizeof( FILE_ALLOCATED_RANGE_BUFFER) ) ) {
 
-        if (empty_file || (last_ret_buf->FileOffset.QuadPart != 0) ||
-            (last_ret_buf->Length.QuadPart != file_size.QuadPart))
-        {
+          last_ret_buf = (PFILE_ALLOCATED_RANGE_BUFFER)(pbuc->DataBuffer.Buffer ) ;
+
+          if ( empty_file ||
+               ( last_ret_buf->FileOffset.QuadPart != 0 ) ||
+               ( last_ret_buf->Length.QuadPart != file_size.QuadPart ) ) {
 
 
-            // first lets add a record for the EOF marker
-            pbuc->dwSparseMapSize += sizeof(FILE_ALLOCATED_RANGE_BUFFER);
-            last_ret_buf = (PFILE_ALLOCATED_RANGE_BUFFER)(pbuc->DataBuffer.Buffer + pbuc->dwSparseMapSize -
-                                                          sizeof(FILE_ALLOCATED_RANGE_BUFFER));
+               // first lets add a record for the EOF marker 
+               pbuc->dwSparseMapSize += sizeof(FILE_ALLOCATED_RANGE_BUFFER) ;
+               last_ret_buf = 
+                      (PFILE_ALLOCATED_RANGE_BUFFER)(pbuc->DataBuffer.Buffer +
+                                                 pbuc->dwSparseMapSize -
+                                                    sizeof(FILE_ALLOCATED_RANGE_BUFFER)) ;
 
-            last_ret_buf->FileOffset.QuadPart = file_size.QuadPart;
-            last_ret_buf->Length.QuadPart = 0;
+               last_ret_buf->FileOffset.QuadPart = file_size.QuadPart ;
+               last_ret_buf->Length.QuadPart = 0 ;
 
-            pbuc->fSparseBlockStart = TRUE;
-            return TRUE;
-        }
-    }
+               pbuc->fSparseBlockStart = TRUE ;
+               return TRUE ;
+          }
+     } 
 
-    pbuc->dwSparseMapSize = 0;
-    return FALSE;
+     pbuc->dwSparseMapSize = 0 ;
+     return FALSE ;
 }
-
-
-BOOL BackupReadData(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
+     
+
+BOOL
+BackupReadData (HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
 /*++
 
 Routine Description:
@@ -733,35 +747,30 @@ Return Value:
 
 --*/
 {
-    LARGE_INTEGER licbFile;
+    LARGE_INTEGER licbFile ;
 
     //
     //  If the context is not initialized for this transfer,
     //  set up based on file size.
     //
+    
+    if (pbuc->fStreamStart) {
 
-    if (pbuc->fStreamStart)
-    {
-
-        if (pbuc->fAttribs & FILE_ATTRIBUTE_ENCRYPTED)
-        {
+        if (pbuc->fAttribs & FILE_ATTRIBUTE_ENCRYPTED) {
             return TRUE;
         }
 
-        if (pbuc->fAttribs & FILE_ATTRIBUTE_DIRECTORY)
-        {
+        if (pbuc->fAttribs & FILE_ATTRIBUTE_DIRECTORY) {
             return TRUE;
         }
 
-        licbFile.LowPart = GetFileSize(hFile, &licbFile.HighPart);
+        licbFile.LowPart = GetFileSize( hFile, &licbFile.HighPart );
 
-        if (licbFile.QuadPart == 0)
-        {
+        if (licbFile.QuadPart == 0) {
             return TRUE;
         }
-
-        if (licbFile.LowPart == 0xffffffff && GetLastError() != NO_ERROR)
-        {
+        
+        if (licbFile.LowPart == 0xffffffff && GetLastError() != NO_ERROR) {
             return FALSE;
         }
 
@@ -774,19 +783,17 @@ Return Value:
         pbuc->cbHeader = CB_NAMELESSHEADER;
         pbuc->fStreamStart = FALSE;
 
-        if (BackupGetSparseMap(hFile, pbuc, pbif))
-        {
+        if ( BackupGetSparseMap( hFile, pbuc, pbif ) ) {
 
-            pbuc->head.Size.QuadPart = 0;
+            pbuc->head.Size.QuadPart = 0 ;
             pbuc->head.dwStreamAttributes = STREAM_SPARSE_ATTRIBUTE;
-        }
-        else
-        {
+
+        } else {
 
             pbuc->head.Size = licbFile;
 
             licbFile.HighPart = 0;
-            SetFilePointer(hFile, 0, &licbFile.HighPart, FILE_BEGIN);
+            SetFilePointer( hFile, 0, &licbFile.HighPart, FILE_BEGIN );
         }
 
 
@@ -797,13 +804,15 @@ Return Value:
     //  If there's more data for us to read, then go and
     //  get it from the stream
     //
+    
 
-
-    return BackupReadStream(hFile, pbuc, pbif);
+    return BackupReadStream( hFile, pbuc, pbif );
 }
 
 
-BOOL BackupReadAlternateData(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
+
+BOOL
+BackupReadAlternateData(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
 /*++
 
 Routine Description:
@@ -828,112 +837,108 @@ Return Value:
     //  If we haven't started transferring alternate data streams then
     //  buffer all the stream information from the file system
     //
-
-    if (pbuc->fStreamStart)
-    {
+    
+    if (pbuc->fStreamStart) {
         NTSTATUS Status;
         FILE_STREAM_INFORMATION *pfsi;
         IO_STATUS_BLOCK iosb;
 
-        if (pbuc->fAttribs & FILE_ATTRIBUTE_ENCRYPTED)
-        {
-            if (!(pbuc->fAttribs & FILE_ATTRIBUTE_DIRECTORY))
-            {
+        if (pbuc->fAttribs & FILE_ATTRIBUTE_ENCRYPTED) {
+             if ( !(pbuc->fAttribs & FILE_ATTRIBUTE_DIRECTORY) ) {
 
-                return TRUE;
-            }
+                 return TRUE;
+             }
         }
 
         //
-        //  Loop, growing the names buffer, until it is large enough to
+        //  Loop, growing the names buffer, until it is large enough to 
         //  contain all the alternate data
         //
-
-        if (!pbuc->NamesReady)
-        {
-
-            if (!GrowBuffer(&pbuc->StreamNameBuffer, 1024))
-            {
-
-                return FALSE;
+        
+        if (!pbuc->NamesReady) {
+            
+            if (!GrowBuffer( &pbuc->StreamNameBuffer, 1024 ) ) {
+                    
+                 return FALSE;
             }
-
-            while (TRUE)
-            {
+            
+            while (TRUE) {
                 //
                 //  Resize the buffer.  If we cannot grow it, then fail.
                 //
-
-                Status = NtQueryInformationFile(hFile, &iosb, pbuc->StreamNameBuffer.Buffer,
-                                                pbuc->StreamNameBuffer.BufferSize, FileStreamInformation);
+                
+                Status = NtQueryInformationFile(
+                            hFile,
+                            &iosb,
+                            pbuc->StreamNameBuffer.Buffer,
+                            pbuc->StreamNameBuffer.BufferSize,
+                            FileStreamInformation);
 
                 //
                 //  If we succeeded in reading some data, set the buffer
                 //  up and finish initializing
                 //
-
-                if (NT_SUCCESS(Status) && iosb.Information != 0)
-                {
+                
+                if (NT_SUCCESS(Status) && iosb.Information != 0) {
                     pbuc->iNameBuffer = 0;
                     pbuc->NamesReady = TRUE;
                     break;
                 }
-
+                
                 //
                 //  If the error was not due to overflow, then skip
                 //  all alternate streams
                 //
-
-                if (!BufferOverflow(Status))
-                {
-                    return TRUE;
+                
+                if (!BufferOverflow(Status)) {
+                    return TRUE;        
                 }
 
                 //
                 // simply inlarge the buffer and try again.
                 //
-                if (!GrowBuffer(&pbuc->StreamNameBuffer, pbuc->StreamNameBuffer.BufferSize * 2))
-                {
-
+                if (!GrowBuffer( &pbuc->StreamNameBuffer, 
+                                 pbuc->StreamNameBuffer.BufferSize * 2)) {
+                    
                     return FALSE;
                 }
+
             }
         }
 
         pbuc->hAlternate = INVALID_HANDLE_VALUE;
         pbuc->fStreamStart = FALSE;
-        pfsi = (FILE_STREAM_INFORMATION *)&pbuc->StreamNameBuffer.Buffer[pbuc->iNameBuffer];
+        pfsi = (FILE_STREAM_INFORMATION *) &pbuc->StreamNameBuffer.Buffer[pbuc->iNameBuffer];
 
         //
-        //  Skip first stream if it is the default data stream.  This
+        //  Skip first stream if it is the default data stream.  This 
         //  code is NTFS-specific and relies on behaviour not documented anywhere.
         //
-
-        if (pfsi->StreamNameLength >= 2 * sizeof(WCHAR) && pfsi->StreamName[1] == ':')
-        {
-
-            if (pfsi->NextEntryOffset == 0)
-            {
-                return TRUE; // No more, do next stream type
+        
+        if (pfsi->StreamNameLength >= 2 * sizeof(WCHAR) &&
+            pfsi->StreamName[1] == ':') {
+            
+            if (pfsi->NextEntryOffset == 0) {
+                return TRUE;                // No more, do next stream type
             }
-
+            
             pbuc->iNameBuffer += pfsi->NextEntryOffset;
+        
         }
-
+        
         pbuc->head.Size.LowPart = 1;
+    
+    //
+    //  If we don't have an open stream
+    //
 
-        //
-        //  If we don't have an open stream
-        //
-    }
-    else if (pbuc->hAlternate == INVALID_HANDLE_VALUE)
-    {
+    } else if (pbuc->hAlternate == INVALID_HANDLE_VALUE) {
         NTSTATUS Status;
         PFILE_STREAM_INFORMATION pfsi;
         UNICODE_STRING strName;
         OBJECT_ATTRIBUTES oa;
         IO_STATUS_BLOCK iosb;
-        DWORD reparse_flg = 0;
+        DWORD reparse_flg = 0 ;
 
         pbuc->head.Size.QuadPart = 0;
 
@@ -941,115 +946,123 @@ Return Value:
         //  Form the relative name of the stream and try to
         //  open it relative to the base file
         //
+        
+        pfsi = (FILE_STREAM_INFORMATION *) &pbuc->StreamNameBuffer.Buffer[pbuc->iNameBuffer];
 
-        pfsi = (FILE_STREAM_INFORMATION *)&pbuc->StreamNameBuffer.Buffer[pbuc->iNameBuffer];
-
-        strName.Length = (USHORT)pfsi->StreamNameLength;
+        strName.Length = (USHORT) pfsi->StreamNameLength;
         strName.MaximumLength = strName.Length;
         strName.Buffer = pfsi->StreamName;
 
 
-        if (pbuc->fAttribs & FILE_ATTRIBUTE_REPARSE_POINT)
-        {
+        if (pbuc->fAttribs & FILE_ATTRIBUTE_REPARSE_POINT ) {
 
-            reparse_flg = FILE_OPEN_REPARSE_POINT;
+             reparse_flg = FILE_OPEN_REPARSE_POINT ;
+
         }
 
-        InitializeObjectAttributes(&oa, &strName, OBJ_CASE_INSENSITIVE, hFile, NULL);
+        InitializeObjectAttributes(
+                 &oa,
+                 &strName,
+                 OBJ_CASE_INSENSITIVE,
+                 hFile,
+                 NULL);
 
-        Status = NtOpenFile(&pbuc->hAlternate, FILE_READ_DATA | SYNCHRONIZE, &oa, &iosb,
-                            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                            FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT | reparse_flg);
+        Status = NtOpenFile(
+                    &pbuc->hAlternate,
+                    FILE_READ_DATA | SYNCHRONIZE,
+                    &oa,
+                    &iosb,
+                    FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
+                    FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT | reparse_flg);
 
         //
         //  If we did not succeed, skip this entry and set up for another stream
         //
 
-        if (!NT_SUCCESS(Status))
-        {
+        if (!NT_SUCCESS( Status )) {
             pbuc->iNameBuffer += pfsi->NextEntryOffset;
-            if (pfsi->NextEntryOffset != 0)
-            {
+            if (pfsi->NextEntryOffset != 0) {
                 pbuc->head.Size.LowPart = 1;
-                pbuc->fMultiStreamType = TRUE; // more to come
+                pbuc->fMultiStreamType = TRUE;        // more to come
             }
-            SetLastError(ERROR_SHARING_VIOLATION);
+            SetLastError( ERROR_SHARING_VIOLATION );
             return FALSE;
         }
 
         // if we can't lock all records, return an error
-        if (!LockFile(pbuc->hAlternate, 0, 0, 0xffffffff, 0xffffffff))
-        {
-            SetLastError(ERROR_SHARING_VIOLATION);
+        if (!LockFile( pbuc->hAlternate, 0, 0, 0xffffffff, 0xffffffff )) {
+            SetLastError( ERROR_SHARING_VIOLATION );
             return FALSE;
         }
 
         //
         //  Perform common header initialization
         //
-
+        
         pbuc->head.dwStreamAttributes = STREAM_NORMAL_ATTRIBUTE;
         pbuc->head.dwStreamNameSize = pfsi->StreamNameLength;
 
         pbuc->cbHeader = CB_NAMELESSHEADER + pfsi->StreamNameLength;
 
-        RtlCopyMemory(pbuc->head.cStreamName, pfsi->StreamName, pfsi->StreamNameLength);
+        RtlCopyMemory(
+            pbuc->head.cStreamName,
+            pfsi->StreamName,
+            pfsi->StreamNameLength);
 
         //
         //  Advance to the next stream in the stream information block
         //
-
-        if (pfsi->NextEntryOffset != 0)
-        {
+        
+        if (pfsi->NextEntryOffset != 0) {
             pbuc->iNameBuffer += pfsi->NextEntryOffset;
             pbuc->fMultiStreamType = TRUE;
         }
-
+    
         //
         //  If we are a data stream, set up for data stream copy
         //
 
-        if (BasepIsDataAttribute(pfsi->StreamNameLength, pfsi->StreamName))
-        {
+        if (BasepIsDataAttribute( pfsi->StreamNameLength, pfsi->StreamName )) {
 
             pbuc->head.dwStreamId = BACKUP_ALTERNATE_DATA;
 
 
-            if (BackupGetSparseMap(pbuc->hAlternate, pbuc, pbif))
-            {
+            if ( BackupGetSparseMap( pbuc->hAlternate, pbuc, pbif ) ) {
 
-                pbuc->head.Size.QuadPart = 0;
-                pbuc->head.dwStreamAttributes = STREAM_SPARSE_ATTRIBUTE;
-            }
-            else
-            {
+                 pbuc->head.Size.QuadPart = 0 ;
+                 pbuc->head.dwStreamAttributes = STREAM_SPARSE_ATTRIBUTE;
 
-                pbuc->head.Size.LowPart = GetFileSize(pbuc->hAlternate, &pbuc->head.Size.HighPart);
+            } else {
+
+                pbuc->head.Size.LowPart = GetFileSize(
+                    pbuc->hAlternate,
+                    &pbuc->head.Size.HighPart );
+
             }
         }
 
-        //
-        //  If we need to return the name
-        //
-    }
-    else if (pbuc->liStreamOffset < pbuc->cbHeader)
-    {
-        return TRUE;
+    //
+    //  If we need to return the name
+    //
+    } else if ( pbuc->liStreamOffset < pbuc->cbHeader) {
+        return TRUE ;
 
-        //
-        //  If there is more data in this stream to transfer
-        //
-    }
-    else if ((pbuc->head.dwStreamId == BACKUP_ALTERNATE_DATA) || (pbuc->head.dwStreamId == BACKUP_SPARSE_BLOCK))
-    {
-
-        return BackupReadStream(pbuc->hAlternate, pbuc, pbif);
+    //
+    //  If there is more data in this stream to transfer
+    //
+    
+    } else if ( (pbuc->head.dwStreamId == BACKUP_ALTERNATE_DATA) ||
+                (pbuc->head.dwStreamId == BACKUP_SPARSE_BLOCK) ) {
+    
+        return BackupReadStream( pbuc->hAlternate, pbuc, pbif );
+    
     }
     return TRUE;
 }
 
 
-BOOL BackupReadEaData(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
+BOOL
+BackupReadEaData(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
 /*++
 
 Routine Description:
@@ -1073,30 +1086,35 @@ Return Value:
     //
     //  If we are just starting out on the EA data
     //
-
-    if (pbuc->fStreamStart)
-    {
+    
+    if (pbuc->fStreamStart) {
         IO_STATUS_BLOCK iosb;
 
         //
         //  Loop trying to read all EA data into the buffer and
         //  resize the buffer if necessary
         //
-
-        while (TRUE)
-        {
+        
+        while (TRUE) {
             NTSTATUS Status;
             FILE_EA_INFORMATION fei;
 
-            Status = NtQueryEaFile(hFile, &iosb, pbuc->DataBuffer.Buffer, pbuc->DataBuffer.BufferSize, FALSE, NULL, 0,
-                                   0, (BOOLEAN)TRUE);
-
+            Status = NtQueryEaFile(
+                        hFile,
+                        &iosb,
+                        pbuc->DataBuffer.Buffer,
+                        pbuc->DataBuffer.BufferSize,
+                        FALSE,
+                        NULL,
+                        0,
+                        0,
+                        (BOOLEAN) TRUE );
+            
             //
             //  If we successfully read all the data, go complete
             //  the initialization
             //
-            if (NT_SUCCESS(Status) && iosb.Information != 0)
-            {
+            if (NT_SUCCESS( Status ) && iosb.Information != 0) {
                 pbuc->NamesReady = TRUE;
                 break;
             }
@@ -1106,35 +1124,37 @@ Return Value:
             //  skip EA's altogether
             //
 
-            if (!BufferOverflow(Status))
-            {
+            if (!BufferOverflow(Status)) {
                 return TRUE;
             }
 
             //
-            //  Get a stab at the total EA size
+            //  Get a stab at the total EA size 
             //
 
-            Status = NtQueryInformationFile(hFile, &iosb, &fei, sizeof(fei), FileEaInformation);
+            Status = NtQueryInformationFile(
+                        hFile,
+                        &iosb,
+                        &fei,
+                        sizeof(fei),
+                        FileEaInformation);
 
             //
-            //  This call should never have failed (since we were able to
+            //  This call should never have failed (since we were able to 
             //  QueryEaFile) above.  However, if it does, skip EAs altogether
             //
-
-            if (!NT_SUCCESS(Status))
-            {
+            
+            if (!NT_SUCCESS(Status)) {
                 return TRUE;
             }
-
+            
             //
             //  Resize the buffer to something that seems reasonable.  No guarantees
             //  about whether this will work or not...  If we couldn't grow the buffer
             //  fail this call.
             //
-
-            if (!GrowBuffer(&pbuc->DataBuffer, (fei.EaSize * 5) / 4))
-            {
+            
+            if (!GrowBuffer( &pbuc->DataBuffer, (fei.EaSize * 5) / 4)) {
                 pbuc->fAccessError = TRUE;
                 return FALSE;
             }
@@ -1143,7 +1163,7 @@ Return Value:
         //
         //  Set up the header for the EA stream
         //
-
+        
         pbuc->head.dwStreamId = BACKUP_EA_DATA;
         pbuc->head.dwStreamAttributes = STREAM_NORMAL_ATTRIBUTE;
         pbuc->head.dwStreamNameSize = 0;
@@ -1153,22 +1173,22 @@ Return Value:
         pbuc->head.Size.QuadPart = iosb.Information;
 
         pbuc->fStreamStart = FALSE;
-
-        //
-        //  If we have more data in the buffer to read then go
-        //  copy it out.
-        //
-    }
-    else if (pbuc->liStreamOffset >= pbuc->cbHeader)
-    {
-        BackupReadBuffer(pbuc, pbif);
+    
+    //
+    //  If we have more data in the buffer to read then go
+    //  copy it out.
+    //
+    
+    } else if (pbuc->liStreamOffset >= pbuc->cbHeader) {
+        BackupReadBuffer( pbuc, pbif );
     }
 
     return TRUE;
 }
 
-
-BOOL BackupReadObjectId(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
+
+BOOL
+BackupReadObjectId(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
 /*++
 
 Routine Description:
@@ -1192,29 +1212,30 @@ Return Value:
     //
     //  If we are just starting out on the Object ID data
     //
-
-    if (pbuc->fStreamStart)
-    {
+    
+    if (pbuc->fStreamStart) {
         IO_STATUS_BLOCK iosb;
-        NTSTATUS Status;
+        NTSTATUS Status ;
 
-        if (!GrowBuffer(&pbuc->DataBuffer, 1024))
-        {
+        if (!GrowBuffer( &pbuc->DataBuffer, 1024 ) ) {
             pbuc->fAccessError = TRUE;
             return FALSE;
         }
 
 
-        Status =
-            NtFsControlFile(hFile,
-                            NULL, // overlapped event handle
-                            NULL, // Apc routine
-                            NULL, // overlapped structure
-                            &iosb, FSCTL_GET_OBJECT_ID, NULL, 0, pbuc->DataBuffer.Buffer, pbuc->DataBuffer.BufferSize);
+        Status = NtFsControlFile( hFile,
+                         NULL,  // overlapped event handle
+                         NULL,  // Apc routine
+                         NULL,  // overlapped structure
+                         &iosb,
+                         FSCTL_GET_OBJECT_ID,
+                         NULL,
+                         0,
+                         pbuc->DataBuffer.Buffer,
+                         pbuc->DataBuffer.BufferSize ) ;
 
-        if (!NT_SUCCESS(Status))
-        {
-            return TRUE;
+        if ( !NT_SUCCESS(Status) ) {
+             return TRUE ;
         }
 
         //
@@ -1222,8 +1243,8 @@ Return Value:
         //
 
         pbuc->NamesReady = TRUE;
-
-        pbuc->head.dwStreamId = BACKUP_OBJECT_ID;
+        
+        pbuc->head.dwStreamId = BACKUP_OBJECT_ID ;
         pbuc->head.dwStreamAttributes = STREAM_NORMAL_ATTRIBUTE;
         pbuc->head.dwStreamNameSize = 0;
 
@@ -1232,22 +1253,22 @@ Return Value:
         pbuc->head.Size.QuadPart = iosb.Information;
 
         pbuc->fStreamStart = FALSE;
-
-        //
-        //  If we have more data in the buffer to read then go
-        //  copy it out.
-        //
-    }
-    else if (pbuc->liStreamOffset >= pbuc->cbHeader)
-    {
-        BackupReadBuffer(pbuc, pbif);
+    
+    //
+    //  If we have more data in the buffer to read then go
+    //  copy it out.
+    //
+    
+    } else if (pbuc->liStreamOffset >= pbuc->cbHeader) {
+        BackupReadBuffer( pbuc, pbif );
     }
 
     return TRUE;
 }
 
-
-BOOL BackupReadReparseData(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
+
+BOOL
+BackupReadReparseData(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
 /*++
 
 Routine Description:
@@ -1270,87 +1291,90 @@ Return Value:
 {
 
     IO_STATUS_BLOCK iosb;
-    PREPARSE_DATA_BUFFER rp_buf_ptr;
-    NTSTATUS Status;
+    PREPARSE_DATA_BUFFER rp_buf_ptr ;
+    NTSTATUS Status ;
 
-    struct RP_SUMMARY
-    {
-        USHORT tag;
-        USHORT rp_size;
-    } *rp_summary_ptr = (struct RP_SUMMARY *)&(iosb.Information);
+    struct RP_SUMMARY {
+           USHORT tag ;
+           USHORT rp_size ;
+    } *rp_summary_ptr =(struct RP_SUMMARY*) &(iosb.Information) ;
 
 
     //
     //  If the object is not a reparse then simply return
     //
-    if (!(pbuc->fAttribs & FILE_ATTRIBUTE_REPARSE_POINT))
-    {
-        return TRUE;
+    if ( !(pbuc->fAttribs & FILE_ATTRIBUTE_REPARSE_POINT) ) { 
+         return TRUE ;
     }
-
+ 
     //
     //  If we are just starting out on the ReParse data
     //
-
-    if (pbuc->fStreamStart)
-    {
+    
+    if (pbuc->fStreamStart) {
 
         //
         //  Loop trying to read all EA data into the buffer and
         //  resize the buffer if necessary
         //
-
+     
         // for some reason a TOO_SMALL error is not setting the information
         //    member of the iosb....
 
-        rp_summary_ptr->rp_size = MAXIMUM_REPARSE_DATA_BUFFER_SIZE;
+        rp_summary_ptr->rp_size = MAXIMUM_REPARSE_DATA_BUFFER_SIZE ;
 
-        Status = NtFsControlFile(hFile,
-                                 NULL, // overlapped event handle
-                                 NULL, // Apc routine
-                                 NULL, // overlapped structure
-                                 &iosb, FSCTL_GET_REPARSE_POINT, NULL, 0, pbuc->DataBuffer.Buffer,
-                                 pbuc->DataBuffer.BufferSize);
+        Status = NtFsControlFile( hFile,
+                         NULL,  // overlapped event handle
+                         NULL,  // Apc routine
+                         NULL,  // overlapped structure
+                         &iosb,
+                         FSCTL_GET_REPARSE_POINT,
+                         NULL,
+                         0,
+                         pbuc->DataBuffer.Buffer,
+                         pbuc->DataBuffer.BufferSize ) ;
 
 
-        if (BufferOverflow(Status))
-        {
-
-            if (rp_summary_ptr->rp_size == 0)
-            {
-                rp_summary_ptr->rp_size = MAXIMUM_REPARSE_DATA_BUFFER_SIZE;
+        if ( BufferOverflow( Status ) ) {
+                    
+            if ( rp_summary_ptr->rp_size == 0 ) {
+                 rp_summary_ptr->rp_size = MAXIMUM_REPARSE_DATA_BUFFER_SIZE ;
             }
 
-            if (!GrowBuffer(&pbuc->DataBuffer, rp_summary_ptr->rp_size))
-            {
+            if (!GrowBuffer( &pbuc->DataBuffer, 
+                            rp_summary_ptr->rp_size ) ) {
 
-                pbuc->fAccessError = TRUE;
-                return FALSE;
+                 pbuc->fAccessError = TRUE;
+                 return FALSE;
             }
 
-            Status = NtFsControlFile(hFile,
-                                     NULL, // overlapped event handle
-                                     NULL, // Apc routine
-                                     NULL, // overlapped structure
-                                     &iosb, FSCTL_GET_REPARSE_POINT, NULL, 0, pbuc->DataBuffer.Buffer,
-                                     pbuc->DataBuffer.BufferSize);
+            Status = NtFsControlFile( hFile,
+                             NULL,  // overlapped event handle
+                             NULL,  // Apc routine
+                             NULL,  // overlapped structure
+                             &iosb,
+                             FSCTL_GET_REPARSE_POINT,
+                             NULL,
+                             0,
+                             pbuc->DataBuffer.Buffer,
+                             pbuc->DataBuffer.BufferSize ) ;
+
         }
 
         //
         //  If we successfully read all the data, go complete
         //  the initialization
         //
-        if (!NT_SUCCESS(Status))
-        {
-            return TRUE;
+        if ( !NT_SUCCESS( Status ) ) {
+            return TRUE ;
         }
 
 
         //
         //  Set up the header for the ReParse stream
         //
-
-        rp_buf_ptr = (PREPARSE_DATA_BUFFER)(pbuc->DataBuffer.Buffer);
+        
+        rp_buf_ptr = (PREPARSE_DATA_BUFFER)(pbuc->DataBuffer.Buffer) ;
 
         pbuc->NamesReady = TRUE;
 
@@ -1360,90 +1384,93 @@ Return Value:
 
         pbuc->cbHeader = CB_NAMELESSHEADER;
 
-        if (IsReparseTagMicrosoft(rp_buf_ptr->ReparseTag))
-        {
-            pbuc->head.Size.QuadPart =
-                rp_buf_ptr->ReparseDataLength + FIELD_OFFSET(REPARSE_DATA_BUFFER, GenericReparseBuffer.DataBuffer);
-        }
-        else
-        {
-            pbuc->head.Size.QuadPart =
-                rp_buf_ptr->ReparseDataLength + FIELD_OFFSET(REPARSE_GUID_DATA_BUFFER, GenericReparseBuffer.DataBuffer);
+        if ( IsReparseTagMicrosoft( rp_buf_ptr->ReparseTag ) ) {
+             pbuc->head.Size.QuadPart = rp_buf_ptr->ReparseDataLength +
+                                        FIELD_OFFSET(REPARSE_DATA_BUFFER, GenericReparseBuffer.DataBuffer) ;
+        } else {
+             pbuc->head.Size.QuadPart = rp_buf_ptr->ReparseDataLength +
+                                        FIELD_OFFSET(REPARSE_GUID_DATA_BUFFER, GenericReparseBuffer.DataBuffer) ;
         }
 
         pbuc->fStreamStart = FALSE;
-
-        //
-        //  If we have more data in the buffer to read then go
-        //  copy it out.
-        //
-    }
-    else if (pbuc->liStreamOffset >= pbuc->cbHeader)
-    {
-        BackupReadBuffer(pbuc, pbif);
+    
+    //
+    //  If we have more data in the buffer to read then go
+    //  copy it out.
+    //
+    
+    } else if (pbuc->liStreamOffset >= pbuc->cbHeader) {
+        BackupReadBuffer( pbuc, pbif );
     }
 
     return TRUE;
 }
 
 
-BOOL BackupReadSecurityData(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
+
+BOOL
+BackupReadSecurityData(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
 {
     //
     //  If we are to skip security then do so.
     //
-
-    if (!pbif->fProcessSecurity)
-    {
+    
+    if (!pbif->fProcessSecurity) {
         return TRUE;
     }
 
     //
     //  If we are just starting out on the security data
     //
-
-    if (pbuc->fStreamStart)
-    {
-
+    
+    if (pbuc->fStreamStart) {
+        
         //
         //  Loop trying to read all security data into the buffer and
         //  resize the buffer if necessary
         //
-
-        while (TRUE)
-        {
+        
+        while (TRUE) {
             NTSTATUS Status;
             DWORD cbSecurityInfo;
 
-            RtlZeroMemory(pbuc->DataBuffer.Buffer, pbuc->DataBuffer.BufferSize);
+            RtlZeroMemory( pbuc->DataBuffer.Buffer, pbuc->DataBuffer.BufferSize );
 
-            Status = NtQuerySecurityObject(hFile,
-                                           OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
-                                               DACL_SECURITY_INFORMATION | SACL_SECURITY_INFORMATION,
-                                           pbuc->DataBuffer.Buffer, pbuc->DataBuffer.BufferSize, &cbSecurityInfo);
+            Status = NtQuerySecurityObject(
+                        hFile,
+                        OWNER_SECURITY_INFORMATION |
+                            GROUP_SECURITY_INFORMATION |
+                            DACL_SECURITY_INFORMATION |
+                            SACL_SECURITY_INFORMATION,
+                        pbuc->DataBuffer.Buffer,
+                        pbuc->DataBuffer.BufferSize,
+                        &cbSecurityInfo );
 
             //
             //  If we failed but it wasn't due to buffer overflow
             //
-
-            if (!NT_SUCCESS(Status) && !BufferOverflow(Status))
-            {
+            
+            if (!NT_SUCCESS( Status ) && !BufferOverflow( Status )) {
 
                 //
                 //  Try reading everything but SACL
                 //
 
                 Status = NtQuerySecurityObject(
-                    hFile, OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
-                    pbuc->DataBuffer.Buffer, pbuc->DataBuffer.BufferSize, &cbSecurityInfo);
+                            hFile,
+                            OWNER_SECURITY_INFORMATION |
+                                GROUP_SECURITY_INFORMATION |
+                                DACL_SECURITY_INFORMATION,
+                            pbuc->DataBuffer.Buffer,
+                            pbuc->DataBuffer.BufferSize,
+                            &cbSecurityInfo );
             }
-
+            
             //
             //  If we got it all, then go continue initialization
             //
 
-            if (NT_SUCCESS(Status))
-            {
+            if (NT_SUCCESS( Status )) {
                 pbuc->NamesReady = TRUE;
                 break;
             }
@@ -1452,9 +1479,8 @@ BOOL BackupReadSecurityData(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pb
             //
             //  If not due to overflowing buffer, skip security altogether
             //
-
-            if (!BufferOverflow(Status))
-            {
+            
+            if (!BufferOverflow( Status )) {
                 return TRUE;
             }
 
@@ -1463,8 +1489,7 @@ BOOL BackupReadSecurityData(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pb
             //  the entire call
             //
 
-            if (!GrowBuffer(&pbuc->DataBuffer, cbSecurityInfo))
-            {
+            if (!GrowBuffer( &pbuc->DataBuffer, cbSecurityInfo )) {
                 return FALSE;
             }
         }
@@ -1482,70 +1507,65 @@ BOOL BackupReadSecurityData(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pb
         pbuc->head.Size.QuadPart = RtlLengthSecurityDescriptor(pbuc->DataBuffer.Buffer);
 
         pbuc->fStreamStart = FALSE;
-
-        //
-        //  If there is more data in the buffer to transfer, go
-        //  do it
-        //
+    
+    //
+    //  If there is more data in the buffer to transfer, go
+    //  do it
+    //
+    } else if (pbuc->liStreamOffset >= pbuc->cbHeader) {
+        
+        BackupReadBuffer( pbuc, pbif );
+    
     }
-    else if (pbuc->liStreamOffset >= pbuc->cbHeader)
-    {
-
-        BackupReadBuffer(pbuc, pbif);
-    }
-
+    
     return TRUE;
 }
 
 
-VOID BackupTestRestartStream(BACKUPCONTEXT *pbuc)
+
+VOID
+BackupTestRestartStream(BACKUPCONTEXT *pbuc)
 {
     LONGLONG licbRemain;
 
-    licbRemain = ComputeRemainingSize(pbuc);
-    if (licbRemain == 0)
-    {
+    licbRemain = ComputeRemainingSize( pbuc );
+    if (licbRemain == 0) {
 
-        if (pbuc->dwSparseMapOffset != pbuc->dwSparseMapSize)
-        { // only true at backup
+        if ( pbuc->dwSparseMapOffset != pbuc->dwSparseMapSize ) {   // only true at backup
 
-            if (!pbuc->fSparseBlockStart)
-            {
-                pbuc->dwSparseMapOffset += sizeof(FILE_ALLOCATED_RANGE_BUFFER);
-            }
+             if ( !pbuc->fSparseBlockStart ) {
+                  pbuc->dwSparseMapOffset += sizeof ( FILE_ALLOCATED_RANGE_BUFFER ) ;
+             }
         }
 
-        if (pbuc->dwSparseMapOffset != pbuc->dwSparseMapSize)
-        { // only true at backup
-            pbuc->fSparseBlockStart = TRUE;
+        if ( pbuc->dwSparseMapOffset != pbuc->dwSparseMapSize ) {   // only true at backup
+             pbuc->fSparseBlockStart = TRUE ;
 
-            pbuc->cbHeader = 0;
-            pbuc->liStreamOffset = 0;
-        }
-        else
-        {
-            if (!pbuc->fSparseHandAlt && (pbuc->hAlternate != NULL))
-            {
-                CloseHandle(pbuc->hAlternate); // releases any locks
-                pbuc->hAlternate = NULL;
-            }
-            pbuc->cbHeader = 0;
-            pbuc->fStreamStart = TRUE;
-            pbuc->fSparseBlockStart = TRUE;
+             pbuc->cbHeader = 0 ;
+             pbuc->liStreamOffset = 0;                
 
-            pbuc->liStreamOffset = 0; // for BackupWrite
+        } else {
+             if ( !pbuc->fSparseHandAlt && (pbuc->hAlternate != NULL)) {
+                 CloseHandle(pbuc->hAlternate);        // releases any locks
+                 pbuc->hAlternate = NULL;
+             }
+             pbuc->cbHeader = 0;
+             pbuc->fStreamStart = TRUE;
+             pbuc->fSparseBlockStart = TRUE;
 
-            if (!pbuc->fMultiStreamType)
-            { // for BackupRead
-                pbuc->StreamIndex++;
-                pbuc->head.dwStreamId = mwStreamList[pbuc->StreamIndex];
-                pbuc->NamesReady = FALSE;
-            }
+             pbuc->liStreamOffset = 0;                // for BackupWrite
+
+             if (!pbuc->fMultiStreamType) {                // for BackupRead
+                 pbuc->StreamIndex++;
+                 pbuc->head.dwStreamId = mwStreamList[pbuc->StreamIndex] ;
+                 pbuc->NamesReady = FALSE;
+             }
         }
     }
 }
 
 
+
 //  Routine Description:
 //
 //    Data can be Backed up from an object using BackupRead.
@@ -1589,22 +1609,29 @@ VOID BackupTestRestartStream(BACKUPCONTEXT *pbuc)
 //
 //
 // NOTE:
-// The NT File Replication Service (NTFRS) performs an MD5 checksum on the
-// stream of data returned by BackupRead().  If the sequence of file information
-// returned changes then two machines, one downlevel and one uplevel will
-// compute different MD5 checksums for the same file data.  Under certain
-// conditions this will cause needless file replication.  Bear this in mind
+// The NT File Replication Service (NTFRS) performs an MD5 checksum on the 
+// stream of data returned by BackupRead().  If the sequence of file information 
+// returned changes then two machines, one downlevel and one uplevel will 
+// compute different MD5 checksums for the same file data.  Under certain 
+// conditions this will cause needless file replication.  Bear this in mind 
 // if a change in the returned data sequence is contemplated.  The sources for
 // NTFRS are in \nt\private\net\svcimgs\ntrepl.
-//
+// 
 
-BOOL WINAPI BackupRead(HANDLE hFile, LPBYTE lpBuffer, DWORD nNumberOfBytesToRead, LPDWORD lpNumberOfBytesRead,
-                       BOOL bAbort, BOOL bProcessSecurity, LPVOID *lpContext)
+BOOL WINAPI
+BackupRead(
+    HANDLE  hFile,
+    LPBYTE  lpBuffer,
+    DWORD   nNumberOfBytesToRead,
+    LPDWORD lpNumberOfBytesRead,
+    BOOL    bAbort,
+    BOOL    bProcessSecurity,
+    LPVOID  *lpContext)
 {
     BACKUPCONTEXT *pbuc;
     BACKUPIOFRAME bif;
     BOOL fSuccess = FALSE;
-    IO_STATUS_BLOCK iosb;
+    IO_STATUS_BLOCK iosb ;
 
     pbuc = *lpContext;
     bif.pIoBuffer = lpBuffer;
@@ -1612,119 +1639,117 @@ BOOL WINAPI BackupRead(HANDLE hFile, LPBYTE lpBuffer, DWORD nNumberOfBytesToRead
     bif.pcbTransferred = lpNumberOfBytesRead;
     bif.fProcessSecurity = (BOOLEAN)bProcessSecurity;
 
-    if (bAbort)
-    {
-        if (pbuc != NULL)
-        {
-            ResetAccessDate(hFile);
+    if (bAbort) {
+        if (pbuc != NULL) {
+            ResetAccessDate( hFile ) ;
             FreeContext(lpContext);
         }
         return TRUE;
     }
     *bif.pcbTransferred = 0;
 
-    if (pbuc == INVALID_HANDLE_VALUE || bif.cbRequest == 0)
-    {
+    if (pbuc == INVALID_HANDLE_VALUE || bif.cbRequest == 0) {
         return TRUE;
     }
 
-    if (pbuc != NULL && mwStreamList[pbuc->StreamIndex] == BACKUP_INVALID)
-    {
-        ResetAccessDate(hFile);
+    if (pbuc != NULL && mwStreamList[pbuc->StreamIndex] == BACKUP_INVALID) {
+        ResetAccessDate( hFile ) ;
         FreeContext(lpContext);
         return TRUE;
     }
 
     // Allocate our Context Control Block on first call.
 
-    if (pbuc == NULL)
-    {
-        pbuc = AllocContext(CBMIN_BUFFER); // Alloc initial buffer
+    if (pbuc == NULL) {
+        pbuc = AllocContext(CBMIN_BUFFER);        // Alloc initial buffer
 
         // ok, we allocated the context, Lets initialize it.
-        if (pbuc != NULL)
-        {
-            NTSTATUS Status;
+        if (pbuc != NULL) {
+            NTSTATUS Status ;
             FILE_BASIC_INFORMATION fbi;
 
-            Status = NtQueryInformationFile(hFile, &iosb, &fbi, sizeof(fbi), FileBasicInformation);
+            Status = NtQueryInformationFile(
+                        hFile,
+                        &iosb,
+                        &fbi,
+                        sizeof(fbi),
+                        FileBasicInformation );
 
-            if (NT_SUCCESS(Status))
-            {
-                pbuc->fAttribs = fbi.FileAttributes;
+            if ( NT_SUCCESS( Status ) ) {
+               pbuc->fAttribs = fbi.FileAttributes ;
+            } else {
+               BaseSetLastNTError( Status );
+               return FALSE ;
             }
-            else
-            {
-                BaseSetLastNTError(Status);
-                return FALSE;
-            }
+
         }
+          
     }
 
-    if (pbuc != NULL)
-    {
+    if (pbuc != NULL) {
         *lpContext = pbuc;
 
-        do
-        {
+        do {
 
-            if (pbuc->fStreamStart)
-            {
+            if (pbuc->fStreamStart) {
                 pbuc->head.Size.QuadPart = 0;
 
                 pbuc->liStreamOffset = 0;
 
                 pbuc->dwSparseMapOffset = 0;
-                pbuc->dwSparseMapSize = 0;
+                pbuc->dwSparseMapSize   = 0;
 
                 pbuc->fMultiStreamType = FALSE;
             }
             fSuccess = TRUE;
 
-            switch (mwStreamList[pbuc->StreamIndex])
-            {
-            case BACKUP_DATA:
-                fSuccess = BackupReadData(hFile, pbuc, &bif);
-                break;
+            switch (mwStreamList[pbuc->StreamIndex]) {
+                case BACKUP_DATA:
+                    fSuccess = BackupReadData(hFile, pbuc, &bif);
+                    break;
 
-            case BACKUP_ALTERNATE_DATA:
-                fSuccess = BackupReadAlternateData(hFile, pbuc, &bif);
-                break;
+                case BACKUP_ALTERNATE_DATA:
+                    fSuccess = BackupReadAlternateData(hFile, pbuc, &bif);
+                    break;
 
-            case BACKUP_EA_DATA:
-                fSuccess = BackupReadEaData(hFile, pbuc, &bif);
-                break;
+                case BACKUP_EA_DATA:
+                    fSuccess = BackupReadEaData(hFile, pbuc, &bif);
+                    break;
 
-            case BACKUP_OBJECT_ID:
-                fSuccess = BackupReadObjectId(hFile, pbuc, &bif);
-                break;
+                case BACKUP_OBJECT_ID:
+                    fSuccess = BackupReadObjectId(hFile, pbuc, &bif);
+                    break;
 
-            case BACKUP_REPARSE_DATA:
-                fSuccess = BackupReadReparseData(hFile, pbuc, &bif);
-                break;
+                case BACKUP_REPARSE_DATA:
+                    fSuccess = BackupReadReparseData(hFile, pbuc, &bif);
+                    break;
 
-            case BACKUP_SECURITY_DATA:
-                fSuccess = BackupReadSecurityData(hFile, pbuc, &bif);
-                break;
+                case BACKUP_SECURITY_DATA:
+                    fSuccess = BackupReadSecurityData(hFile, pbuc, &bif);
+                    break;
 
-            default:
-                pbuc->StreamIndex++;
-                pbuc->fStreamStart = TRUE;
-                break;
+                default:
+                    pbuc->StreamIndex++;
+                    pbuc->fStreamStart = TRUE;
+                    break;
             }
 
             // if we're in the phase of reading the header, copy the header
 
-            if (pbuc->liStreamOffset < pbuc->cbHeader)
-            {
+            if (pbuc->liStreamOffset < pbuc->cbHeader) {
 
                 DWORD cbrequest;
 
                 //  Send the current stream header;
 
-                cbrequest = (ULONG)min(pbuc->cbHeader - pbuc->liStreamOffset, bif.cbRequest);
+                cbrequest = 
+                    (ULONG)min( pbuc->cbHeader - pbuc->liStreamOffset,
+                                bif.cbRequest);
 
-                RtlCopyMemory(bif.pIoBuffer, (BYTE *)&pbuc->head + pbuc->liStreamOffset, cbrequest);
+                RtlCopyMemory(
+                    bif.pIoBuffer,
+                    (BYTE *) &pbuc->head + pbuc->liStreamOffset,
+                    cbrequest);
 
                 ReportTransfer(pbuc, &bif, cbrequest);
             }
@@ -1734,24 +1759,25 @@ BOOL WINAPI BackupRead(HANDLE hFile, LPBYTE lpBuffer, DWORD nNumberOfBytesToRead
             //          start at the beginning of the next stream
             //
 
-            if (pbuc->liStreamOffset >= pbuc->cbHeader)
-            {
-                BackupTestRestartStream(pbuc);
+            if (pbuc->liStreamOffset >= pbuc->cbHeader) {
+                 BackupTestRestartStream(pbuc);
             }
 
-        } while (fSuccess && mwStreamList[pbuc->StreamIndex] != BACKUP_INVALID && bif.cbRequest != 0);
+        } while (fSuccess &&
+                 mwStreamList[pbuc->StreamIndex] != BACKUP_INVALID &&
+                 bif.cbRequest != 0);
     }
-
-    if (fSuccess && *bif.pcbTransferred == 0)
-    {
-        ResetAccessDate(hFile);
+    
+    if (fSuccess && *bif.pcbTransferred == 0) {
+        ResetAccessDate( hFile ) ;
         FreeContext(lpContext);
     }
-
-    return (fSuccess);
+    
+    return(fSuccess);
 }
 
 
+
 //  Routine Description:
 //
 //    Data can be skiped during BackupRead or BackupWrite by using
@@ -1796,29 +1822,33 @@ BOOL WINAPI BackupRead(HANDLE hFile, LPBYTE lpBuffer, DWORD nNumberOfBytesToRead
 //    FALSE - The requested number of bytes could not be seeked. The number
 //          of bytes actually seeked is returned.
 
-BOOL WINAPI BackupSeek(HANDLE hFile, DWORD dwLowBytesToSeek, DWORD dwHighBytesToSeek, LPDWORD lpdwLowBytesSeeked,
-                       LPDWORD lpdwHighBytesSeeked, LPVOID *lpContext)
+BOOL WINAPI
+BackupSeek(
+    HANDLE  hFile,
+    DWORD   dwLowBytesToSeek,
+    DWORD   dwHighBytesToSeek,
+    LPDWORD lpdwLowBytesSeeked,
+    LPDWORD lpdwHighBytesSeeked,
+    LPVOID *lpContext)
 {
     BACKUPCONTEXT *pbuc;
     LONGLONG licbRemain;
     LARGE_INTEGER licbRequest;
     BOOL fSuccess;
-    LARGE_INTEGER sparse_bytes;
+    LARGE_INTEGER sparse_bytes ;
 
     pbuc = *lpContext;
 
-    sparse_bytes.QuadPart = 0;
+    sparse_bytes.QuadPart = 0 ;
 
     *lpdwHighBytesSeeked = 0;
     *lpdwLowBytesSeeked = 0;
 
-    if (pbuc == INVALID_HANDLE_VALUE || pbuc == NULL || pbuc->fStreamStart)
-    {
+    if (pbuc == INVALID_HANDLE_VALUE || pbuc == NULL || pbuc->fStreamStart) {
         return FALSE;
     }
 
-    if (pbuc->liStreamOffset < pbuc->cbHeader)
-    {
+    if (pbuc->liStreamOffset < pbuc->cbHeader) {
         return FALSE;
     }
 
@@ -1826,101 +1856,102 @@ BOOL WINAPI BackupSeek(HANDLE hFile, DWORD dwLowBytesToSeek, DWORD dwHighBytesTo
     // If we made it here, we are in the middle of a stream
     //
 
-    licbRemain = ComputeRemainingSize(pbuc);
+    licbRemain = ComputeRemainingSize( pbuc );
 
     licbRequest.LowPart = dwLowBytesToSeek;
     licbRequest.HighPart = dwHighBytesToSeek & 0x7fffffff;
 
-    if (licbRequest.QuadPart > licbRemain)
-    {
+    if (licbRequest.QuadPart > licbRemain) {
         licbRequest.QuadPart = licbRemain;
     }
     fSuccess = TRUE;
 
-    switch (pbuc->head.dwStreamId)
-    {
+    switch (pbuc->head.dwStreamId) {
     case BACKUP_EA_DATA:
     case BACKUP_SECURITY_DATA:
-    case BACKUP_OBJECT_ID:
-    case BACKUP_REPARSE_DATA:
+    case BACKUP_OBJECT_ID :
+    case BACKUP_REPARSE_DATA :
 
         // assume less than 2gig of data
 
         break;
 
-    case BACKUP_SPARSE_BLOCK:
-        if (pbuc->liStreamOffset < sizeof(LARGE_INTEGER))
-        {
-            sparse_bytes.QuadPart = (sizeof(LARGE_INTEGER) - pbuc->liStreamOffset);
-            if (sparse_bytes.QuadPart < licbRequest.QuadPart)
-            {
-                licbRequest.QuadPart -= sparse_bytes.QuadPart;
-            }
-            else
-            {
-                licbRequest.QuadPart = 0;
-            }
-        }
+    case BACKUP_SPARSE_BLOCK :
+         if ( pbuc->liStreamOffset < sizeof(LARGE_INTEGER) ) {
+              sparse_bytes.QuadPart = ( sizeof(LARGE_INTEGER) - pbuc->liStreamOffset ) ;
+              if ( sparse_bytes.QuadPart < licbRequest.QuadPart ) {
+                  licbRequest.QuadPart -= sparse_bytes.QuadPart ;
+              } else {
+                  licbRequest.QuadPart = 0 ;
+              }
+         }
     case BACKUP_DATA:
     case BACKUP_ALTERNATE_DATA:
-    {
-        LARGE_INTEGER liCurPos;
-        LARGE_INTEGER liNewPos;
-        HANDLE hf;
-
-        //        set up the correct handle to seek with
-
-        if (pbuc->head.dwStreamId == BACKUP_DATA)
         {
-            hf = hFile;
+            LARGE_INTEGER liCurPos;
+            LARGE_INTEGER liNewPos;
+            HANDLE hf;
+    
+            //        set up the correct handle to seek with
+    
+            if (pbuc->head.dwStreamId == BACKUP_DATA) {
+                hf = hFile;
+            }
+            else {
+                hf = pbuc->hAlternate;
+            }
+    
+            // first, let's get the current position
+    
+            liCurPos.HighPart = 0;
+            liCurPos.LowPart = SetFilePointer(
+                    hf,
+                    0,
+                    &liCurPos.HighPart,
+                    FILE_CURRENT);
+    
+            // Now seek the requested number of bytes
+    
+            liNewPos.HighPart = licbRequest.HighPart;
+            liNewPos.LowPart = SetFilePointer(
+                    hf,
+                    licbRequest.LowPart,
+                    &liNewPos.HighPart,
+                    FILE_CURRENT);
+    
+            // Assume that we seek the requested amount because if we do not,
+            // subsequent reads will fail and the caller will never be able
+            // to read to the next stream.
+    
+            break;
         }
-        else
-        {
-            hf = pbuc->hAlternate;
-        }
-
-        // first, let's get the current position
-
-        liCurPos.HighPart = 0;
-        liCurPos.LowPart = SetFilePointer(hf, 0, &liCurPos.HighPart, FILE_CURRENT);
-
-        // Now seek the requested number of bytes
-
-        liNewPos.HighPart = licbRequest.HighPart;
-        liNewPos.LowPart = SetFilePointer(hf, licbRequest.LowPart, &liNewPos.HighPart, FILE_CURRENT);
-
-        // Assume that we seek the requested amount because if we do not,
-        // subsequent reads will fail and the caller will never be able
-        // to read to the next stream.
-
-        break;
-    }
 
     default:
         break;
     }
-
-    if (dwHighBytesToSeek != (DWORD)licbRequest.HighPart || dwLowBytesToSeek != licbRequest.LowPart)
-    {
+    
+    if (dwHighBytesToSeek != (DWORD) licbRequest.HighPart ||
+        dwLowBytesToSeek != licbRequest.LowPart) {
         fSuccess = FALSE;
     }
-    licbRequest.QuadPart += sparse_bytes.QuadPart;
-    pbuc->liStreamOffset += licbRequest.QuadPart;
+    licbRequest.QuadPart += sparse_bytes.QuadPart ;
+    pbuc->liStreamOffset += licbRequest.QuadPart ;
 
     *lpdwLowBytesSeeked = licbRequest.LowPart;
     *lpdwHighBytesSeeked = licbRequest.HighPart;
 
     BackupTestRestartStream(pbuc);
 
-    if (!fSuccess)
-    {
+    if (!fSuccess) {
         SetLastError(ERROR_SEEK);
     }
-    return (fSuccess);
+    return(fSuccess);
 }
 
 
-BOOL BackupWriteHeader(BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif, DWORD cbHeader)
+
+BOOL
+BackupWriteHeader(BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif, DWORD cbHeader)
 /*++
 
 Routine Description:
@@ -1943,45 +1974,47 @@ Return Value:
 --*/
 {
     //
-    //  Determine how much data we can transfer into our header.
+    //  Determine how much data we can transfer into our header.  
     //
-
-    DWORD cbrequest = (DWORD)min(pbif->cbRequest, cbHeader - pbuc->liStreamOffset);
+    
+    DWORD cbrequest = 
+        (DWORD) min( pbif->cbRequest, cbHeader - pbuc->liStreamOffset );
 
     //
     //  Copy from user buffer into header
     //
 
 
-    if (pbuc->liStreamOffset + cbrequest > CWCMAX_STREAMNAME + CB_NAMELESSHEADER)
-    {
-        return FALSE;
+    if ( pbuc->liStreamOffset+cbrequest > CWCMAX_STREAMNAME + CB_NAMELESSHEADER ) {
+         return FALSE ;
     }
 
-    RtlCopyMemory((CHAR *)&pbuc->head + pbuc->liStreamOffset, pbif->pIoBuffer, cbrequest);
+    RtlCopyMemory(
+        (CHAR *) &pbuc->head + pbuc->liStreamOffset,
+        pbif->pIoBuffer,
+        cbrequest);
 
     //
     //  Update transfer statistics
     //
-
+    
     ReportTransfer(pbuc, pbif, cbrequest);
 
     //
     //  If we've filled up the header, mark the header as complete
     //  even though we might need more if names are present
     //
-
-    if (pbuc->liStreamOffset == cbHeader)
-    {
+    
+    if (pbuc->liStreamOffset == cbHeader) {
         pbuc->cbHeader = cbHeader;
     }
 
-    return TRUE;
+    return TRUE ;
 }
 
 
-typedef enum
-{
+
+typedef enum {
     BRB_FAIL,
     BRB_DONE,
     BRB_MORE,
@@ -2017,19 +2050,17 @@ Return Value:
     //
     //  If we're starting out on the buffer, we make sure
     //  we have a buffer to contain all of the data since
-    //  the Nt calls we'll use must have all the data
+    //  the Nt calls we'll use must have all the data 
     //  present
     //
 
-    if (pbuc->fStreamStart)
-    {
+    if (pbuc->fStreamStart) {
         pbuc->fStreamStart = FALSE;
 
         if (pbuc->DataBuffer.BufferSize < pbuc->head.Size.QuadPart &&
-            !GrowBuffer(&pbuc->DataBuffer, pbuc->head.Size.LowPart))
-        {
+            !GrowBuffer( &pbuc->DataBuffer, pbuc->head.Size.LowPart )) {
 
-            return (BRB_FAIL);
+            return(BRB_FAIL);
         }
     }
 
@@ -2037,30 +2068,34 @@ Return Value:
     //  Determine how much data from the user buffer is
     //  needed to fill our buffer
     //
-
-    cbrequest = ComputeRequestSize(pbuc, pbif->cbRequest);
-
+    
+    cbrequest = ComputeRequestSize( pbuc, pbif->cbRequest );
+    
     //
     //  Fill in the next portion of the buffer
     //
-
-    RtlCopyMemory(pbuc->DataBuffer.Buffer + pbuc->liStreamOffset - pbuc->cbHeader, pbif->pIoBuffer, cbrequest);
+    
+    RtlCopyMemory(
+        pbuc->DataBuffer.Buffer + pbuc->liStreamOffset - pbuc->cbHeader,
+        pbif->pIoBuffer,
+        cbrequest);
 
     //
     //  Update transfer statistics
     //
-
+    
     ReportTransfer(pbuc, pbif, cbrequest);
 
     //
     //  If we've entirely filled the buffer, let our caller know
     //
-
-    return ComputeRemainingSize(pbuc) == 0 ? BRB_DONE : BRB_MORE;
+    
+    return ComputeRemainingSize( pbuc ) == 0 ? BRB_DONE : BRB_MORE;
 }
 
-
-BOOL BackupWriteSparse(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
+
+BOOL
+BackupWriteSparse(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
 /*++
 
 Routine Description:
@@ -2083,57 +2118,61 @@ Return Value:
 
 --*/
 {
-    LARGE_INTEGER licbFile;
-    DWORD cbrequest;
-    DWORD cbtransferred;
-    BOOL fSuccess;
+     LARGE_INTEGER licbFile ;
+     DWORD cbrequest;
+     DWORD cbtransferred;
+     BOOL fSuccess;
 
-    if (pbuc->fSparseBlockStart)
-    {
+     if ( pbuc->fSparseBlockStart ) {
 
-        RtlCopyMemory(&pbuc->cbSparseOffset, pbuc->head.cStreamName, sizeof(LARGE_INTEGER));
+         RtlCopyMemory( &pbuc->cbSparseOffset, pbuc->head.cStreamName, sizeof( LARGE_INTEGER ) ) ;
 
-        licbFile = pbuc->cbSparseOffset;
+         licbFile = pbuc->cbSparseOffset;
 
-        licbFile.LowPart = SetFilePointer(pbuc->fSparseHandAlt ? pbuc->hAlternate : hFile, licbFile.LowPart,
-                                          &licbFile.HighPart, FILE_BEGIN);
+         licbFile.LowPart = SetFilePointer( pbuc->fSparseHandAlt?pbuc->hAlternate:hFile,
+                              licbFile.LowPart,
+                              &licbFile.HighPart,
+                              FILE_BEGIN );
 
-        if (licbFile.QuadPart != pbuc->cbSparseOffset.QuadPart)
-        {
-            return FALSE;
-        }
+         if ( licbFile.QuadPart != pbuc->cbSparseOffset.QuadPart ) {
+            return FALSE ;
+         }
 
-        if (pbuc->head.Size.QuadPart == sizeof(LARGE_INTEGER))
-        {
-            SetEndOfFile(pbuc->fSparseHandAlt ? pbuc->hAlternate : hFile);
-        }
-        pbuc->fSparseBlockStart = FALSE;
-    }
+         if ( pbuc->head.Size.QuadPart == sizeof( LARGE_INTEGER ) ) {
+              SetEndOfFile(pbuc->fSparseHandAlt?pbuc->hAlternate:hFile) ;
+         }    
+         pbuc->fSparseBlockStart = FALSE ;
+     }
 
-    //
-    //  Determine how much data from the user buffer is
-    //  needed to be written into the stream and perform
-    //  the transfer.
-    //
+     //
+     //  Determine how much data from the user buffer is
+     //  needed to be written into the stream and perform
+     //  the transfer.
+     //
+     
+     cbrequest = ComputeRequestSize(pbuc, pbif->cbRequest);
 
-    cbrequest = ComputeRequestSize(pbuc, pbif->cbRequest);
+     fSuccess = WriteFile(
+                     pbuc->fSparseHandAlt?pbuc->hAlternate:hFile,
+                     pbif->pIoBuffer,
+                     cbrequest,
+                     &cbtransferred,
+                     NULL);
 
-    fSuccess =
-        WriteFile(pbuc->fSparseHandAlt ? pbuc->hAlternate : hFile, pbif->pIoBuffer, cbrequest, &cbtransferred, NULL);
+     //
+     //  Update transfer statistics
+     //
 
-    //
-    //  Update transfer statistics
-    //
+     ReportTransfer(pbuc, pbif, cbtransferred);
+     
+     return(fSuccess);
 
-    ReportTransfer(pbuc, pbif, cbtransferred);
-
-    return (fSuccess);
-
-    return TRUE;
+     return TRUE ;
 }
 
-
-BOOL BackupWriteStream(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
+
+BOOL
+BackupWriteStream(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
 /*++
 
 Routine Description:
@@ -2162,34 +2201,44 @@ Return Value:
     IO_STATUS_BLOCK iosb;
 
 
-    if (pbuc->fStreamStart)
-    {
+    if ( pbuc->fStreamStart ) {
 
-        if (pbuc->head.dwStreamAttributes & STREAM_SPARSE_ATTRIBUTE)
-        {
+       if  ( pbuc->head.dwStreamAttributes & STREAM_SPARSE_ATTRIBUTE ) {
 
             // if it was sparse when be backed it up make is sparse again.
-            NtFsControlFile(hFile,
-                            NULL, // overlapped event handle
-                            NULL, // Apc routine
-                            NULL, // overlapped structure
-                            &iosb, FSCTL_SET_SPARSE, NULL, 0, NULL, 0);
-        }
-        else
-        {
+            NtFsControlFile( hFile,
+              NULL,  // overlapped event handle
+              NULL,  // Apc routine
+              NULL,  // overlapped structure
+              &iosb,
+              FSCTL_SET_SPARSE ,
+              NULL,
+              0,
+              NULL,
+              0 ) ;
 
-            LARGE_INTEGER end_of_file;
+       } else {
 
-            end_of_file.QuadPart = pbuc->head.Size.QuadPart;
-            SetFilePointer(hFile, end_of_file.LowPart, &end_of_file.HighPart, FILE_BEGIN);
+              LARGE_INTEGER end_of_file ;
 
-            SetEndOfFile(hFile);
+              end_of_file.QuadPart = pbuc->head.Size.QuadPart ;
+              SetFilePointer( hFile,
+                              end_of_file.LowPart,
+                              &end_of_file.HighPart,
+                              FILE_BEGIN );
 
-            end_of_file.QuadPart = 0;
-            SetFilePointer(hFile, end_of_file.LowPart, &end_of_file.HighPart, FILE_BEGIN);
-        }
+              SetEndOfFile(hFile) ;
 
-        pbuc->fStreamStart = FALSE;
+              end_of_file.QuadPart = 0 ;
+              SetFilePointer( hFile,
+                              end_of_file.LowPart,
+                              &end_of_file.HighPart,
+                              FILE_BEGIN );
+
+
+       }
+
+       pbuc->fStreamStart = FALSE;
     }
 
     //
@@ -2197,22 +2246,29 @@ Return Value:
     //  needed to be written into the stream and perform
     //  the transfer.
     //
-
+    
     cbrequest = ComputeRequestSize(pbuc, pbif->cbRequest);
 
-    fSuccess = WriteFile(hFile, pbif->pIoBuffer, cbrequest, &cbtransferred, NULL);
+    fSuccess = WriteFile(
+                    hFile,
+                    pbif->pIoBuffer,
+                    cbrequest,
+                    &cbtransferred,
+                    NULL);
 
     //
     //  Update transfer statistics
     //
-
+    
     ReportTransfer(pbuc, pbif, cbtransferred);
-
-    return (fSuccess);
+    
+    return(fSuccess);
 }
 
 
-BOOL BackupWriteAlternateData(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
+
+BOOL
+BackupWriteAlternateData(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
 /*++
 
 Routine Description:
@@ -2239,84 +2295,100 @@ Return Value:
     //  If we are just starting out on this stream then attempt to
     //  overwrite the new stream.
     //
-
-    if (pbuc->fStreamStart)
-    {
+    
+    if (pbuc->fStreamStart) {
         NTSTATUS Status;
         UNICODE_STRING strName;
         OBJECT_ATTRIBUTES oa;
         IO_STATUS_BLOCK iosb;
-        DWORD reparse_flg = 0;
+        DWORD reparse_flg = 0 ;
 
-        strName.Length = (USHORT)pbuc->head.dwStreamNameSize;
+        strName.Length = (USHORT) pbuc->head.dwStreamNameSize;
         strName.MaximumLength = strName.Length;
         strName.Buffer = pbuc->head.cStreamName;
 
-        if (pbuc->hAlternate != INVALID_HANDLE_VALUE)
-        {
-            CloseHandle(pbuc->hAlternate);
-            pbuc->hAlternate = INVALID_HANDLE_VALUE;
-            pbuc->fSparseHandAlt = FALSE;
+        if (pbuc->hAlternate != INVALID_HANDLE_VALUE) {
+             CloseHandle(pbuc->hAlternate);        
+             pbuc->hAlternate = INVALID_HANDLE_VALUE;
+             pbuc->fSparseHandAlt = FALSE ;
         }
 
 
-        if (pbuc->fAttribs & FILE_ATTRIBUTE_REPARSE_POINT)
-        {
-            reparse_flg = FILE_OPEN_REPARSE_POINT;
+        if (pbuc->fAttribs & FILE_ATTRIBUTE_REPARSE_POINT ) {
+             reparse_flg = FILE_OPEN_REPARSE_POINT ;
         }
 
-        InitializeObjectAttributes(&oa, &strName, OBJ_CASE_INSENSITIVE, hFile, NULL);
+        InitializeObjectAttributes(
+                &oa,
+                &strName,
+                OBJ_CASE_INSENSITIVE,
+                hFile,
+                NULL);
 
-        Status = NtCreateFile(&pbuc->hAlternate, FILE_WRITE_DATA | SYNCHRONIZE, &oa, &iosb, NULL, FILE_ATTRIBUTE_NORMAL,
-                              FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_OVERWRITE_IF,
-                              FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT | reparse_flg, NULL, 0L);
+        Status = NtCreateFile(
+                    &pbuc->hAlternate,
+                    FILE_WRITE_DATA | SYNCHRONIZE,
+                    &oa,
+                    &iosb,
+                    NULL,
+                    FILE_ATTRIBUTE_NORMAL,
+                    FILE_SHARE_READ | FILE_SHARE_WRITE|FILE_SHARE_DELETE,
+                    FILE_OVERWRITE_IF,
+                    FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT | reparse_flg,
+                    NULL,
+                    0L);
 
         //
         //  If we failed, map the error, record the failure, and return failure.
         //
-
-        if (!NT_SUCCESS(Status))
-        {
-            BaseSetLastNTError(Status);
+        
+        if (!NT_SUCCESS( Status )) {
+            BaseSetLastNTError( Status );
             pbuc->fAccessError = TRUE;
             return FALSE;
         }
 
-        if (pbuc->head.dwStreamAttributes & STREAM_SPARSE_ATTRIBUTE)
-        {
-            pbuc->fSparseHandAlt = TRUE;
+        if ( pbuc->head.dwStreamAttributes & STREAM_SPARSE_ATTRIBUTE ) {
+           pbuc->fSparseHandAlt = TRUE ;
 
-            // if it was sparse when be backed it up make is sparse again.
-            NtFsControlFile(pbuc->hAlternate,
-                            NULL, // overlapped event handle
-                            NULL, // Apc routine
-                            NULL, // overlapped structure
-                            &iosb, FSCTL_SET_SPARSE, NULL, 0, NULL, 0);
+           // if it was sparse when be backed it up make is sparse again.
+           NtFsControlFile( pbuc->hAlternate,
+                  NULL,  // overlapped event handle
+                  NULL,  // Apc routine
+                  NULL,  // overlapped structure
+                  &iosb,
+                  FSCTL_SET_SPARSE ,
+                  NULL,
+                  0,
+                  NULL,
+                  0 ) ;
         }
 
         // don't reset stream start because WriteStream will do it.
+
     }
 
     //
     //  If we have no handle for the transfer, record this failure
     //  and return failure.
     //
-
-    if (pbuc->hAlternate == INVALID_HANDLE_VALUE)
-    {
+    
+    if (pbuc->hAlternate == INVALID_HANDLE_VALUE) {
         pbuc->fAccessError = TRUE;
         return FALSE;
     }
-
+    
     //
     //  Let the normal stream copy perform the transfer
     //
-
-    return BackupWriteStream(pbuc->hAlternate, pbuc, pbif);
+    
+    return BackupWriteStream( pbuc->hAlternate, pbuc, pbif );
 }
 
 
-BOOL BackupWriteEaData(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
+
+BOOL
+BackupWriteEaData(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
 /*++
 
 Routine Description:
@@ -2344,9 +2416,8 @@ Return Value:
     //
     //  Attempt to fill up the buffer from the input.
     //
-
-    switch (BackupWriteBuffer(pbuc, pbif))
-    {
+    
+    switch (BackupWriteBuffer( pbuc, pbif )) {
     default:
     case BRB_FAIL:
         return FALSE;
@@ -2362,24 +2433,28 @@ Return Value:
     //  The buffer is now completely filled with our EA data.  Set the
     //  EA data on the file.
     //
-
-    Status = NtSetEaFile(hFile, &iosb, pbuc->DataBuffer.Buffer, pbuc->head.Size.LowPart);
+    
+    Status = NtSetEaFile(
+                hFile,
+                &iosb,
+                pbuc->DataBuffer.Buffer,
+                pbuc->head.Size.LowPart );
 
     //
     //  If we failed, map the error and return failure
     //
-
-    if (!NT_SUCCESS(Status))
-    {
-        BaseSetLastNTError(Status);
+    
+    if (!NT_SUCCESS( Status )) {
+        BaseSetLastNTError( Status );
         return FALSE;
     }
-
+    
     return TRUE;
 }
 
-
-BOOL BackupWriteReparseData(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
+
+BOOL
+BackupWriteReparseData(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
 /*++
 
 Routine Description:
@@ -2403,14 +2478,13 @@ Return Value:
 {
     NTSTATUS Status;
     IO_STATUS_BLOCK iosb;
-    DWORD *rp_tag_ptr;
+    DWORD *rp_tag_ptr ;
 
     //
     //  Attempt to fill up the buffer from the input.
     //
-
-    switch (BackupWriteBuffer(pbuc, pbif))
-    {
+    
+    switch (BackupWriteBuffer( pbuc, pbif )) {
     default:
     case BRB_FAIL:
         return FALSE;
@@ -2428,32 +2502,37 @@ Return Value:
     //
 
 
-    rp_tag_ptr = (DWORD *)(pbuc->DataBuffer.Buffer);
+    rp_tag_ptr = (DWORD *)(pbuc->DataBuffer.Buffer) ;
+    
+    pbuc->fAttribs |= FILE_ATTRIBUTE_REPARSE_POINT ;
 
-    pbuc->fAttribs |= FILE_ATTRIBUTE_REPARSE_POINT;
 
-
-    Status = NtFsControlFile(hFile,
-                             NULL, // overlapped event handle
-                             NULL, // Apc routine
-                             NULL, // overlapped structure
-                             &iosb, FSCTL_SET_REPARSE_POINT, pbuc->DataBuffer.Buffer, pbuc->head.Size.LowPart, NULL, 0);
-
+    Status = NtFsControlFile( hFile,
+                     NULL,  // overlapped event handle
+                     NULL,  // Apc routine
+                     NULL,  // overlapped structure
+                     &iosb,
+                     FSCTL_SET_REPARSE_POINT,
+                     pbuc->DataBuffer.Buffer,
+                     pbuc->head.Size.LowPart,
+                     NULL,
+                     0 ) ;
+    
     //
     //  If we failed, map the error and return failure
     //
-
-    if (!NT_SUCCESS(Status))
-    {
-        BaseSetLastNTError(Status);
+    
+    if (!NT_SUCCESS( Status )) {
+        BaseSetLastNTError( Status );
         return FALSE;
     }
-
+    
     return TRUE;
 }
 
-
-BOOL BackupWriteObjectId(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
+
+BOOL
+BackupWriteObjectId(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
 /*++
 
 Routine Description:
@@ -2478,16 +2557,15 @@ Return Value:
 --*/
 {
     IO_STATUS_BLOCK iosb;
-    NTSTATUS Status;
+    NTSTATUS  Status ;
     FILE_FS_OBJECTID_INFORMATION fsobOID;
     GUID guidZero;
 
     //
     //  Attempt to fill up the buffer from the input.
     //
-
-    switch (BackupWriteBuffer(pbuc, pbif))
-    {
+    
+    switch (BackupWriteBuffer( pbuc, pbif )) {
     default:
     case BRB_FAIL:
         return FALSE;
@@ -2503,33 +2581,41 @@ Return Value:
     // Zero out the birth ID (the extended 48 bytes)
     //
 
-    memset(&pbuc->DataBuffer.Buffer[sizeof(GUID)], 0, 3 * sizeof(GUID));
+    memset(&pbuc->DataBuffer.Buffer[sizeof(GUID)], 0, 3*sizeof(GUID));
 
     //
     //  Set the ID on the file.
     //
-
-    Status = NtFsControlFile(hFile,
-                             NULL, // overlapped event handle
-                             NULL, // Apc routine
-                             NULL, // overlapped structure
-                             &iosb, FSCTL_SET_OBJECT_ID, pbuc->DataBuffer.Buffer, pbuc->head.Size.LowPart, NULL, 0);
+    
+    Status = NtFsControlFile( hFile,
+                     NULL,  // overlapped event handle
+                     NULL,  // Apc routine
+                     NULL,  // overlapped structure
+                     &iosb,
+                     FSCTL_SET_OBJECT_ID,
+                     pbuc->DataBuffer.Buffer,
+                     pbuc->head.Size.LowPart,
+                     NULL,
+                     0);
 
 
     //
     //  Ignore errors
     //
 
-    if (!NT_SUCCESS(Status))
-    {
-        BaseSetLastNTError(Status);
+    if (!NT_SUCCESS( Status )) {
+        BaseSetLastNTError( Status );
     }
 
-    return (TRUE);
+    return( TRUE );
+    
 }
 
 
-BOOL BackupWriteSecurityData(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
+
+
+BOOL
+BackupWriteSecurityData(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
 /*++
 
 Routine Description:
@@ -2557,9 +2643,8 @@ Return Value:
     //
     //  Attempt to fill up the buffer from the input.
     //
-
-    switch (BackupWriteBuffer(pbuc, pbif))
-    {
+    
+    switch (BackupWriteBuffer(pbuc, pbif)) {
     default:
     case BRB_FAIL:
         return FALSE;
@@ -2572,48 +2657,42 @@ Return Value:
     }
 
     //
-    //  The buffer is now completely filled with our security data.  If we
+    //  The buffer is now completely filled with our security data.  If we 
     //  are to ignore it, then return success
     //
-
-    if (!pbif->fProcessSecurity)
-    {
+    
+    if (!pbif->fProcessSecurity) {
         return TRUE;
     }
-
-    //
-    //  Find out what security information is present so we know what to
+    
+    //  
+    //  Find out what security information is present so we know what to 
     //  set.
 
     si = OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION;
 
-    if (((PISECURITY_DESCRIPTOR)pbuc->DataBuffer.Buffer)->Control & SE_DACL_PRESENT)
-    {
+    if (((PISECURITY_DESCRIPTOR) pbuc->DataBuffer.Buffer)->Control & SE_DACL_PRESENT) {
         si |= DACL_SECURITY_INFORMATION;
     }
 
-    if (((PISECURITY_DESCRIPTOR)pbuc->DataBuffer.Buffer)->Control & SE_SACL_PRESENT)
-    {
+    if (((PISECURITY_DESCRIPTOR) pbuc->DataBuffer.Buffer)->Control & SE_SACL_PRESENT) {
         si |= SACL_SECURITY_INFORMATION;
     }
 
     //
     // If the security descriptor has AUTO_INHERITED set, set the appropriate REQ bits.
     //
-    if (((PISECURITY_DESCRIPTOR)pbuc->DataBuffer.Buffer)->Control & SE_DACL_AUTO_INHERITED)
-    {
-        ((PISECURITY_DESCRIPTOR)pbuc->DataBuffer.Buffer)->Control |= SE_DACL_AUTO_INHERIT_REQ;
+    if (((PISECURITY_DESCRIPTOR) pbuc->DataBuffer.Buffer)->Control & SE_DACL_AUTO_INHERITED) {
+        ((PISECURITY_DESCRIPTOR) pbuc->DataBuffer.Buffer)->Control |= SE_DACL_AUTO_INHERIT_REQ;
     }
 
-    if (((PISECURITY_DESCRIPTOR)pbuc->DataBuffer.Buffer)->Control & SE_SACL_AUTO_INHERITED)
-    {
-        ((PISECURITY_DESCRIPTOR)pbuc->DataBuffer.Buffer)->Control |= SE_SACL_AUTO_INHERIT_REQ;
+    if (((PISECURITY_DESCRIPTOR) pbuc->DataBuffer.Buffer)->Control & SE_SACL_AUTO_INHERITED) {
+        ((PISECURITY_DESCRIPTOR) pbuc->DataBuffer.Buffer)->Control |= SE_SACL_AUTO_INHERIT_REQ;
     }
+    
+    Status = NtSetSecurityObject( hFile, si, pbuc->DataBuffer.Buffer );
 
-    Status = NtSetSecurityObject(hFile, si, pbuc->DataBuffer.Buffer);
-
-    if (!NT_SUCCESS(Status))
-    {
+    if (!NT_SUCCESS( Status )) {
 
         NTSTATUS Status2;
 
@@ -2624,36 +2703,43 @@ Return Value:
         //  failures.
         //
 
-        if (si & SACL_SECURITY_INFORMATION)
-        {
-            NtSetSecurityObject(hFile, SACL_SECURITY_INFORMATION, pbuc->DataBuffer.Buffer);
+        if (si & SACL_SECURITY_INFORMATION) {
+            NtSetSecurityObject(
+                        hFile,
+                        SACL_SECURITY_INFORMATION,
+                        pbuc->DataBuffer.Buffer );
         }
 
-        if (si & DACL_SECURITY_INFORMATION)
-        {
-            Status = NtSetSecurityObject(hFile, DACL_SECURITY_INFORMATION, pbuc->DataBuffer.Buffer);
+        if (si & DACL_SECURITY_INFORMATION) {
+            Status = NtSetSecurityObject(
+                            hFile,
+                            DACL_SECURITY_INFORMATION,
+                            pbuc->DataBuffer.Buffer);
         }
 
-        Status2 = NtSetSecurityObject(hFile, OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION,
-                                      pbuc->DataBuffer.Buffer);
+        Status2 = NtSetSecurityObject(
+                            hFile,
+                            OWNER_SECURITY_INFORMATION |
+                                GROUP_SECURITY_INFORMATION,
+                            pbuc->DataBuffer.Buffer);
 
-        if (NT_SUCCESS(Status))
-        {
+        if (NT_SUCCESS(Status)) {
             Status = Status2;
         }
     }
 
-    if (!NT_SUCCESS(Status))
-    {
+    if (!NT_SUCCESS(Status)) {
         BaseSetLastNTError(Status);
         return FALSE;
     }
-
+    
     return TRUE;
 }
 
 
-BOOL BackupWriteLinkData(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
+
+BOOL
+BackupWriteLinkData(HANDLE hFile, BACKUPCONTEXT *pbuc, BACKUPIOFRAME *pbif)
 /*++
 
 Routine Description:
@@ -2686,9 +2772,8 @@ Return Value:
     //
     //  Attempt to fill up the buffer from the input.
     //
-
-    switch (BackupWriteBuffer(pbuc, pbif))
-    {
+    
+    switch (BackupWriteBuffer(pbuc, pbif)) {
     default:
     case BRB_FAIL:
         return FALSE;
@@ -2701,19 +2786,17 @@ Return Value:
     }
 
     //
-    //  The buffer is now completely filled with our link data.
+    //  The buffer is now completely filled with our link data.  
     //  Find the last component of the name.
     //
-
+    
     cSlash = 0;
     pwcSlash = NULL;
-    pwc = (WCHAR *)pbuc->DataBuffer.Buffer;
+    pwc = (WCHAR *) pbuc->DataBuffer.Buffer;
     cbName = sizeof(WCHAR);
 
-    while (*pwc != L'\0')
-    {
-        if (*pwc == L'\\')
-        {
+    while (*pwc != L'\0') {
+        if (*pwc == L'\\') {
             pwcSlash = pwc;
             cSlash++;
             cbName = 0;
@@ -2722,22 +2805,19 @@ Return Value:
         cbName += sizeof(WCHAR);
     }
 
-    pfli = BackupAlloc(sizeof(*pfli) + cbName);
+    pfli = BackupAlloc( sizeof(*pfli) + cbName );
 
-    if (pfli == NULL)
-    {
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+    if (pfli == NULL) {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return FALSE;
     }
 
-    RtlCopyMemory(pfli->FileName, pwcSlash + 1, cbName);
+    RtlCopyMemory( pfli->FileName, pwcSlash + 1, cbName );
     pfli->FileNameLength = cbName - sizeof(WCHAR);
-    if (cSlash > 1)
-    {
+    if (cSlash > 1) {
         wcSave = L'\\';
     }
-    else
-    {
+    else {
         wcSave = *pwcSlash++;
     }
     *pwcSlash = L'\0';
@@ -2745,54 +2825,57 @@ Return Value:
     //
     //  Open the parent of the link target
     //
-
-    pfli->RootDirectory = CreateFileW((WCHAR *)pbuc->DataBuffer.Buffer, GENERIC_WRITE | GENERIC_READ,
-                                      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING,
-                                      FILE_ATTRIBUTE_NORMAL | FILE_FLAG_BACKUP_SEMANTICS, NULL);
+    
+    pfli->RootDirectory = CreateFileW(
+        (WCHAR *) pbuc->DataBuffer.Buffer,
+        GENERIC_WRITE | GENERIC_READ,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        NULL,
+        OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL| FILE_FLAG_BACKUP_SEMANTICS,
+        NULL );
 
     *pwcSlash = wcSave;
     pfli->ReplaceIfExists = TRUE;
 
     fSuccess = TRUE;
 
-    if (pfli->RootDirectory == INVALID_HANDLE_VALUE)
-    {
-        SetLastError(ERROR_FILE_NOT_FOUND);
+    if (pfli->RootDirectory == INVALID_HANDLE_VALUE) {
+        SetLastError( ERROR_FILE_NOT_FOUND );
         fSuccess = FALSE;
     }
-    else
-    {
+    else {
         NTSTATUS Status;
         IO_STATUS_BLOCK iosb;
 
-        Status = NtSetInformationFile(hFile, &iosb, pfli, sizeof(*pfli) + cbName, FileLinkInformation);
+        Status = NtSetInformationFile(
+                    hFile,
+                    &iosb,
+                    pfli,
+                    sizeof(*pfli) + cbName,
+                    FileLinkInformation );
 
-        CloseHandle(pfli->RootDirectory);
+        CloseHandle( pfli->RootDirectory );
         pfli->RootDirectory = INVALID_HANDLE_VALUE;
-        if (!NT_SUCCESS(Status))
-        {
-            BaseSetLastNTError(Status);
+        if (!NT_SUCCESS( Status )) {
+            BaseSetLastNTError( Status );
             fSuccess = FALSE;
-        }
-        else
-        {
-            if (iosb.Information == FILE_OVERWRITTEN)
-            {
-                SetLastError(ERROR_ALREADY_EXISTS);
-            }
-            else
-            {
-                SetLastError(0);
+        } else {
+            if (iosb.Information == FILE_OVERWRITTEN) {
+                SetLastError( ERROR_ALREADY_EXISTS );
+            } else {
+                SetLastError( 0 );
             }
         }
     }
-
-    BackupFree(pfli);
-
+    
+    BackupFree( pfli );
+    
     return fSuccess;
 }
 
 
+
 //  Routine Description:
 //
 //    Data can be written to a file using BackupWrite.
@@ -2838,8 +2921,15 @@ Return Value:
 //    FALSE - The operation failed.  Extended error status is
 //          available using GetLastError.
 
-BOOL WINAPI BackupWrite(HANDLE hFile, LPBYTE lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten,
-                        BOOL bAbort, BOOL bProcessSecurity, LPVOID *lpContext)
+BOOL WINAPI
+BackupWrite(
+    HANDLE  hFile,
+    LPBYTE  lpBuffer,
+    DWORD   nNumberOfBytesToWrite,
+    LPDWORD lpNumberOfBytesWritten,
+    BOOL    bAbort,
+    BOOL    bProcessSecurity,
+    LPVOID  *lpContext)
 {
     BACKUPCONTEXT *pbuc;
     BACKUPIOFRAME bif;
@@ -2855,41 +2945,36 @@ BOOL WINAPI BackupWrite(HANDLE hFile, LPBYTE lpBuffer, DWORD nNumberOfBytesToWri
     // Allocate our Context Control Block on first call.
     //
 
-    if (bAbort)
-    {
-        if (pbuc != NULL)
-        {
+    if (bAbort) {
+        if (pbuc != NULL) {
             FreeContext(lpContext);
         }
         return TRUE;
     }
 
     *bif.pcbTransferred = 0;
-    if (pbuc == INVALID_HANDLE_VALUE)
-    {
+    if (pbuc == INVALID_HANDLE_VALUE) {
         return TRUE;
     }
 
     // Allocate our Context Control Block on first call.
 
-    if (pbuc == NULL)
-    {
-        pbuc = AllocContext(0); // No initial buffer
+    if (pbuc == NULL) {
+        pbuc = AllocContext(0);                        // No initial buffer
 
         //
         //  If we have no space then return failure
         //
-
-        if (pbuc == NULL)
-        {
-            return FALSE;
+        
+        if (pbuc == NULL) {
+            return FALSE;           
         }
+
     }
 
     *lpContext = pbuc;
 
-    do
-    {
+    do {
         DWORD cbrequest;
         LONGLONG licbRemain;
 
@@ -2897,68 +2982,70 @@ BOOL WINAPI BackupWrite(HANDLE hFile, LPBYTE lpBuffer, DWORD nNumberOfBytesToWri
         //  If we do not have a complete header, go
         //  fill it in.
         //
+        
+        if (pbuc->cbHeader == 0) {
 
-        if (pbuc->cbHeader == 0)
-        {
+            pbuc->fMultiStreamType = TRUE ;    //restore does not auto inc stream index.
+            pbuc->fStreamStart = TRUE ;
 
-            pbuc->fMultiStreamType = TRUE; //restore does not auto inc stream index.
-            pbuc->fStreamStart = TRUE;
+            BackupWriteHeader(pbuc, &bif, CB_NAMELESSHEADER) ;
 
-            BackupWriteHeader(pbuc, &bif, CB_NAMELESSHEADER);
         }
 
         //
         //  If no more data, then exit
         //
-
-        if (bif.cbRequest == 0)
-        {
+        
+        if (bif.cbRequest == 0) {
             return TRUE;
         }
 
         //
         //  If a stream name was expected, go read it in
         //
+        
+        if (pbuc->cbHeader == CB_NAMELESSHEADER &&
+            pbuc->head.dwStreamNameSize != 0) {
 
-        if (pbuc->cbHeader == CB_NAMELESSHEADER && pbuc->head.dwStreamNameSize != 0)
-        {
-
-            if (!BackupWriteHeader(pbuc, &bif, pbuc->cbHeader + pbuc->head.dwStreamNameSize))
+            if ( !BackupWriteHeader(
+                    pbuc,
+                    &bif,
+                    pbuc->cbHeader + pbuc->head.dwStreamNameSize) )
             {
-                SetLastError(ERROR_INVALID_DATA);
-                return FALSE;
+                 SetLastError( ERROR_INVALID_DATA );
+                 return FALSE ;
             }
 
             //
             //  If no more data then exit
             //
-
-            if (bif.cbRequest == 0)
-            {
+            
+            if (bif.cbRequest == 0) {
                 return TRUE;
             }
-        }
+        } 
 
-
-        if ((pbuc->cbHeader == CB_NAMELESSHEADER) && (pbuc->head.dwStreamId == BACKUP_SPARSE_BLOCK))
-        {
-
-            BackupWriteHeader(pbuc, &bif, pbuc->cbHeader + sizeof(LARGE_INTEGER));
+     
+        if ( ( pbuc->cbHeader == CB_NAMELESSHEADER ) &&
+             ( pbuc->head.dwStreamId == BACKUP_SPARSE_BLOCK ) ) {
+      
+            BackupWriteHeader(
+                pbuc,
+                &bif,
+                pbuc->cbHeader + sizeof(LARGE_INTEGER) );
 
             //
             //  If no more data then exit
             //
+            
+            if (bif.cbRequest == 0) {
 
-            if (bif.cbRequest == 0)
-            {
-
-                if (pbuc->cbHeader == CB_NAMELESSHEADER)
-                {
-                    return TRUE;
-                }
+               if ( pbuc->cbHeader == CB_NAMELESSHEADER ) {
+                   return TRUE;
+               }
             }
         }
-
+        
         //
         //  Determine amount of data remaining in user buffer
         //  that can be transferred as part of this section
@@ -2971,62 +3058,60 @@ BOOL WINAPI BackupWrite(HANDLE hFile, LPBYTE lpBuffer, DWORD nNumberOfBytesToWri
         //  Determine total amount of data left in this section
         //  of backup stream.
         //
-
-        licbRemain = ComputeRemainingSize(pbuc);
+        
+        licbRemain = ComputeRemainingSize( pbuc );
 
         //
         //  If we had an error in the transfer and we're done
-        //  doing the transfer then pretend that we successfully
+        //  doing the transfer then pretend that we successfully 
         //  completed the section.
         //
-
-        if (pbuc->fAccessError && licbRemain == 0)
-        {
+        
+        if (pbuc->fAccessError && licbRemain == 0) {
 
             ReportTransfer(pbuc, &bif, cbrequest);
             continue;
         }
-
+        
         //
         //  Begin or continue the transfer of data.  We assume that there
         //  are no errors
         //
-
+        
         pbuc->fAccessError = FALSE;
 
-        switch (pbuc->head.dwStreamId)
-        {
+        switch (pbuc->head.dwStreamId) {
 
-        case BACKUP_SPARSE_BLOCK:
-            fSuccess = BackupWriteSparse(hFile, pbuc, &bif);
-            break;
+        case BACKUP_SPARSE_BLOCK :
+            fSuccess = BackupWriteSparse( hFile, pbuc, &bif ) ;
+            break ;
 
         case BACKUP_DATA:
-            fSuccess = BackupWriteStream(hFile, pbuc, &bif);
+            fSuccess = BackupWriteStream( hFile, pbuc, &bif );
             break;
 
         case BACKUP_ALTERNATE_DATA:
-            fSuccess = BackupWriteAlternateData(hFile, pbuc, &bif);
+            fSuccess = BackupWriteAlternateData( hFile, pbuc, &bif );
             break;
 
         case BACKUP_EA_DATA:
-            fSuccess = BackupWriteEaData(hFile, pbuc, &bif);
+            fSuccess = BackupWriteEaData( hFile, pbuc, &bif );
             break;
 
         case BACKUP_OBJECT_ID:
-            fSuccess = BackupWriteObjectId(hFile, pbuc, &bif);
+            fSuccess = BackupWriteObjectId( hFile, pbuc, &bif );
             break;
 
         case BACKUP_REPARSE_DATA:
-            fSuccess = BackupWriteReparseData(hFile, pbuc, &bif);
+            fSuccess = BackupWriteReparseData( hFile, pbuc, &bif );
             break;
 
         case BACKUP_SECURITY_DATA:
-            fSuccess = BackupWriteSecurityData(hFile, pbuc, &bif);
+            fSuccess = BackupWriteSecurityData( hFile, pbuc, &bif );
             break;
 
         case BACKUP_LINK:
-            fSuccess = BackupWriteLinkData(hFile, pbuc, &bif);
+            fSuccess = BackupWriteLinkData( hFile, pbuc, &bif );
             break;
 
         default:
@@ -3038,10 +3123,9 @@ BOOL WINAPI BackupWrite(HANDLE hFile, LPBYTE lpBuffer, DWORD nNumberOfBytesToWri
         BackupTestRestartStream(pbuc);
     } while (fSuccess && bif.cbRequest != 0);
 
-    if (fSuccess && *bif.pcbTransferred == 0)
-    {
+    if (fSuccess && *bif.pcbTransferred == 0) {
         FreeContext(lpContext);
     }
-
-    return (fSuccess);
+    
+    return(fSuccess);
 }

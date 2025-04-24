@@ -39,68 +39,106 @@ extern BOOL RunningInWow64;
 //
 //  csrbeep.c
 //
-VOID NTAPI NtWow64CsrBasepSoundSentryNotification(IN ULONG VideoMode);
+VOID
+NTAPI
+NtWow64CsrBasepSoundSentryNotification(
+    IN ULONG VideoMode
+    );
 
 //
 //  csrdlini.c
 //
 NTSTATUS
 NTAPI
-NtWow64CsrBasepRefreshIniFileMapping(IN PUNICODE_STRING BaseFileName);
+NtWow64CsrBasepRefreshIniFileMapping(
+    IN PUNICODE_STRING BaseFileName
+    );
 
 //
-//  csrdosdv.c
+//  csrdosdv.c 
 //
 NTSTATUS
 NTAPI
-NtWow64CsrBasepDefineDosDevice(IN DWORD dwFlags, IN PUNICODE_STRING pDeviceName, IN PUNICODE_STRING pTargetPath);
+NtWow64CsrBasepDefineDosDevice(
+    IN DWORD dwFlags,
+    IN PUNICODE_STRING pDeviceName,
+    IN PUNICODE_STRING pTargetPath
+    );
 
 //
 //  csrpathm.c
 //
-UINT NTAPI NtWow64CsrBasepGetTempFile(VOID);
+UINT
+NTAPI
+NtWow64CsrBasepGetTempFile(
+    VOID
+    );
 
 //
 //  csrpro.c
 //
 
 NTSTATUS
-NtWow64CsrBasepCreateProcess(IN PBASE_CREATEPROCESS_MSG a);
+NtWow64CsrBasepCreateProcess(
+    IN PBASE_CREATEPROCESS_MSG a
+    );
 
-VOID NtWow64CsrBasepExitProcess(IN UINT uExitCode);
+VOID
+NtWow64CsrBasepExitProcess(
+    IN UINT uExitCode
+    );
 
 NTSTATUS
-NtWow64CsrBasepSetProcessShutdownParam(IN DWORD dwLevel, IN DWORD dwFlags);
+NtWow64CsrBasepSetProcessShutdownParam(
+    IN DWORD dwLevel,
+    IN DWORD dwFlags
+    );
 
 NTSTATUS
-NtWow64CsrBasepGetProcessShutdownParam(OUT LPDWORD lpdwLevel, OUT LPDWORD lpdwFlags);
+NtWow64CsrBasepGetProcessShutdownParam(
+    OUT LPDWORD lpdwLevel,
+    OUT LPDWORD lpdwFlags
+    );
 
 //
 //  csrterm.c
 //
 NTSTATUS
-NtWow64CsrBasepSetTermsrvAppInstallMode(IN BOOL bState);
+NtWow64CsrBasepSetTermsrvAppInstallMode(
+    IN BOOL bState
+    );
 
 NTSTATUS
-NtWow64CsrBasepSetClientTimeZoneInformation(IN PBASE_SET_TERMSRVCLIENTTIMEZONE c);
+NtWow64CsrBasepSetClientTimeZoneInformation(
+    IN PBASE_SET_TERMSRVCLIENTTIMEZONE c
+    );
 
 //
 //  csrthrd.c
 //
 NTSTATUS
-NtWow64CsrBasepCreateThread(IN HANDLE ThreadHandle, IN CLIENT_ID ClientId);
+NtWow64CsrBasepCreateThread(
+    IN HANDLE ThreadHandle,
+    IN CLIENT_ID ClientId
+    );
 
 //
 //  csrbinit.c
 //
 NTSTATUS
-NtWow64CsrBaseClientConnectToServer(IN PWSTR szSessionDir, OUT PHANDLE phMutant, OUT PBOOLEAN pServerProcess);
+NtWow64CsrBaseClientConnectToServer(
+    IN PWSTR szSessionDir,
+    OUT PHANDLE phMutant,
+    OUT PBOOLEAN pServerProcess
+    );
 
 
 //
 // csrsxs.c
 //
 NTSTATUS
-NtWow64CsrBasepCreateActCtx(IN PBASE_SXS_CREATE_ACTIVATION_CONTEXT_MSG Message);
+NtWow64CsrBasepCreateActCtx(
+    IN PBASE_SXS_CREATE_ACTIVATION_CONTEXT_MSG Message
+    );
 
 #endif

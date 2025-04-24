@@ -24,40 +24,47 @@ Revision History:
 char Buffer[] = "This is a message";
 
 DWORD
-main(int argc, char *argv[], char *envp[])
-
+main(
+    int argc,
+    char *argv[],
+    char *envp[]
+    )
+        
 {
     BOOL success;
     HANDLE handle;
-    LPSTR mailslotName = "\\\\.\\mailslot\\asdf";
-
+    LPSTR mailslotName =  "\\\\.\\mailslot\\asdf";
+    
     DWORD bytesWritten;
+    
+    handle = CreateFile( mailslotName,
+                         GENERIC_WRITE,
+                         FILE_SHARE_WRITE | FILE_SHARE_READ,
+                         NULL,
+                         OPEN_EXISTING,
+                         FILE_ATTRIBUTE_NORMAL,
+                         0 );
 
-    handle = CreateFile(mailslotName, GENERIC_WRITE, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, OPEN_EXISTING,
-                        FILE_ATTRIBUTE_NORMAL, 0);
-
-    if (handle == (HANDLE)-1)
-    {
-        printf("Failed to open mailslot "
-               "%s"
-               "\n",
-               mailslotName);
-        printf("Error = %lx\n", GetLastError());
+    if (handle == (HANDLE)-1) {
+        printf ("Failed to open mailslot ""%s""\n", mailslotName);
+        printf ("Error = %lx\n", GetLastError() );
         return 1;
     }
+    
+    printf ("Successfully opened the mailslot.\n");
+    
 
-    printf("Successfully opened the mailslot.\n");
-
-
-    success = WriteFile(handle, Buffer, sizeof(Buffer), &bytesWritten, NULL);
-
-    if (!success)
-    {
-        printf("Failed to read mailslot\n");
+    success = WriteFile( handle,
+                         Buffer,
+                         sizeof(Buffer),
+                         &bytesWritten,
+                         NULL );
+                    
+    if (!success) {
+        printf ("Failed to read mailslot\n");
         return 1;
+    } else {
+        printf ("Successfully wrote %d bytes '%s'\n", bytesWritten, Buffer );
     }
-    else
-    {
-        printf("Successfully wrote %d bytes '%s'\n", bytesWritten, Buffer);
-    }
+                         
 }

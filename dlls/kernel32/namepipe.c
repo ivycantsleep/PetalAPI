@@ -20,23 +20,42 @@ Revision History:
 
 #include "basedll.h"
 
-#define DOS_LOCAL_PIPE_PREFIX L"\\\\.\\pipe\\"
-#define DOS_LOCAL_PIPE L"\\DosDevices\\pipe\\"
-#define DOS_REMOTE_PIPE L"\\DosDevices\\UNC\\"
+#define DOS_LOCAL_PIPE_PREFIX   L"\\\\.\\pipe\\"
+#define DOS_LOCAL_PIPE          L"\\DosDevices\\pipe\\"
+#define DOS_REMOTE_PIPE         L"\\DosDevices\\UNC\\"
 
-#define INVALID_PIPE_MODE_BITS ~(PIPE_READMODE_BYTE | PIPE_READMODE_MESSAGE | PIPE_WAIT | PIPE_NOWAIT)
-BOOL NpGetUserNamep(HANDLE hNamedPipe, LPWSTR lpUserName, DWORD nMaxUserNameSize);
+#define INVALID_PIPE_MODE_BITS  ~(PIPE_READMODE_BYTE    \
+                                | PIPE_READMODE_MESSAGE \
+                                | PIPE_WAIT             \
+                                | PIPE_NOWAIT)
+BOOL
+NpGetUserNamep(
+    HANDLE hNamedPipe,
+    LPWSTR lpUserName,
+    DWORD nMaxUserNameSize
+    );
 
-typedef BOOL(WINAPI *REVERTTOSELF)(VOID);
+typedef
+BOOL (WINAPI *REVERTTOSELF)( VOID );
 
-typedef BOOL(WINAPI *GETUSERNAMEW)(LPWSTR, LPDWORD);
+typedef
+BOOL (WINAPI *GETUSERNAMEW)( LPWSTR, LPDWORD );
 
-typedef BOOL(WINAPI *IMPERSONATENAMEDPIPECLIENT)(HANDLE);
+typedef
+BOOL (WINAPI *IMPERSONATENAMEDPIPECLIENT)( HANDLE );
 
 HANDLE
 APIENTRY
-CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD nMaxInstances, DWORD nOutBufferSize,
-                 DWORD nInBufferSize, DWORD nDefaultTimeOut, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
+CreateNamedPipeA(
+    LPCSTR lpName,
+    DWORD dwOpenMode,
+    DWORD dwPipeMode,
+    DWORD nMaxInstances,
+    DWORD nOutBufferSize,
+    DWORD nInBufferSize,
+    DWORD nDefaultTimeOut,
+    LPSECURITY_ATTRIBUTES lpSecurityAttributes
+    )
 
 /*++
     Ansi thunk to CreateNamedPipeW.
@@ -48,29 +67,41 @@ CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD nMaxIn
     ANSI_STRING AnsiString;
 
     Unicode = &NtCurrentTeb()->StaticUnicodeString;
-    RtlInitAnsiString(&AnsiString, lpName);
-    Status = RtlAnsiStringToUnicodeString(Unicode, &AnsiString, FALSE);
-    if (!NT_SUCCESS(Status))
-    {
-        if (Status == STATUS_BUFFER_OVERFLOW)
-        {
+    RtlInitAnsiString(&AnsiString,lpName);
+    Status = RtlAnsiStringToUnicodeString(Unicode,&AnsiString,FALSE);
+    if ( !NT_SUCCESS(Status) ) {
+        if ( Status == STATUS_BUFFER_OVERFLOW ) {
             SetLastError(ERROR_FILENAME_EXCED_RANGE);
-        }
-        else
-        {
+            }
+        else {
             BaseSetLastNTError(Status);
-        }
+            }
         return INVALID_HANDLE_VALUE;
-    }
+        }
 
-    return CreateNamedPipeW((LPCWSTR)Unicode->Buffer, dwOpenMode, dwPipeMode, nMaxInstances, nOutBufferSize,
-                            nInBufferSize, nDefaultTimeOut, lpSecurityAttributes);
+    return CreateNamedPipeW(
+            (LPCWSTR)Unicode->Buffer,
+            dwOpenMode,
+            dwPipeMode,
+            nMaxInstances,
+            nOutBufferSize,
+            nInBufferSize,
+            nDefaultTimeOut,
+            lpSecurityAttributes);
 }
 
 HANDLE
 APIENTRY
-CreateNamedPipeW(LPCWSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD nMaxInstances, DWORD nOutBufferSize,
-                 DWORD nInBufferSize, DWORD nDefaultTimeOut, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
+CreateNamedPipeW(
+    LPCWSTR lpName,
+    DWORD dwOpenMode,
+    DWORD dwPipeMode,
+    DWORD nMaxInstances,
+    DWORD nOutBufferSize,
+    DWORD nInBufferSize,
+    DWORD nDefaultTimeOut,
+    LPSECURITY_ATTRIBUTES lpSecurityAttributes
+    )
 
 /*++
 
@@ -195,63 +226,66 @@ Return Value:
     SECURITY_DESCRIPTOR SecurityDescriptor;
     PACL DefaultAcl = NULL;
 
-    if ((nMaxInstances == 0) || (nMaxInstances > PIPE_UNLIMITED_INSTANCES))
-    {
+    if ((nMaxInstances == 0) ||
+        (nMaxInstances > PIPE_UNLIMITED_INSTANCES)) {
         BaseSetLastNTError(STATUS_INVALID_PARAMETER);
         return INVALID_HANDLE_VALUE;
-    }
+        }
 
     // Convert Win32 maximum Instances to Nt maximum instances.
-    MaxInstances = (nMaxInstances == PIPE_UNLIMITED_INSTANCES) ? 0xffffffff : nMaxInstances;
+    MaxInstances = (nMaxInstances == PIPE_UNLIMITED_INSTANCES)?
+        0xffffffff : nMaxInstances;
 
 
-    TranslationStatus = RtlDosPathNameToNtPathName_U(lpName, &FileName, &FilePart, &RelativeName);
+    TranslationStatus = RtlDosPathNameToNtPathName_U(
+                            lpName,
+                            &FileName,
+                            &FilePart,
+                            &RelativeName
+                            );
 
-    if (!TranslationStatus)
-    {
+    if ( !TranslationStatus ) {
         SetLastError(ERROR_PATH_NOT_FOUND);
         return INVALID_HANDLE_VALUE;
-    }
+        }
 
     FreeBuffer = FileName.Buffer;
 
-    if (RelativeName.RelativeName.Length)
-    {
+    if ( RelativeName.RelativeName.Length ) {
         FileName = *(PUNICODE_STRING)&RelativeName.RelativeName;
-    }
-    else
-    {
-        RelativeName.ContainingDirectory = NULL;
-    }
-
-    InitializeObjectAttributes(&Obja, &FileName, OBJ_CASE_INSENSITIVE, RelativeName.ContainingDirectory, NULL);
-
-    if (ARGUMENT_PRESENT(lpSecurityAttributes))
-    {
-        Obja.SecurityDescriptor = lpSecurityAttributes->lpSecurityDescriptor;
-        if (lpSecurityAttributes->bInheritHandle)
-        {
-            Obja.Attributes |= OBJ_INHERIT;
         }
-    }
+    else {
+        RelativeName.ContainingDirectory = NULL;
+        }
 
-    if (Obja.SecurityDescriptor == NULL)
-    {
+    InitializeObjectAttributes(
+        &Obja,
+        &FileName,
+        OBJ_CASE_INSENSITIVE,
+        RelativeName.ContainingDirectory,
+        NULL
+        );
+
+    if ( ARGUMENT_PRESENT(lpSecurityAttributes) ) {
+        Obja.SecurityDescriptor = lpSecurityAttributes->lpSecurityDescriptor;
+        if ( lpSecurityAttributes->bInheritHandle ) {
+            Obja.Attributes |= OBJ_INHERIT;
+            }
+        }
+
+    if (Obja.SecurityDescriptor == NULL) {
 
         //
         // Apply default security if none specified (bug 131090)
         //
 
-        Status = RtlDefaultNpAcl(&DefaultAcl);
-        if (NT_SUCCESS(Status))
-        {
-            RtlCreateSecurityDescriptor(&SecurityDescriptor, SECURITY_DESCRIPTOR_REVISION);
-            RtlSetDaclSecurityDescriptor(&SecurityDescriptor, TRUE, DefaultAcl, FALSE);
+        Status = RtlDefaultNpAcl( &DefaultAcl );
+        if (NT_SUCCESS( Status )) {
+            RtlCreateSecurityDescriptor( &SecurityDescriptor, SECURITY_DESCRIPTOR_REVISION );
+            RtlSetDaclSecurityDescriptor( &SecurityDescriptor, TRUE, DefaultAcl, FALSE );
             Obja.SecurityDescriptor = &SecurityDescriptor;
-        }
-        else
-        {
-            RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
+        } else {
+            RtlFreeHeap(RtlProcessHeap(),0,FreeBuffer);
             BaseSetLastNTError(Status);
             return INVALID_HANDLE_VALUE;
         }
@@ -259,89 +293,95 @@ Return Value:
 
     //  End of code common with fileopcr.c CreateFile()
 
-    CreateFlags = (dwOpenMode & FILE_FLAG_WRITE_THROUGH ? FILE_WRITE_THROUGH : 0);
+    CreateFlags = (dwOpenMode & FILE_FLAG_WRITE_THROUGH ? FILE_WRITE_THROUGH : 0 );
     CreateFlags |= (dwOpenMode & FILE_FLAG_OVERLAPPED ? 0 : FILE_SYNCHRONOUS_IO_NONALERT);
 
     //
     //  Determine the timeout. Convert from milliseconds to an Nt delta time
     //
 
-    if (nDefaultTimeOut)
-    {
-        Timeout.QuadPart = -(LONGLONG)UInt32x32To64(10 * 1000, nDefaultTimeOut);
-    }
-    else
-    {
+    if ( nDefaultTimeOut ) {
+        Timeout.QuadPart = - (LONGLONG)UInt32x32To64( 10 * 1000, nDefaultTimeOut );
+        }
+    else {
         //  Default timeout is 50 Milliseconds
-        Timeout.QuadPart = -10 * 1000 * 50;
-    }
+        Timeout.QuadPart =  -10 * 1000 * 50;
+        }
 
     //  Check no reserved bits are set by mistake.
 
-    if ((dwOpenMode & ~(PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED | FILE_FLAG_WRITE_THROUGH |
-                        FILE_FLAG_FIRST_PIPE_INSTANCE | WRITE_DAC | WRITE_OWNER | ACCESS_SYSTEM_SECURITY)) ||
+    if (( dwOpenMode & ~(PIPE_ACCESS_DUPLEX |
+                         FILE_FLAG_OVERLAPPED | FILE_FLAG_WRITE_THROUGH |
+                         FILE_FLAG_FIRST_PIPE_INSTANCE | WRITE_DAC |
+                         WRITE_OWNER | ACCESS_SYSTEM_SECURITY ))||
 
-        (dwPipeMode & ~(PIPE_NOWAIT | PIPE_READMODE_MESSAGE | PIPE_TYPE_MESSAGE)))
-    {
+        ( dwPipeMode & ~(PIPE_NOWAIT | PIPE_READMODE_MESSAGE |
+                         PIPE_TYPE_MESSAGE ))) {
 
-        RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
-        if (DefaultAcl != NULL)
-        {
-            RtlFreeHeap(RtlProcessHeap(), 0, DefaultAcl);
+            RtlFreeHeap(RtlProcessHeap(),0,FreeBuffer);
+            if (DefaultAcl != NULL) {
+                RtlFreeHeap(RtlProcessHeap(),0,DefaultAcl);
+            }
+            BaseSetLastNTError(STATUS_INVALID_PARAMETER);
+            return INVALID_HANDLE_VALUE;
         }
-        BaseSetLastNTError(STATUS_INVALID_PARAMETER);
-        return INVALID_HANDLE_VALUE;
-    }
 
     //
     //  Translate the open mode into a sharemode to restrict the clients access
     //  and derive the appropriate local desired access.
     //
 
-    switch (dwOpenMode & PIPE_ACCESS_DUPLEX)
-    {
-    case PIPE_ACCESS_INBOUND:
-        ShareAccess = FILE_SHARE_WRITE;
-        DesiredAccess = GENERIC_READ;
-        break;
+    switch ( dwOpenMode & PIPE_ACCESS_DUPLEX ) {
+        case PIPE_ACCESS_INBOUND:
+            ShareAccess = FILE_SHARE_WRITE;
+            DesiredAccess = GENERIC_READ;
+            break;
 
-    case PIPE_ACCESS_OUTBOUND:
-        ShareAccess = FILE_SHARE_READ;
-        DesiredAccess = GENERIC_WRITE;
-        break;
+        case PIPE_ACCESS_OUTBOUND:
+            ShareAccess = FILE_SHARE_READ;
+            DesiredAccess = GENERIC_WRITE;
+            break;
 
-    case PIPE_ACCESS_DUPLEX:
-        ShareAccess = FILE_SHARE_READ | FILE_SHARE_WRITE;
-        DesiredAccess = GENERIC_READ | GENERIC_WRITE;
-        break;
+        case PIPE_ACCESS_DUPLEX:
+            ShareAccess = FILE_SHARE_READ | FILE_SHARE_WRITE;
+            DesiredAccess = GENERIC_READ | GENERIC_WRITE;
+            break;
 
-    default:
-        RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
-        if (DefaultAcl != NULL)
-        {
-            RtlFreeHeap(RtlProcessHeap(), 0, DefaultAcl);
+        default:
+            RtlFreeHeap(RtlProcessHeap(),0,FreeBuffer);
+            if (DefaultAcl != NULL) {
+                RtlFreeHeap(RtlProcessHeap(),0,DefaultAcl);
+            }
+            BaseSetLastNTError(STATUS_INVALID_PARAMETER);
+            return INVALID_HANDLE_VALUE;
         }
-        BaseSetLastNTError(STATUS_INVALID_PARAMETER);
-        return INVALID_HANDLE_VALUE;
-    }
 
-    DesiredAccess |= SYNCHRONIZE | (dwOpenMode & (WRITE_DAC | WRITE_OWNER | ACCESS_SYSTEM_SECURITY));
+    DesiredAccess |= SYNCHRONIZE |
+         ( dwOpenMode & (WRITE_DAC | WRITE_OWNER | ACCESS_SYSTEM_SECURITY ));
 
-    Status = NtCreateNamedPipeFile(
-        &Handle, DesiredAccess, &Obja, &IoStatusBlock, ShareAccess,
-        (dwOpenMode & FILE_FLAG_FIRST_PIPE_INSTANCE) ? FILE_CREATE
-                                                     : FILE_OPEN_IF, // Create first instance or subsequent
-        CreateFlags,                                                 // Create Options
-        dwPipeMode & PIPE_TYPE_MESSAGE ? FILE_PIPE_MESSAGE_TYPE : FILE_PIPE_BYTE_STREAM_TYPE,
-        dwPipeMode & PIPE_READMODE_MESSAGE ? FILE_PIPE_MESSAGE_MODE : FILE_PIPE_BYTE_STREAM_MODE,
-        dwPipeMode & PIPE_NOWAIT ? FILE_PIPE_COMPLETE_OPERATION : FILE_PIPE_QUEUE_OPERATION,
-        MaxInstances,   // Max instances
-        nInBufferSize,  // Inbound quota
-        nOutBufferSize, // Outbound quota
-        (PLARGE_INTEGER)&Timeout);
+    Status = NtCreateNamedPipeFile (
+        &Handle,
+        DesiredAccess,
+        &Obja,
+        &IoStatusBlock,
+        ShareAccess,
+        (dwOpenMode & FILE_FLAG_FIRST_PIPE_INSTANCE) ?
+            FILE_CREATE : FILE_OPEN_IF, // Create first instance or subsequent
+        CreateFlags,                    // Create Options
+        dwPipeMode & PIPE_TYPE_MESSAGE ?
+            FILE_PIPE_MESSAGE_TYPE : FILE_PIPE_BYTE_STREAM_TYPE,
+        dwPipeMode & PIPE_READMODE_MESSAGE ?
+            FILE_PIPE_MESSAGE_MODE : FILE_PIPE_BYTE_STREAM_MODE,
+        dwPipeMode & PIPE_NOWAIT ?
+            FILE_PIPE_COMPLETE_OPERATION : FILE_PIPE_QUEUE_OPERATION,
+        MaxInstances,                   // Max instances
+        nInBufferSize,                  // Inbound quota
+        nOutBufferSize,                 // Outbound quota
+        (PLARGE_INTEGER)&Timeout
+        );
 
-    if (Status == STATUS_NOT_SUPPORTED || Status == STATUS_INVALID_DEVICE_REQUEST)
-    {
+    if ( Status == STATUS_NOT_SUPPORTED ||
+         Status == STATUS_INVALID_DEVICE_REQUEST ) {
 
         //
         // The request must have been processed by some other device driver
@@ -351,21 +391,24 @@ Return Value:
         Status = STATUS_OBJECT_NAME_INVALID;
     }
 
-    RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
-    if (DefaultAcl != NULL)
-    {
-        RtlFreeHeap(RtlProcessHeap(), 0, DefaultAcl);
+    RtlFreeHeap(RtlProcessHeap(),0,FreeBuffer);
+    if (DefaultAcl != NULL) {
+        RtlFreeHeap(RtlProcessHeap(),0,DefaultAcl);
     }
-    if (!NT_SUCCESS(Status))
-    {
+    if ( !NT_SUCCESS(Status) ) {
         BaseSetLastNTError(Status);
         return INVALID_HANDLE_VALUE;
-    }
+        }
 
     return Handle;
 }
 
-BOOL APIENTRY ConnectNamedPipe(HANDLE hNamedPipe, LPOVERLAPPED lpOverlapped)
+BOOL
+APIENTRY
+ConnectNamedPipe(
+    HANDLE hNamedPipe,
+    LPOVERLAPPED lpOverlapped
+    )
 
 /*++
 
@@ -425,43 +468,45 @@ Return Value:
     NTSTATUS Status;
     IO_STATUS_BLOCK Iosb;
 
-    if (lpOverlapped)
-    {
+    if ( lpOverlapped ) {
         lpOverlapped->Internal = (DWORD)STATUS_PENDING;
-    }
-    Status =
-        NtFsControlFile(hNamedPipe, (lpOverlapped == NULL) ? NULL : lpOverlapped->hEvent,
-                        NULL, // ApcRoutine
-                        lpOverlapped ? ((ULONG_PTR)lpOverlapped->hEvent & 1 ? NULL : lpOverlapped) : NULL,
-                        (lpOverlapped == NULL) ? &Iosb : (PIO_STATUS_BLOCK)&lpOverlapped->Internal, FSCTL_PIPE_LISTEN,
-                        NULL, // InputBuffer
-                        0,    // InputBufferLength,
-                        NULL, // OutputBuffer
-                        0     // OutputBufferLength
-        );
-
-    if (lpOverlapped == NULL && Status == STATUS_PENDING)
-    {
-        // Operation must complete before return & Iosb destroyed
-        Status = NtWaitForSingleObject(hNamedPipe, FALSE, NULL);
-        if (NT_SUCCESS(Status))
-        {
-            Status = Iosb.Status;
         }
-    }
+    Status = NtFsControlFile(
+                hNamedPipe,
+                (lpOverlapped==NULL)? NULL : lpOverlapped->hEvent,
+                NULL,   // ApcRoutine
+                lpOverlapped ? ((ULONG_PTR)lpOverlapped->hEvent & 1 ? NULL : lpOverlapped) : NULL,
+                (lpOverlapped==NULL) ? &Iosb : (PIO_STATUS_BLOCK)&lpOverlapped->Internal,
+                FSCTL_PIPE_LISTEN,
+                NULL,   // InputBuffer
+                0,      // InputBufferLength,
+                NULL,   // OutputBuffer
+                0       // OutputBufferLength
+                );
 
-    if (NT_SUCCESS(Status) && Status != STATUS_PENDING)
-    {
+    if ( lpOverlapped == NULL && Status == STATUS_PENDING) {
+        // Operation must complete before return & Iosb destroyed
+        Status = NtWaitForSingleObject( hNamedPipe, FALSE, NULL );
+        if ( NT_SUCCESS(Status)) {
+            Status = Iosb.Status;
+            }
+        }
+
+    if (NT_SUCCESS( Status ) && Status != STATUS_PENDING ) {
         return TRUE;
-    }
+        }
     else
-    {
+        {
         BaseSetLastNTError(Status);
         return FALSE;
-    }
+        }
 }
 
-BOOL APIENTRY DisconnectNamedPipe(HANDLE hNamedPipe)
+BOOL
+APIENTRY
+DisconnectNamedPipe(
+    HANDLE hNamedPipe
+    )
 
 /*++
 
@@ -491,40 +536,48 @@ Return Value:
     NTSTATUS Status;
     IO_STATUS_BLOCK Iosb;
 
-    Status = NtFsControlFile(hNamedPipe, NULL,
-                             NULL, // ApcRoutine
-                             NULL, // ApcContext
-                             &Iosb, FSCTL_PIPE_DISCONNECT,
-                             NULL, // InputBuffer
-                             0,    // InputBufferLength,
-                             NULL, // OutputBuffer
-                             0     // OutputBufferLength
-    );
+    Status = NtFsControlFile(
+                        hNamedPipe,
+                        NULL,
+                        NULL,   // ApcRoutine
+                        NULL,   // ApcContext
+                        &Iosb,
+                        FSCTL_PIPE_DISCONNECT,
+                        NULL,   // InputBuffer
+                        0,      // InputBufferLength,
+                        NULL,   // OutputBuffer
+                        0       // OutputBufferLength
+                        );
 
-    if (Status == STATUS_PENDING)
-    {
+    if ( Status == STATUS_PENDING) {
         // Operation must complete before return & Iosb destroyed
-        Status = NtWaitForSingleObject(hNamedPipe, FALSE, NULL);
-        if (NT_SUCCESS(Status))
-        {
+        Status = NtWaitForSingleObject( hNamedPipe, FALSE, NULL );
+        if ( NT_SUCCESS(Status)) {
             Status = Iosb.Status;
+            }
         }
-    }
 
-    if (NT_SUCCESS(Status))
-    {
+    if (NT_SUCCESS( Status )) {
         return TRUE;
-    }
+        }
     else
-    {
+        {
         BaseSetLastNTError(Status);
         return FALSE;
-    }
+        }
 }
 
-BOOL APIENTRY GetNamedPipeHandleStateA(HANDLE hNamedPipe, LPDWORD lpState, LPDWORD lpCurInstances,
-                                       LPDWORD lpMaxCollectionCount, LPDWORD lpCollectDataTimeout, LPSTR lpUserName,
-                                       DWORD nMaxUserNameSize)
+BOOL
+APIENTRY
+GetNamedPipeHandleStateA(
+    HANDLE hNamedPipe,
+    LPDWORD lpState,
+    LPDWORD lpCurInstances,
+    LPDWORD lpMaxCollectionCount,
+    LPDWORD lpCollectDataTimeout,
+    LPSTR lpUserName,
+    DWORD nMaxUserNameSize
+    )
 /*++
 
 Routine Description:
@@ -533,8 +586,7 @@ Routine Description:
 
 ---*/
 {
-    if (ARGUMENT_PRESENT(lpUserName))
-    {
+    if ( ARGUMENT_PRESENT( lpUserName ) ) {
 
         BOOL b;
         NTSTATUS Status;
@@ -542,54 +594,80 @@ Routine Description:
         UNICODE_STRING UnicodeUserName;
 
         UnicodeUserName.MaximumLength = (USHORT)(nMaxUserNameSize << 1);
-        UnicodeUserName.Buffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), UnicodeUserName.MaximumLength);
+        UnicodeUserName.Buffer = RtlAllocateHeap(
+                                        RtlProcessHeap(),MAKE_TAG( TMP_TAG ),
+                                        UnicodeUserName.MaximumLength
+                                        );
 
         AnsiUserName.Buffer = lpUserName;
         AnsiUserName.MaximumLength = (USHORT)nMaxUserNameSize;
 
 
-        if (!UnicodeUserName.Buffer)
-        {
+        if ( !UnicodeUserName.Buffer ) {
             SetLastError(ERROR_NOT_ENOUGH_MEMORY);
             return FALSE;
-        }
+            }
 
 
-        b = GetNamedPipeHandleStateW(hNamedPipe, lpState, lpCurInstances, lpMaxCollectionCount, lpCollectDataTimeout,
-                                     UnicodeUserName.Buffer, UnicodeUserName.MaximumLength / 2);
+        b = GetNamedPipeHandleStateW(
+                hNamedPipe,
+                lpState,
+                lpCurInstances,
+                lpMaxCollectionCount,
+                lpCollectDataTimeout,
+                UnicodeUserName.Buffer,
+                UnicodeUserName.MaximumLength/2);
 
-        if (b)
-        {
+        if ( b ) {
 
             //  Set length correctly in UnicodeUserName
-            RtlInitUnicodeString(&UnicodeUserName, UnicodeUserName.Buffer);
+            RtlInitUnicodeString(
+                &UnicodeUserName,
+                UnicodeUserName.Buffer
+                );
 
-            Status = RtlUnicodeStringToAnsiString(&AnsiUserName, &UnicodeUserName, FALSE);
+            Status = RtlUnicodeStringToAnsiString(
+                        &AnsiUserName,
+                        &UnicodeUserName,
+                        FALSE
+                        );
 
-            if (!NT_SUCCESS(Status))
-            {
+            if ( !NT_SUCCESS(Status) ) {
                 BaseSetLastNTError(Status);
                 b = FALSE;
+                }
             }
-        }
 
-        if (UnicodeUserName.Buffer)
-        {
-            RtlFreeHeap(RtlProcessHeap(), 0, UnicodeUserName.Buffer);
-        }
+        if ( UnicodeUserName.Buffer ) {
+            RtlFreeHeap(RtlProcessHeap(),0,UnicodeUserName.Buffer);
+            }
 
         return b;
-    }
-    else
-    {
-        return GetNamedPipeHandleStateW(hNamedPipe, lpState, lpCurInstances, lpMaxCollectionCount, lpCollectDataTimeout,
-                                        NULL, 0);
-    }
+        }
+    else {
+        return GetNamedPipeHandleStateW(
+                hNamedPipe,
+                lpState,
+                lpCurInstances,
+                lpMaxCollectionCount,
+                lpCollectDataTimeout,
+                NULL,
+                0);
+        }
+
 }
 
-BOOL APIENTRY GetNamedPipeHandleStateW(HANDLE hNamedPipe, LPDWORD lpState, LPDWORD lpCurInstances,
-                                       LPDWORD lpMaxCollectionCount, LPDWORD lpCollectDataTimeout, LPWSTR lpUserName,
-                                       DWORD nMaxUserNameSize)
+BOOL
+APIENTRY
+GetNamedPipeHandleStateW(
+    HANDLE hNamedPipe,
+    LPDWORD lpState,
+    LPDWORD lpCurInstances,
+    LPDWORD lpMaxCollectionCount,
+    LPDWORD lpCollectDataTimeout,
+    LPWSTR lpUserName,
+    DWORD nMaxUserNameSize
+    )
 /*++
 
 Routine Description:
@@ -651,101 +729,112 @@ Return Value:
     IO_STATUS_BLOCK Iosb;
     NTSTATUS Status;
 
-    if (ARGUMENT_PRESENT(lpState))
-    {
+    if ( ARGUMENT_PRESENT( lpState ) ){
         FILE_PIPE_INFORMATION Common;
 
-        Status = NtQueryInformationFile(hNamedPipe, &Iosb, &Common, sizeof(FILE_PIPE_INFORMATION), FilePipeInformation);
+        Status = NtQueryInformationFile(
+                    hNamedPipe,
+                    &Iosb,
+                    &Common,
+                    sizeof(FILE_PIPE_INFORMATION),
+                    FilePipeInformation );
 
-        if (!NT_SUCCESS(Status))
-        {
+        if ( !NT_SUCCESS(Status) ) {
             BaseSetLastNTError(Status);
             return FALSE;
+            }
+
+        *lpState = (Common.CompletionMode == FILE_PIPE_QUEUE_OPERATION) ?
+            PIPE_WAIT : PIPE_NOWAIT;
+
+        *lpState |= (Common.ReadMode == FILE_PIPE_BYTE_STREAM_MODE) ?
+            PIPE_READMODE_BYTE : PIPE_READMODE_MESSAGE;
         }
 
-        *lpState = (Common.CompletionMode == FILE_PIPE_QUEUE_OPERATION) ? PIPE_WAIT : PIPE_NOWAIT;
-
-        *lpState |= (Common.ReadMode == FILE_PIPE_BYTE_STREAM_MODE) ? PIPE_READMODE_BYTE : PIPE_READMODE_MESSAGE;
-    }
-
-    if (ARGUMENT_PRESENT(lpCurInstances))
-    {
+    if (ARGUMENT_PRESENT( lpCurInstances ) ){
         FILE_PIPE_LOCAL_INFORMATION Local;
 
-        Status = NtQueryInformationFile(hNamedPipe, &Iosb, &Local, sizeof(FILE_PIPE_LOCAL_INFORMATION),
-                                        FilePipeLocalInformation);
+        Status = NtQueryInformationFile(
+                    hNamedPipe,
+                    &Iosb,
+                    &Local,
+                    sizeof(FILE_PIPE_LOCAL_INFORMATION),
+                    FilePipeLocalInformation );
 
-        if (!NT_SUCCESS(Status))
-        {
+        if ( !NT_SUCCESS(Status) ) {
             BaseSetLastNTError(Status);
             return FALSE;
-        }
+            }
 
-        if (Local.CurrentInstances >= PIPE_UNLIMITED_INSTANCES)
-        {
+        if (Local.CurrentInstances >= PIPE_UNLIMITED_INSTANCES) {
             *lpCurInstances = PIPE_UNLIMITED_INSTANCES;
-        }
-        else
-        {
+            }
+        else {
             *lpCurInstances = Local.CurrentInstances;
-        }
-    }
+            }
 
-    if (ARGUMENT_PRESENT(lpMaxCollectionCount) || ARGUMENT_PRESENT(lpCollectDataTimeout))
-    {
+        }
+
+    if (ARGUMENT_PRESENT( lpMaxCollectionCount ) ||
+        ARGUMENT_PRESENT( lpCollectDataTimeout ) ) {
         FILE_PIPE_REMOTE_INFORMATION Remote;
 
-        Status = NtQueryInformationFile(hNamedPipe, &Iosb, &Remote, sizeof(FILE_PIPE_REMOTE_INFORMATION),
-                                        FilePipeRemoteInformation);
+        Status = NtQueryInformationFile(
+                    hNamedPipe,
+                    &Iosb,
+                    &Remote,
+                    sizeof(FILE_PIPE_REMOTE_INFORMATION),
+                    FilePipeRemoteInformation );
 
-        if (!NT_SUCCESS(Status))
-        {
+        if ( !NT_SUCCESS(Status) ) {
             BaseSetLastNTError(Status);
             return FALSE;
-        }
+            }
 
-        if (ARGUMENT_PRESENT(lpMaxCollectionCount))
-        {
+        if (ARGUMENT_PRESENT( lpMaxCollectionCount ) ) {
             *lpMaxCollectionCount = Remote.MaximumCollectionCount;
-        }
+            }
 
-        if (ARGUMENT_PRESENT(lpCollectDataTimeout))
-        {
+        if (ARGUMENT_PRESENT( lpCollectDataTimeout ) ) {
             LARGE_INTEGER TimeWorkspace;
             LARGE_INTEGER LiTemporary;
 
             // Convert delta NT LARGE_INTEGER to milliseconds delay
 
             LiTemporary.QuadPart = -Remote.CollectDataTime.QuadPart;
-            TimeWorkspace = RtlExtendedLargeIntegerDivide(LiTemporary, 10000,
-                                                          NULL); // Not interested in any remainder
+            TimeWorkspace = RtlExtendedLargeIntegerDivide (
+                    LiTemporary,
+                    10000,
+                    NULL ); // Not interested in any remainder
 
-            if (TimeWorkspace.HighPart)
-            {
+            if ( TimeWorkspace.HighPart ) {
 
                 //
                 //  Timeout larger than we can return- but not infinity.
                 //  Must have been set with the direct NT Interface.
                 //
 
-                *lpCollectDataTimeout = 0xfffffffe; //  Maximum we can set
-            }
-            else
-            {
+                *lpCollectDataTimeout = 0xfffffffe;   //  Maximum we can set
+                }
+            else {
                 *lpCollectDataTimeout = TimeWorkspace.LowPart;
+                }
             }
         }
-    }
 
-    if (ARGUMENT_PRESENT(lpUserName))
-    {
-        return NpGetUserNamep(hNamedPipe, lpUserName, nMaxUserNameSize);
-    }
+    if ( ARGUMENT_PRESENT( lpUserName ) ) {
+            return NpGetUserNamep(hNamedPipe, lpUserName, nMaxUserNameSize );
+        }
 
     return TRUE;
 }
 
-BOOL NpGetUserNamep(HANDLE hNamedPipe, LPWSTR lpUserName, DWORD nMaxUserNameSize)
+BOOL
+NpGetUserNamep(
+    HANDLE hNamedPipe,
+    LPWSTR lpUserName,
+    DWORD nMaxUserNameSize
+    )
 /*++
 
 Routine Description:
@@ -773,7 +862,7 @@ Return Value:
 
 --*/
 {
-    HANDLE hToken;
+    HANDLE   hToken;
     NTSTATUS Status;
     DWORD Size = nMaxUserNameSize;
     BOOL res;
@@ -787,87 +876,91 @@ Return Value:
 
     advapi32 = LoadLibraryW(AdvapiDllString);
 
-    if (advapi32 == NULL)
-    {
+    if (advapi32 == NULL ) {
         return FALSE;
-    }
+        }
 
-    RevertToSelfp = (REVERTTOSELF)GetProcAddress(advapi32, "RevertToSelf");
-    if (RevertToSelfp == NULL)
-    {
+    RevertToSelfp = (REVERTTOSELF)GetProcAddress(advapi32,"RevertToSelf");
+    if ( RevertToSelfp == NULL) {
         FreeLibrary(advapi32);
         return FALSE;
-    }
+        }
 
-    GetUserNameWp = (GETUSERNAMEW)GetProcAddress(advapi32, "GetUserNameW");
-    if (GetUserNameWp == NULL)
-    {
+    GetUserNameWp = (GETUSERNAMEW)GetProcAddress(advapi32,"GetUserNameW");
+    if ( GetUserNameWp == NULL) {
         FreeLibrary(advapi32);
         return FALSE;
-    }
+        }
 
-    ImpersonateNamedPipeClientp = (IMPERSONATENAMEDPIPECLIENT)GetProcAddress(advapi32, "ImpersonateNamedPipeClient");
-    if (ImpersonateNamedPipeClientp == NULL)
-    {
+    ImpersonateNamedPipeClientp = (IMPERSONATENAMEDPIPECLIENT)GetProcAddress(advapi32,"ImpersonateNamedPipeClient");
+    if ( ImpersonateNamedPipeClientp == NULL) {
         FreeLibrary(advapi32);
         return FALSE;
-    }
+        }
 
     //  Save whoever the thread is currently impersonating.
 
-    Status = NtOpenThreadToken(NtCurrentThread(), TOKEN_IMPERSONATE, TRUE, &hToken);
+    Status = NtOpenThreadToken(
+                    NtCurrentThread(),
+                    TOKEN_IMPERSONATE,
+                    TRUE,
+                    &hToken
+                    );
 
-    if (!(ImpersonateNamedPipeClientp)(hNamedPipe))
-    {
-        if (NT_SUCCESS(Status))
-        {
-            if (!CloseHandle(hToken))
-            {
-                ASSERTMSG("CloseHandle failed for previously opened token", 0);
+    if (!(ImpersonateNamedPipeClientp)( hNamedPipe )) {
+        if (NT_SUCCESS (Status)) {
+            if (!CloseHandle (hToken)) {
+                ASSERTMSG ("CloseHandle failed for previously opened token", 0);
             }
         }
         FreeLibrary(advapi32);
         return FALSE;
     }
 
-    res = (GetUserNameWp)(lpUserName, &Size);
+    res = (GetUserNameWp)( lpUserName, &Size );
 
-    if (!NT_SUCCESS(Status))
-    {
+    if ( !NT_SUCCESS( Status ) ) {
         //  We were not impersonating anyone
 
         (RevertToSelfp)();
-    }
-    else
-    {
+
+    } else {
 
         //
         //  Set thread back to whoever it was originally impersonating.
         //  An error on this API overrides any error from  GetUserNameW
         //
 
-        Status =
-            NtSetInformationThread(NtCurrentThread(), ThreadImpersonationToken, (PVOID)&hToken, (ULONG)sizeof(HANDLE));
+        Status = NtSetInformationThread(
+                     NtCurrentThread(),
+                     ThreadImpersonationToken,
+                     (PVOID)&hToken,
+                     (ULONG)sizeof(HANDLE)
+                     );
 
-        if (!CloseHandle(hToken))
-        {
-            ASSERTMSG("CloseHandle failed for previously opened token", 0);
+        if (!CloseHandle (hToken)) {
+            ASSERTMSG ("CloseHandle failed for previously opened token", 0);
         }
-        if (!NT_SUCCESS(Status))
-        {
+        if ( !NT_SUCCESS(Status) ) {
             BaseSetLastNTError(Status);
             FreeLibrary(advapi32);
             return FALSE;
+            }
         }
-    }
 
     FreeLibrary(advapi32);
 
     return res;
 }
 
-BOOL APIENTRY SetNamedPipeHandleState(HANDLE hNamedPipe, LPDWORD lpMode, LPDWORD lpMaxCollectionCount,
-                                      LPDWORD lpCollectDataTimeout)
+BOOL
+APIENTRY
+SetNamedPipeHandleState(
+    HANDLE hNamedPipe,
+    LPDWORD lpMode,
+    LPDWORD lpMaxCollectionCount,
+    LPDWORD lpCollectDataTimeout
+    )
 /*++
 
 Routine Description:
@@ -929,35 +1022,39 @@ Return Value:
     IO_STATUS_BLOCK Iosb;
     NTSTATUS Status;
 
-    if (ARGUMENT_PRESENT(lpMode))
-    {
+    if ( ARGUMENT_PRESENT( lpMode ) ){
         FILE_PIPE_INFORMATION Common;
 
-        if (*lpMode & INVALID_PIPE_MODE_BITS)
-        {
+        if (*lpMode & INVALID_PIPE_MODE_BITS) {
             SetLastError(ERROR_INVALID_PARAMETER);
             return FALSE;
         }
 
-        Common.ReadMode = (*lpMode & PIPE_READMODE_MESSAGE) ? FILE_PIPE_MESSAGE_MODE : FILE_PIPE_BYTE_STREAM_MODE;
+        Common.ReadMode = ( *lpMode & PIPE_READMODE_MESSAGE ) ?
+            FILE_PIPE_MESSAGE_MODE: FILE_PIPE_BYTE_STREAM_MODE;
 
-        Common.CompletionMode = (*lpMode & PIPE_NOWAIT) ? FILE_PIPE_COMPLETE_OPERATION : FILE_PIPE_QUEUE_OPERATION;
+        Common.CompletionMode = ( *lpMode & PIPE_NOWAIT ) ?
+            FILE_PIPE_COMPLETE_OPERATION : FILE_PIPE_QUEUE_OPERATION;
 
-        Status = NtSetInformationFile(hNamedPipe, &Iosb, &Common, sizeof(FILE_PIPE_INFORMATION), FilePipeInformation);
+        Status = NtSetInformationFile(
+                    hNamedPipe,
+                    &Iosb,
+                    &Common,
+                    sizeof(FILE_PIPE_INFORMATION),
+                    FilePipeInformation );
 
-        if (!NT_SUCCESS(Status))
-        {
+        if ( !NT_SUCCESS(Status) ) {
             BaseSetLastNTError(Status);
             return FALSE;
+            }
         }
-    }
 
-    if (ARGUMENT_PRESENT(lpMaxCollectionCount) || ARGUMENT_PRESENT(lpCollectDataTimeout))
-    {
+    if ( ARGUMENT_PRESENT( lpMaxCollectionCount ) ||
+         ARGUMENT_PRESENT( lpCollectDataTimeout ) ){
         FILE_PIPE_REMOTE_INFORMATION Remote;
 
-        if ((lpMaxCollectionCount == NULL) || (lpCollectDataTimeout == NULL))
-        {
+        if ( ( lpMaxCollectionCount == NULL ) ||
+             ( lpCollectDataTimeout == NULL ) ){
 
             //
             // User is setting only one of the two parameters so read
@@ -966,47 +1063,59 @@ Return Value:
             // in this case the setting would be lost.
             //
 
-            Status = NtQueryInformationFile(hNamedPipe, &Iosb, &Remote, sizeof(FILE_PIPE_REMOTE_INFORMATION),
-                                            FilePipeRemoteInformation);
+            Status = NtQueryInformationFile(
+                    hNamedPipe,
+                    &Iosb,
+                    &Remote,
+                    sizeof(FILE_PIPE_REMOTE_INFORMATION),
+                    FilePipeRemoteInformation );
 
-            if (!NT_SUCCESS(Status))
-            {
+            if ( !NT_SUCCESS(Status) ) {
                 BaseSetLastNTError(Status);
                 return FALSE;
+                }
             }
-        }
 
-        if (ARGUMENT_PRESENT(lpMaxCollectionCount))
-        {
+        if (ARGUMENT_PRESENT( lpMaxCollectionCount ) ) {
             Remote.MaximumCollectionCount = *lpMaxCollectionCount;
-        }
+            }
 
-        if (ARGUMENT_PRESENT(lpCollectDataTimeout))
-        {
+        if (ARGUMENT_PRESENT( lpCollectDataTimeout ) ) {
 
             //
             //  Convert from milliseconds to an Nt delta time.
             //
 
-            Remote.CollectDataTime.QuadPart = -(LONGLONG)UInt32x32To64(10 * 1000, *lpCollectDataTimeout);
-        }
+            Remote.CollectDataTime.QuadPart =
+                        - (LONGLONG)UInt32x32To64( 10 * 1000, *lpCollectDataTimeout );
+            }
 
-        Status = NtSetInformationFile(hNamedPipe, &Iosb, &Remote, sizeof(FILE_PIPE_REMOTE_INFORMATION),
-                                      FilePipeRemoteInformation);
+        Status = NtSetInformationFile(
+                    hNamedPipe,
+                    &Iosb,
+                    &Remote,
+                    sizeof(FILE_PIPE_REMOTE_INFORMATION),
+                    FilePipeRemoteInformation );
 
-        if (!NT_SUCCESS(Status))
-        {
+        if ( !NT_SUCCESS(Status) ) {
             BaseSetLastNTError(Status);
             return FALSE;
+            }
         }
-    }
 
 
     return TRUE;
 }
 
-BOOL APIENTRY GetNamedPipeInfo(HANDLE hNamedPipe, LPDWORD lpFlags, LPDWORD lpOutBufferSize, LPDWORD lpInBufferSize,
-                               LPDWORD lpMaxInstances)
+BOOL
+APIENTRY
+GetNamedPipeInfo(
+    HANDLE hNamedPipe,
+    LPDWORD lpFlags,
+    LPDWORD lpOutBufferSize,
+    LPDWORD lpInBufferSize,
+    LPDWORD lpMaxInstances
+    )
 /*++
 
 Routine Description:
@@ -1065,50 +1174,57 @@ Return Value:
 
     FILE_PIPE_LOCAL_INFORMATION Local;
 
-    Status = NtQueryInformationFile(hNamedPipe, &Iosb, &Local, sizeof(FILE_PIPE_LOCAL_INFORMATION),
-                                    FilePipeLocalInformation);
+    Status = NtQueryInformationFile(
+                    hNamedPipe,
+                    &Iosb,
+                    &Local,
+                    sizeof(FILE_PIPE_LOCAL_INFORMATION),
+                    FilePipeLocalInformation );
 
-    if (!NT_SUCCESS(Status))
-    {
+    if ( !NT_SUCCESS(Status) ) {
         BaseSetLastNTError(Status);
         return FALSE;
-    }
+        }
 
-    if (ARGUMENT_PRESENT(lpFlags))
-    {
-        *lpFlags = (Local.NamedPipeEnd == FILE_PIPE_CLIENT_END) ? PIPE_CLIENT_END : PIPE_SERVER_END;
-        *lpFlags |= (Local.NamedPipeType == FILE_PIPE_BYTE_STREAM_TYPE) ? PIPE_TYPE_BYTE : PIPE_TYPE_MESSAGE;
-    }
+    if (ARGUMENT_PRESENT( lpFlags ) ) {
+        *lpFlags = (Local.NamedPipeEnd == FILE_PIPE_CLIENT_END) ?
+            PIPE_CLIENT_END : PIPE_SERVER_END;
+        *lpFlags |= (Local.NamedPipeType == FILE_PIPE_BYTE_STREAM_TYPE) ?
+            PIPE_TYPE_BYTE : PIPE_TYPE_MESSAGE;
+        }
 
-    if (ARGUMENT_PRESENT(lpOutBufferSize))
-    {
+    if (ARGUMENT_PRESENT( lpOutBufferSize ) ) {
         *lpOutBufferSize = Local.OutboundQuota;
-    }
+        }
 
-    if (ARGUMENT_PRESENT(lpInBufferSize))
-    {
+    if (ARGUMENT_PRESENT( lpInBufferSize ) ) {
         *lpInBufferSize = Local.InboundQuota;
-    }
+        }
 
-    if (ARGUMENT_PRESENT(lpMaxInstances))
-    {
-        if (Local.MaximumInstances >= PIPE_UNLIMITED_INSTANCES)
-        {
+    if (ARGUMENT_PRESENT( lpMaxInstances ) ) {
+        if (Local.MaximumInstances >= PIPE_UNLIMITED_INSTANCES) {
             *lpMaxInstances = PIPE_UNLIMITED_INSTANCES;
-        }
-        else
-        {
+            }
+        else {
             *lpMaxInstances = Local.MaximumInstances;
+            }
         }
-    }
 
 
     return TRUE;
 }
 
 
-BOOL APIENTRY PeekNamedPipe(HANDLE hNamedPipe, LPVOID lpBuffer, DWORD nBufferSize, LPDWORD lpBytesRead,
-                            LPDWORD lpTotalBytesAvail, LPDWORD lpBytesLeftThisMessage)
+BOOL
+APIENTRY
+PeekNamedPipe(
+    HANDLE hNamedPipe,
+    LPVOID lpBuffer,
+    DWORD nBufferSize,
+    LPDWORD lpBytesRead,
+    LPDWORD lpTotalBytesAvail,
+    LPDWORD lpBytesLeftThisMessage
+    )
 /*++
 
 Routine Description:
@@ -1165,43 +1281,39 @@ Return Value:
     // Allocate enough for the users data and FILE_PIPE_PEEK_BUFFER
 
     IOLength = nBufferSize + FIELD_OFFSET(FILE_PIPE_PEEK_BUFFER, Data[0]);
-    PeekBuffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), IOLength);
-    if (PeekBuffer == NULL)
-    {
-        BaseSetLastNTError(STATUS_INSUFFICIENT_RESOURCES);
+    PeekBuffer = RtlAllocateHeap(RtlProcessHeap(),MAKE_TAG( TMP_TAG ), IOLength);
+    if (PeekBuffer == NULL) {
+        BaseSetLastNTError (STATUS_INSUFFICIENT_RESOURCES);
         return FALSE;
     }
 
-    try
-    {
+    try {
 
-        Status = NtFsControlFile(hNamedPipe, NULL,
-                                 NULL,            // APC routine
-                                 NULL,            // APC Context
-                                 &Iosb,           // I/O Status block
-                                 FSCTL_PIPE_PEEK, // IoControlCode
-                                 NULL,            // Buffer for data to the FS
-                                 0,               // Length.
-                                 PeekBuffer,      // OutputBuffer for data from the FS
-                                 IOLength         // OutputBuffer Length
-        );
+        Status = NtFsControlFile(hNamedPipe,
+                    NULL,
+                    NULL,           // APC routine
+                    NULL,           // APC Context
+                    &Iosb,          // I/O Status block
+                    FSCTL_PIPE_PEEK,// IoControlCode
+                    NULL,           // Buffer for data to the FS
+                    0,              // Length.
+                    PeekBuffer,     // OutputBuffer for data from the FS
+                    IOLength        // OutputBuffer Length
+                    );
 
-        if (Status == STATUS_PENDING)
-        {
+        if ( Status == STATUS_PENDING) {
             // Operation must complete before return & IoStatusBlock destroyed
-            Status = NtWaitForSingleObject(hNamedPipe, FALSE, NULL);
-            if (NT_SUCCESS(Status))
-            {
+            Status = NtWaitForSingleObject( hNamedPipe, FALSE, NULL );
+            if ( NT_SUCCESS(Status)) {
                 Status = Iosb.Status;
+                }
             }
-        }
 
         //
         //  Buffer overflow simply means that lpBytesLeftThisMessage != 0
         //
 
-        if (Status == STATUS_BUFFER_OVERFLOW)
-        {
+        if ( Status == STATUS_BUFFER_OVERFLOW ) {
             Status = STATUS_SUCCESS;
         }
 
@@ -1210,63 +1322,64 @@ Return Value:
         //  the PeekBuffer is deleted even if an invalid pointer was given.
         //
 
-        if (NT_SUCCESS(Status))
-        {
+        if ( NT_SUCCESS(Status)) {
 
-            try
-            {
+            try {
 
-                if (ARGUMENT_PRESENT(lpTotalBytesAvail))
-                {
+                if ( ARGUMENT_PRESENT( lpTotalBytesAvail ) ) {
                     *lpTotalBytesAvail = PeekBuffer->ReadDataAvailable;
-                }
+                    }
 
-                if (ARGUMENT_PRESENT(lpBytesRead))
-                {
+                if ( ARGUMENT_PRESENT( lpBytesRead ) ) {
                     *lpBytesRead = (ULONG)(Iosb.Information - FIELD_OFFSET(FILE_PIPE_PEEK_BUFFER, Data[0]));
-                }
+                    }
 
-                if (ARGUMENT_PRESENT(lpBytesLeftThisMessage))
-                {
-                    *lpBytesLeftThisMessage = PeekBuffer->MessageLength -
-                                              (ULONG)(Iosb.Information - FIELD_OFFSET(FILE_PIPE_PEEK_BUFFER, Data[0]));
-                }
+                if ( ARGUMENT_PRESENT( lpBytesLeftThisMessage ) ) {
+                    *lpBytesLeftThisMessage =
+                        PeekBuffer->MessageLength -
+                        (ULONG)(Iosb.Information - FIELD_OFFSET(FILE_PIPE_PEEK_BUFFER, Data[0]));
+                    }
 
-                if (ARGUMENT_PRESENT(lpBuffer))
-                {
-                    RtlCopyMemory(lpBuffer, PeekBuffer->Data,
-                                  Iosb.Information - FIELD_OFFSET(FILE_PIPE_PEEK_BUFFER, Data[0]));
+                if ( ARGUMENT_PRESENT( lpBuffer ) ) {
+                    RtlCopyMemory(
+                        lpBuffer,
+                        PeekBuffer->Data,
+                        Iosb.Information - FIELD_OFFSET(FILE_PIPE_PEEK_BUFFER, Data[0]));
+                    }
                 }
-            }
-            except(EXCEPTION_EXECUTE_HANDLER)
-            {
+            except (EXCEPTION_EXECUTE_HANDLER) {
                 Status = STATUS_ACCESS_VIOLATION;
+                }
             }
         }
-    }
 
-    finally
-    {
+    finally {
 
-        if (PeekBuffer != NULL)
-        {
-            RtlFreeHeap(RtlProcessHeap(), 0, PeekBuffer);
+        if ( PeekBuffer != NULL ) {
+            RtlFreeHeap(RtlProcessHeap(),0,PeekBuffer);
+            }
         }
-    }
 
-    if (NT_SUCCESS(Status))
-    {
+    if ( NT_SUCCESS(Status) ) {
         return TRUE;
-    }
-    else
-    {
+        }
+    else {
         BaseSetLastNTError(Status);
         return FALSE;
-    }
+        }
 }
 
-BOOL APIENTRY TransactNamedPipe(HANDLE hNamedPipe, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer,
-                                DWORD nOutBufferSize, LPDWORD lpBytesRead, LPOVERLAPPED lpOverlapped)
+BOOL
+APIENTRY
+TransactNamedPipe(
+    HANDLE hNamedPipe,
+    LPVOID lpInBuffer,
+    DWORD nInBufferSize,
+    LPVOID lpOutBuffer,
+    DWORD nOutBufferSize,
+    LPDWORD lpBytesRead,
+    LPOVERLAPPED lpOverlapped
+    )
 /*++
 
 Routine Description:
@@ -1320,101 +1433,97 @@ Return Value:
 
     NTSTATUS Status;
 
-    if (ARGUMENT_PRESENT(lpOverlapped))
-    {
+    if ( ARGUMENT_PRESENT( lpOverlapped ) ) {
 
         lpOverlapped->Internal = (DWORD)STATUS_PENDING;
 
-        Status = NtFsControlFile(hNamedPipe, lpOverlapped->hEvent,
-                                 NULL, // APC routine
-                                 (ULONG_PTR)lpOverlapped->hEvent & 1 ? NULL : lpOverlapped,
-                                 (PIO_STATUS_BLOCK)&lpOverlapped->Internal,
-                                 FSCTL_PIPE_TRANSCEIVE, // IoControlCode
-                                 lpInBuffer,            // Buffer for data to the FS
-                                 nInBufferSize,
-                                 lpOutBuffer,   // OutputBuffer for data from the FS
-                                 nOutBufferSize // OutputBuffer Length
-        );
+        Status = NtFsControlFile(hNamedPipe,
+                    lpOverlapped->hEvent,
+                    NULL,           // APC routine
+                    (ULONG_PTR)lpOverlapped->hEvent & 1 ? NULL : lpOverlapped,
+                    (PIO_STATUS_BLOCK)&lpOverlapped->Internal,
+                    FSCTL_PIPE_TRANSCEIVE,// IoControlCode
+                    lpInBuffer,    // Buffer for data to the FS
+                    nInBufferSize,
+                    lpOutBuffer,     // OutputBuffer for data from the FS
+                    nOutBufferSize   // OutputBuffer Length
+                    );
 
-        if (NT_SUCCESS(Status) && Status != STATUS_PENDING)
-        {
-            if (ARGUMENT_PRESENT(lpBytesRead))
-            {
-                try
-                {
+        if ( NT_SUCCESS(Status) && Status != STATUS_PENDING) {
+            if ( ARGUMENT_PRESENT(lpBytesRead) ) {
+                try {
                     *lpBytesRead = (DWORD)lpOverlapped->InternalHigh;
-                }
-                except(EXCEPTION_EXECUTE_HANDLER)
-                {
+                    }
+                except(EXCEPTION_EXECUTE_HANDLER) {
                     *lpBytesRead = 0;
+                    }
                 }
-            }
             return TRUE;
-        }
-        else
-        {
-            if (NT_WARNING(Status))
-            {
-                if (ARGUMENT_PRESENT(lpBytesRead))
-                {
-                    try
-                    {
+            }
+        else {
+            if ( NT_WARNING(Status) ) {
+                if ( ARGUMENT_PRESENT(lpBytesRead) ) {
+                    try {
                         *lpBytesRead = (DWORD)lpOverlapped->InternalHigh;
-                    }
-                    except(EXCEPTION_EXECUTE_HANDLER)
-                    {
+                        }
+                    except(EXCEPTION_EXECUTE_HANDLER) {
                         *lpBytesRead = 0;
+                        }
                     }
-                }
             }
             BaseSetLastNTError(Status);
             return FALSE;
-        }
-    }
-    else
-    {
-        IO_STATUS_BLOCK Iosb;
-
-        Status = NtFsControlFile(hNamedPipe, NULL,
-                                 NULL, // APC routine
-                                 NULL, // APC Context
-                                 &Iosb,
-                                 FSCTL_PIPE_TRANSCEIVE, // IoControlCode
-                                 lpInBuffer,            // Buffer for data to the FS
-                                 nInBufferSize,
-                                 lpOutBuffer,   // OutputBuffer for data from the FS
-                                 nOutBufferSize // OutputBuffer Length
-        );
-
-        if (Status == STATUS_PENDING)
-        {
-            // Operation must complete before return & Iosb destroyed
-            Status = NtWaitForSingleObject(hNamedPipe, FALSE, NULL);
-            if (NT_SUCCESS(Status))
-            {
-                Status = Iosb.Status;
             }
         }
-
-        if (NT_SUCCESS(Status))
+    else
         {
+        IO_STATUS_BLOCK Iosb;
+
+        Status = NtFsControlFile(hNamedPipe,
+                    NULL,
+                    NULL,           // APC routine
+                    NULL,           // APC Context
+                    &Iosb,
+                    FSCTL_PIPE_TRANSCEIVE,// IoControlCode
+                    lpInBuffer,    // Buffer for data to the FS
+                    nInBufferSize,
+                    lpOutBuffer,     // OutputBuffer for data from the FS
+                    nOutBufferSize   // OutputBuffer Length
+                    );
+
+        if ( Status == STATUS_PENDING) {
+            // Operation must complete before return & Iosb destroyed
+            Status = NtWaitForSingleObject( hNamedPipe, FALSE, NULL );
+            if ( NT_SUCCESS(Status)) {
+                Status = Iosb.Status;
+                }
+            }
+
+        if ( NT_SUCCESS(Status) ) {
             *lpBytesRead = (DWORD)Iosb.Information;
             return TRUE;
-        }
-        else
-        {
-            if (NT_WARNING(Status))
-            {
+            }
+        else {
+            if ( NT_WARNING(Status) ) {
                 *lpBytesRead = (DWORD)Iosb.Information;
             }
             BaseSetLastNTError(Status);
             return FALSE;
+            }
         }
-    }
 }
 
-BOOL APIENTRY CallNamedPipeA(LPCSTR lpNamedPipeName, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer,
-                             DWORD nOutBufferSize, LPDWORD lpBytesRead, DWORD nTimeOut)
+BOOL
+APIENTRY
+CallNamedPipeA(
+    LPCSTR lpNamedPipeName,
+    LPVOID lpInBuffer,
+    DWORD nInBufferSize,
+    LPVOID lpOutBuffer,
+    DWORD nOutBufferSize,
+    LPDWORD lpBytesRead,
+    DWORD nTimeOut
+    )
 /*++
 
     ANSI thunk to CallNamedPipeW
@@ -1426,28 +1535,40 @@ BOOL APIENTRY CallNamedPipeA(LPCSTR lpNamedPipeName, LPVOID lpInBuffer, DWORD nI
     NTSTATUS Status;
 
     Unicode = &NtCurrentTeb()->StaticUnicodeString;
-    RtlInitAnsiString(&AnsiString, lpNamedPipeName);
-    Status = RtlAnsiStringToUnicodeString(Unicode, &AnsiString, FALSE);
-    if (!NT_SUCCESS(Status))
-    {
-        if (Status == STATUS_BUFFER_OVERFLOW)
-        {
+    RtlInitAnsiString(&AnsiString,lpNamedPipeName);
+    Status = RtlAnsiStringToUnicodeString(Unicode,&AnsiString,FALSE);
+    if ( !NT_SUCCESS(Status) ) {
+        if ( Status == STATUS_BUFFER_OVERFLOW ) {
             SetLastError(ERROR_FILENAME_EXCED_RANGE);
-        }
-        else
-        {
+            }
+        else {
             BaseSetLastNTError(Status);
-        }
+            }
         return FALSE;
-    }
+        }
 
-    return (CallNamedPipeW((LPCWSTR)Unicode->Buffer, lpInBuffer, nInBufferSize, lpOutBuffer, nOutBufferSize,
-                           lpBytesRead, nTimeOut));
+    return ( CallNamedPipeW( (LPCWSTR)Unicode->Buffer,
+                lpInBuffer,
+                nInBufferSize,
+                lpOutBuffer,
+                nOutBufferSize,
+                lpBytesRead,
+                nTimeOut)
+           );
 }
 
 
-BOOL APIENTRY CallNamedPipeW(LPCWSTR lpNamedPipeName, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer,
-                             DWORD nOutBufferSize, LPDWORD lpBytesRead, DWORD nTimeOut)
+BOOL
+APIENTRY
+CallNamedPipeW(
+    LPCWSTR lpNamedPipeName,
+    LPVOID lpInBuffer,
+    DWORD nInBufferSize,
+    LPVOID lpOutBuffer,
+    DWORD nOutBufferSize,
+    LPDWORD lpBytesRead,
+    DWORD nTimeOut
+    )
 /*++
 
 Routine Description:
@@ -1492,51 +1613,63 @@ Return Value:
     BOOL FirstChance = TRUE; //  Allow only one chance at WaitNamedPipe
     BOOL Result;
 
-    while (1)
-    {
+    while ( 1 ) {
 
-        Pipe = CreateFileW(lpNamedPipeName, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
-                           NULL, // Security Attributes
-                           OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+        Pipe = CreateFileW(lpNamedPipeName,
+                GENERIC_READ | GENERIC_WRITE,
+                FILE_SHARE_READ | FILE_SHARE_WRITE,
+                NULL,       // Security Attributes
+                OPEN_EXISTING,
+                FILE_ATTRIBUTE_NORMAL,
+                NULL
+                );
 
-        if (Pipe != INVALID_HANDLE_VALUE)
-        {
-            break; //  Created a handle
-        }
+        if ( Pipe != INVALID_HANDLE_VALUE ) {
+            break;  //  Created a handle
+            }
 
-        if (FirstChance == FALSE)
-        {
-            //  Already called WaitNamedPipe once so give up.
-            return FALSE;
+        if ( FirstChance == FALSE ) {
+           //  Already called WaitNamedPipe once so give up.
+           return FALSE;
         }
 
         WaitNamedPipeW(lpNamedPipeName, nTimeOut);
 
         FirstChance = FALSE;
-    }
+
+        }
 
 
-    try
-    {
+    try {
         DWORD ReadMode = PIPE_READMODE_MESSAGE | PIPE_WAIT;
 
         //  Default open is readmode byte stream- change to message mode.
-        Result = SetNamedPipeHandleState(Pipe, &ReadMode, NULL, NULL);
+        Result = SetNamedPipeHandleState( Pipe, &ReadMode, NULL, NULL);
 
-        if (Result == TRUE)
-        {
-            Result = TransactNamedPipe(Pipe, lpInBuffer, nInBufferSize, lpOutBuffer, nOutBufferSize, lpBytesRead, NULL);
+        if ( Result == TRUE ) {
+            Result = TransactNamedPipe(
+                Pipe,
+                lpInBuffer,
+                nInBufferSize,
+                lpOutBuffer,
+                nOutBufferSize,
+                lpBytesRead,
+                NULL);
+            }
         }
-    }
-    finally
-    {
-        CloseHandle(Pipe);
-    }
+    finally {
+        CloseHandle( Pipe );
+        }
 
     return Result;
 }
 
-BOOL APIENTRY WaitNamedPipeA(LPCSTR lpNamedPipeName, DWORD nTimeOut)
+BOOL
+APIENTRY
+WaitNamedPipeA(
+    LPCSTR lpNamedPipeName,
+    DWORD nTimeOut
+    )
 /*++
 
     Ansi thunk to WaitNamedPipeW
@@ -1546,20 +1679,25 @@ BOOL APIENTRY WaitNamedPipeA(LPCSTR lpNamedPipeName, DWORD nTimeOut)
     UNICODE_STRING UnicodeString;
     BOOL b;
 
-    if (!Basep8BitStringToDynamicUnicodeString(&UnicodeString, lpNamedPipeName))
-    {
+    if (!Basep8BitStringToDynamicUnicodeString( &UnicodeString, lpNamedPipeName )) {
         return FALSE;
     }
 
-    b = WaitNamedPipeW(UnicodeString.Buffer, nTimeOut);
+    b = WaitNamedPipeW( UnicodeString.Buffer, nTimeOut );
 
     RtlFreeUnicodeString(&UnicodeString);
 
     return b;
+
 }
 
 
-BOOL APIENTRY WaitNamedPipeW(LPCWSTR lpNamedPipeName, DWORD nTimeOut)
+BOOL
+APIENTRY
+WaitNamedPipeW(
+    LPCWSTR lpNamedPipeName,
+    DWORD nTimeOut
+    )
 /*++
 
 Routine Description:
@@ -1617,23 +1755,20 @@ Return Value:
     //      \\server\pipe\pipename  \\ and server\pipe\pipename
     //
 
-    if (!RtlCreateUnicodeString(&OriginalPipeName, lpNamedPipeName))
-    {
+    if (!RtlCreateUnicodeString( &OriginalPipeName, lpNamedPipeName)) {
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
         return FALSE;
-    }
+        }
 
     //
     //  Change all the forward slashes into backward slashes.
     //
 
-    for (Index = 0; Index < (OriginalPipeName.Length / sizeof(WCHAR)); Index++)
-    {
-        if (OriginalPipeName.Buffer[Index] == L'/')
-        {
+    for ( Index =0; Index < (OriginalPipeName.Length/sizeof(WCHAR)); Index++ ) {
+        if (OriginalPipeName.Buffer[Index] == L'/') {
             OriginalPipeName.Buffer[Index] = L'\\';
+            }
         }
-    }
 
     PipeName = OriginalPipeName;
 
@@ -1641,178 +1776,194 @@ Return Value:
 
     FreeBuffer = NULL;
 
-    switch (PathType)
-    {
+    switch ( PathType ) {
     case RtlPathTypeLocalDevice:
 
-        //  Name should be of the form \\.\pipe\pipename (IgnoreCase)
+            //  Name should be of the form \\.\pipe\pipename (IgnoreCase)
 
-        RtlInitUnicodeString(&ValidUnicodePrefix, DOS_LOCAL_PIPE_PREFIX);
+            RtlInitUnicodeString( &ValidUnicodePrefix, DOS_LOCAL_PIPE_PREFIX);
 
-        if (RtlPrefixString((PSTRING)&ValidUnicodePrefix, (PSTRING)&PipeName, TRUE) == FALSE)
-        {
-            RtlFreeUnicodeString(&OriginalPipeName);
+            if (RtlPrefixString((PSTRING)&ValidUnicodePrefix,
+                    (PSTRING)&PipeName,
+                    TRUE) == FALSE) {
+                RtlFreeUnicodeString(&OriginalPipeName);
+                BaseSetLastNTError(STATUS_OBJECT_PATH_SYNTAX_BAD);
+                return FALSE;
+                }
+
+            //  Skip first 9 characters "\\.\pipe\"
+            PipeName.Buffer+=9;
+            PipeName.Length-=9*sizeof(WCHAR);
+
+            RtlInitUnicodeString( &FileSystem, DOS_LOCAL_PIPE);
+
+            break;
+
+        case RtlPathTypeUncAbsolute:
+            //  Name is of the form \\server\pipe\pipename
+
+            //  Find the pipe name.
+
+            for ( Pwc = &PipeName.Buffer[2]; *Pwc != 0; Pwc++) {
+                if ( *Pwc == L'\\') {
+                    //  Found backslash after servername
+                    break;
+                    }
+                }
+
+            if ( (*Pwc != 0) &&
+                 ( _wcsnicmp( Pwc + 1, L"pipe\\", 5 ) == 0 ) ) {
+
+                // Temporarily, break this up into 2 strings
+                //    string1 = \\server\pipe
+                //    string2 = the-rest
+
+                Pwc += (sizeof (L"pipe\\") / sizeof( WCHAR ) ) - 1;
+
+            } else {
+
+                // This is not a valid remote path name.
+
+                RtlFreeUnicodeString(&OriginalPipeName);
+                BaseSetLastNTError(STATUS_OBJECT_PATH_SYNTAX_BAD);
+                return FALSE;
+                }
+
+            //  Pwc now points to the first path seperator after \\server\pipe.
+            //  Attempt to open \DosDevices\Unc\Servername\Pipe.
+
+            PipeName.Buffer = &PipeName.Buffer[2];
+            PipeName.Length = (USHORT)((PCHAR)Pwc - (PCHAR)PipeName.Buffer);
+            PipeName.MaximumLength = PipeName.Length;
+
+            FileSystem.MaximumLength =
+                (USHORT)sizeof( DOS_REMOTE_PIPE ) +
+                PipeName.MaximumLength;
+
+            FileSystem.Buffer = RtlAllocateHeap(
+                                    RtlProcessHeap(),MAKE_TAG( TMP_TAG ),
+                                    FileSystem.MaximumLength
+                                    );
+
+            if ( !FileSystem.Buffer ) {
+                SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+                RtlFreeUnicodeString(&OriginalPipeName);
+                return FALSE;
+                }
+            FreeBuffer = FileSystem.Buffer;
+
+            RtlCopyMemory(
+                FileSystem.Buffer,
+                DOS_REMOTE_PIPE,
+                sizeof( DOS_REMOTE_PIPE ) - sizeof(WCHAR)
+                );
+
+            FileSystem.Length = sizeof( DOS_REMOTE_PIPE ) - sizeof(WCHAR);
+
+            RtlAppendUnicodeStringToString( &FileSystem, &PipeName );
+
+            // Set up pipe name, skip leading backslashes.
+
+            RtlInitUnicodeString( &PipeName, (PWCH)Pwc + 1 );
+
+            break;
+
+        default:
             BaseSetLastNTError(STATUS_OBJECT_PATH_SYNTAX_BAD);
-            return FALSE;
-        }
-
-        //  Skip first 9 characters "\\.\pipe\"
-        PipeName.Buffer += 9;
-        PipeName.Length -= 9 * sizeof(WCHAR);
-
-        RtlInitUnicodeString(&FileSystem, DOS_LOCAL_PIPE);
-
-        break;
-
-    case RtlPathTypeUncAbsolute:
-        //  Name is of the form \\server\pipe\pipename
-
-        //  Find the pipe name.
-
-        for (Pwc = &PipeName.Buffer[2]; *Pwc != 0; Pwc++)
-        {
-            if (*Pwc == L'\\')
-            {
-                //  Found backslash after servername
-                break;
-            }
-        }
-
-        if ((*Pwc != 0) && (_wcsnicmp(Pwc + 1, L"pipe\\", 5) == 0))
-        {
-
-            // Temporarily, break this up into 2 strings
-            //    string1 = \\server\pipe
-            //    string2 = the-rest
-
-            Pwc += (sizeof(L"pipe\\") / sizeof(WCHAR)) - 1;
-        }
-        else
-        {
-
-            // This is not a valid remote path name.
-
-            RtlFreeUnicodeString(&OriginalPipeName);
-            BaseSetLastNTError(STATUS_OBJECT_PATH_SYNTAX_BAD);
-            return FALSE;
-        }
-
-        //  Pwc now points to the first path seperator after \\server\pipe.
-        //  Attempt to open \DosDevices\Unc\Servername\Pipe.
-
-        PipeName.Buffer = &PipeName.Buffer[2];
-        PipeName.Length = (USHORT)((PCHAR)Pwc - (PCHAR)PipeName.Buffer);
-        PipeName.MaximumLength = PipeName.Length;
-
-        FileSystem.MaximumLength = (USHORT)sizeof(DOS_REMOTE_PIPE) + PipeName.MaximumLength;
-
-        FileSystem.Buffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), FileSystem.MaximumLength);
-
-        if (!FileSystem.Buffer)
-        {
-            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
             RtlFreeUnicodeString(&OriginalPipeName);
             return FALSE;
         }
-        FreeBuffer = FileSystem.Buffer;
-
-        RtlCopyMemory(FileSystem.Buffer, DOS_REMOTE_PIPE, sizeof(DOS_REMOTE_PIPE) - sizeof(WCHAR));
-
-        FileSystem.Length = sizeof(DOS_REMOTE_PIPE) - sizeof(WCHAR);
-
-        RtlAppendUnicodeStringToString(&FileSystem, &PipeName);
-
-        // Set up pipe name, skip leading backslashes.
-
-        RtlInitUnicodeString(&PipeName, (PWCH)Pwc + 1);
-
-        break;
-
-    default:
-        BaseSetLastNTError(STATUS_OBJECT_PATH_SYNTAX_BAD);
-        RtlFreeUnicodeString(&OriginalPipeName);
-        return FALSE;
-    }
 
 
-    InitializeObjectAttributes(&Obja, &FileSystem, OBJ_CASE_INSENSITIVE, NULL, NULL);
+    InitializeObjectAttributes(
+        &Obja,
+        &FileSystem,
+        OBJ_CASE_INSENSITIVE,
+        NULL,
+        NULL
+        );
 
-    Status = NtOpenFile(&Handle, (ACCESS_MASK)FILE_READ_ATTRIBUTES | SYNCHRONIZE, &Obja, &IoStatusBlock,
-                        FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT);
+    Status = NtOpenFile(
+                &Handle,
+                (ACCESS_MASK)FILE_READ_ATTRIBUTES | SYNCHRONIZE,
+                &Obja,
+                &IoStatusBlock,
+                FILE_SHARE_READ | FILE_SHARE_WRITE,
+                FILE_SYNCHRONOUS_IO_NONALERT
+                );
 
-    if (FreeBuffer != NULL)
-    {
-        RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
-    }
+    if (FreeBuffer != NULL) {
+        RtlFreeHeap(RtlProcessHeap(),0,FreeBuffer);
+        }
 
-    if (!NT_SUCCESS(Status))
-    {
+    if ( !NT_SUCCESS(Status) ) {
         RtlFreeUnicodeString(&OriginalPipeName);
         BaseSetLastNTError(Status);
         return FALSE;
-    }
+        }
 
-    WaitPipeLength = FIELD_OFFSET(FILE_PIPE_WAIT_FOR_BUFFER, Name[0]) + PipeName.Length;
-    WaitPipe = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), WaitPipeLength);
-    if (!WaitPipe)
-    {
+    WaitPipeLength =
+        FIELD_OFFSET(FILE_PIPE_WAIT_FOR_BUFFER, Name[0]) + PipeName.Length;
+    WaitPipe = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( TMP_TAG ), WaitPipeLength);
+    if ( !WaitPipe ) {
         RtlFreeUnicodeString(&OriginalPipeName);
         NtClose(Handle);
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 
         return FALSE;
-    }
-
-    if (nTimeOut == NMPWAIT_USE_DEFAULT_WAIT)
-    {
-        WaitPipe->TimeoutSpecified = FALSE;
-    }
-    else
-    {
-        if (nTimeOut == NMPWAIT_WAIT_FOREVER)
-        {
-            WaitPipe->Timeout.LowPart = 0;
-            WaitPipe->Timeout.HighPart = 0x80000000;
         }
-        else
-        {
+
+    if ( nTimeOut == NMPWAIT_USE_DEFAULT_WAIT ) {
+        WaitPipe->TimeoutSpecified = FALSE;
+        }
+    else {
+        if ( nTimeOut == NMPWAIT_WAIT_FOREVER ) {
+            WaitPipe->Timeout.LowPart = 0;
+            WaitPipe->Timeout.HighPart =0x80000000;
+            }
+        else {
             //
             //  Convert from milliseconds to an Nt delta time.
             //
 
-            WaitPipe->Timeout.QuadPart = -(LONGLONG)UInt32x32To64(10 * 1000, nTimeOut);
-        }
+            WaitPipe->Timeout.QuadPart =
+                                - (LONGLONG)UInt32x32To64( 10 * 1000, nTimeOut );
+            }
         WaitPipe->TimeoutSpecified = TRUE;
-    }
+        }
 
     WaitPipe->NameLength = PipeName.Length;
 
-    RtlCopyMemory(WaitPipe->Name, PipeName.Buffer, PipeName.Length);
+    RtlCopyMemory(
+        WaitPipe->Name,
+        PipeName.Buffer,
+        PipeName.Length
+        );
 
     RtlFreeUnicodeString(&OriginalPipeName);
 
-    Status = NtFsControlFile(Handle, NULL,
-                             NULL, // APC routine
-                             NULL, // APC Context
-                             &Iosb,
-                             FSCTL_PIPE_WAIT, // IoControlCode
-                             WaitPipe,        // Buffer for data to the FS
-                             WaitPipeLength,
-                             NULL, // OutputBuffer for data from the FS
-                             0     // OutputBuffer Length
-    );
+    Status = NtFsControlFile(Handle,
+                        NULL,
+                        NULL,           // APC routine
+                        NULL,           // APC Context
+                        &Iosb,
+                        FSCTL_PIPE_WAIT,// IoControlCode
+                        WaitPipe,       // Buffer for data to the FS
+                        WaitPipeLength,
+                        NULL,           // OutputBuffer for data from the FS
+                        0               // OutputBuffer Length
+                        );
 
-    RtlFreeHeap(RtlProcessHeap(), 0, WaitPipe);
+    RtlFreeHeap(RtlProcessHeap(),0,WaitPipe);
 
     NtClose(Handle);
 
-    if (NT_SUCCESS(Status))
-    {
+    if (NT_SUCCESS( Status ) ) {
         return TRUE;
-    }
+        }
     else
-    {
+        {
         BaseSetLastNTError(Status);
         return FALSE;
-    }
+        }
 }

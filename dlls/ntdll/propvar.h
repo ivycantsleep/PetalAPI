@@ -18,46 +18,91 @@
 #include <debnot.h>
 #include <propset.h>
 
-SERIALIZEDPROPERTYVALUE *RtlConvertVariantToProperty(IN PROPVARIANT const *pvar, IN USHORT CodePage,
-                                                     OUT SERIALIZEDPROPERTYVALUE *pprop, IN OUT ULONG *pcb,
-                                                     IN PROPID pid, IN BOOLEAN fVariantVector,
-                                                     OPTIONAL OUT ULONG *pcIndirect);
+SERIALIZEDPROPERTYVALUE *
+RtlConvertVariantToProperty(
+    IN PROPVARIANT const *pvar,
+    IN USHORT CodePage,
+    OUT SERIALIZEDPROPERTYVALUE *pprop,
+    IN OUT ULONG *pcb,
+    IN PROPID pid,
+    IN BOOLEAN fVariantVector,
+    OPTIONAL OUT ULONG *pcIndirect);
 
-SERIALIZEDPROPERTYVALUE *RtlConvertVariantToPropertyNoEH( // No NT Exception Handling version
-    IN PROPVARIANT const *pvar, IN USHORT CodePage, OUT SERIALIZEDPROPERTYVALUE *pprop, IN OUT ULONG *pcb,
-    IN PROPID pid, IN BOOLEAN fVariantVector, OPTIONAL OUT ULONG *pcIndirect, OUT NTSTATUS *pstatus);
+SERIALIZEDPROPERTYVALUE *
+RtlConvertVariantToPropertyNoEH(     // No NT Exception Handling version
+    IN PROPVARIANT const *pvar,
+    IN USHORT CodePage,
+    OUT SERIALIZEDPROPERTYVALUE *pprop,
+    IN OUT ULONG *pcb,
+    IN PROPID pid,
+    IN BOOLEAN fVariantVector,
+    OPTIONAL OUT ULONG *pcIndirect,
+    OUT NTSTATUS *pstatus);
 
 BOOLEAN
-RtlConvertPropertyToVariant(IN SERIALIZEDPROPERTYVALUE const *pprop, IN USHORT CodePage, OUT PROPVARIANT *pvar,
-                            IN PMemoryAllocator *pma);
+RtlConvertPropertyToVariant(
+    IN SERIALIZEDPROPERTYVALUE const *pprop,
+    IN USHORT CodePage,
+    OUT PROPVARIANT *pvar,
+    IN PMemoryAllocator *pma);
 
 BOOLEAN
-RtlConvertPropertyToVariantNoEH( // No NT Exception Handling version
-    IN SERIALIZEDPROPERTYVALUE const *pprop, IN USHORT CodePage, OUT PROPVARIANT *pvar, IN PMemoryAllocator *pma,
+RtlConvertPropertyToVariantNoEH(     // No NT Exception Handling version
+    IN SERIALIZEDPROPERTYVALUE const *pprop,
+    IN USHORT CodePage,
+    OUT PROPVARIANT *pvar,
+    IN PMemoryAllocator *pma,
     OUT NTSTATUS *pstatus);
 
 
-SERIALIZEDPROPERTYVALUE *PrConvertVariantToProperty(IN PROPVARIANT const *pvar, IN USHORT CodePage,
-                                                    OUT SERIALIZEDPROPERTYVALUE *pprop, IN OUT ULONG *pcb,
-                                                    IN PROPID pid, IN BOOLEAN fVariantVector,
-                                                    OPTIONAL OUT ULONG *pcIndirect);
 
-SERIALIZEDPROPERTYVALUE *PrConvertVariantToPropertyNoEH( // No NT Exception Handling version
-    IN PROPVARIANT const *pvar, IN USHORT CodePage, OUT SERIALIZEDPROPERTYVALUE *pprop, IN OUT ULONG *pcb,
-    IN PROPID pid, IN BOOLEAN fVariantVector, OPTIONAL OUT ULONG *pcIndirect, OUT NTSTATUS *pstatus);
 
-BOOLEAN
-PrConvertPropertyToVariant(IN SERIALIZEDPROPERTYVALUE const *pprop, IN USHORT CodePage, OUT PROPVARIANT *pvar,
-                           IN PMemoryAllocator *pma);
+SERIALIZEDPROPERTYVALUE *
+PrConvertVariantToProperty(
+    IN PROPVARIANT const *pvar,
+    IN USHORT CodePage,
+    OUT SERIALIZEDPROPERTYVALUE *pprop,
+    IN OUT ULONG *pcb,
+    IN PROPID pid,
+    IN BOOLEAN fVariantVector,
+    OPTIONAL OUT ULONG *pcIndirect);
 
-BOOLEAN
-PrConvertPropertyToVariantNoEH( // No NT Exception Handling version
-    IN SERIALIZEDPROPERTYVALUE const *pprop, IN USHORT CodePage, OUT PROPVARIANT *pvar, IN PMemoryAllocator *pma,
+SERIALIZEDPROPERTYVALUE *
+PrConvertVariantToPropertyNoEH(     // No NT Exception Handling version
+    IN PROPVARIANT const *pvar,
+    IN USHORT CodePage,
+    OUT SERIALIZEDPROPERTYVALUE *pprop,
+    IN OUT ULONG *pcb,
+    IN PROPID pid,
+    IN BOOLEAN fVariantVector,
+    OPTIONAL OUT ULONG *pcIndirect,
     OUT NTSTATUS *pstatus);
+
+BOOLEAN
+PrConvertPropertyToVariant(
+    IN SERIALIZEDPROPERTYVALUE const *pprop,
+    IN USHORT CodePage,
+    OUT PROPVARIANT *pvar,
+    IN PMemoryAllocator *pma);
+
+BOOLEAN
+PrConvertPropertyToVariantNoEH(     // No NT Exception Handling version
+    IN SERIALIZEDPROPERTYVALUE const *pprop,
+    IN USHORT CodePage,
+    OUT PROPVARIANT *pvar,
+    IN PMemoryAllocator *pma,
+    OUT NTSTATUS *pstatus);
+
+
+
 
 
 #ifndef KERNEL
-VOID CleanupVariants(IN PROPVARIANT *pvar, IN ULONG cprop, IN PMemoryAllocator *pma);
+VOID
+CleanupVariants(
+    IN PROPVARIANT *pvar,
+    IN ULONG cprop,
+    IN PMemoryAllocator *pma);
 #endif
 
 #if DBGPROP
@@ -78,29 +123,29 @@ BOOLEAN IsAnsiString(CHAR const *pszname, ULONG cb);
 //+--------------------------------------------------------------------------
 
 
-#define StatusOverflow(pstatus, szReason) \
-    *(pstatus) = STATUS_BUFFER_OVERFLOW;  \
-    TraceStatus(szReason)
+#define StatusOverflow(pstatus, szReason)           \
+          *(pstatus) = STATUS_BUFFER_OVERFLOW;      \
+          TraceStatus(szReason)
 
-#define StatusAccessDenied(pstatus, szReason) \
-    *(pstatus) = STATUS_ACCESS_DENIED;        \
-    TraceStatus(szReason);
+#define StatusAccessDenied(pstatus, szReason)   \
+          *(pstatus) = STATUS_ACCESS_DENIED;        \
+          TraceStatus(szReason);
 
-#define StatusInvalidParameter(pstatus, szReason) \
-    *(pstatus) = STATUS_INVALID_PARAMETER;        \
-    TraceStatus(szReason);
+#define StatusInvalidParameter(pstatus, szReason)   \
+          *(pstatus) = STATUS_INVALID_PARAMETER;    \
+          TraceStatus(szReason);
 
-#define StatusNoMemory(pstatus, szReason)       \
-    *(pstatus) = STATUS_INSUFFICIENT_RESOURCES; \
-    TraceStatus(szReason);
+#define StatusNoMemory(pstatus, szReason)           \
+          *(pstatus) = STATUS_INSUFFICIENT_RESOURCES;\
+          TraceStatus(szReason);
 
-#define StatusDiskFull(pstatus, szReason) \
-    *(pstatus) = STATUS_DISK_FULL;        \
-    TraceStatus(szReason);
+#define StatusDiskFull(pstatus, szReason)           \
+          *(pstatus) = STATUS_DISK_FULL;            \
+          TraceStatus(szReason);
 
-#define StatusError(pstatus, szReason, Status) \
-    *(pstatus) = Status;                       \
-    TraceStatus(szReason);
+#define StatusError(pstatus, szReason, Status)      \
+          *(pstatus) = Status;                      \
+          TraceStatus(szReason);
 
 #ifdef KERNEL
 #define StatusKBufferOverflow(pstatus, szReason) StatusOverflow(pstatus, szReason)
@@ -110,19 +155,19 @@ BOOLEAN IsAnsiString(CHAR const *pszname, ULONG cb);
 
 
 #ifdef KERNEL
-#define KERNELSELECT(k, u) k
+#define KERNELSELECT(k, u)      k
 #else
-#define KERNELSELECT(k, u) u
+#define KERNELSELECT(k, u)      u
 #endif
 
-#define DBGPROPASSERT KERNELSELECT(DBGPROP, DBG)
+#define DBGPROPASSERT   KERNELSELECT(DBGPROP, DBG)
 
 #if DBGPROPASSERT
 #define TraceStatus(szReason)                                   \
-    {                                                           \
-        DebugTrace(0, DEBTRACE_ERROR, (szReason "\n"));         \
-        PROPASSERTMSG(szReason, !(DebugLevel & DEBTRACE_WARN)); \
-    }
+	{							\
+	    DebugTrace(0, DEBTRACE_ERROR, (szReason "\n"));     \
+	    PROPASSERTMSG(szReason, !(DebugLevel & DEBTRACE_WARN)); \
+	}
 
 
 #else
@@ -130,30 +175,33 @@ BOOLEAN IsAnsiString(CHAR const *pszname, ULONG cb);
 #endif
 
 
-#define AssertVarField(field, cb)                                                     \
-    PROPASSERT(FIELD_OFFSET(PROPVARIANT, iVal) == FIELD_OFFSET(PROPVARIANT, field) && \
-               sizeof(((PROPVARIANT *)0)->field) == (cb))
 
-#define AssertVarVector(field, cbElem)                                                             \
-    PROPASSERT(FIELD_OFFSET(PROPVARIANT, cai.cElems) == FIELD_OFFSET(PROPVARIANT, field.cElems) && \
-               FIELD_OFFSET(PROPVARIANT, cai.pElems) == FIELD_OFFSET(PROPVARIANT, field.pElems) && \
-               sizeof(((PROPVARIANT *)0)->field.pElems[0]) == (cbElem))
+#define AssertVarField(field, cb) \
+  PROPASSERT(FIELD_OFFSET(PROPVARIANT, iVal) == FIELD_OFFSET(PROPVARIANT, field) && \
+	 sizeof(((PROPVARIANT *) 0)->field) == (cb))
 
-#define AssertByteField(field) AssertVarField(field, sizeof(BYTE))
-#define AssertShortField(field) AssertVarField(field, sizeof(SHORT))
-#define AssertLongField(field) AssertVarField(field, sizeof(LONG))
-#define AssertLongLongField(field) AssertVarField(field, sizeof(LONGLONG))
-#define AssertStringField(field) AssertVarField(field, sizeof(VOID *))
+#define AssertVarVector(field, cbElem) \
+  PROPASSERT(FIELD_OFFSET(PROPVARIANT, cai.cElems) == \
+	     FIELD_OFFSET(PROPVARIANT, field.cElems) && \
+         FIELD_OFFSET(PROPVARIANT, cai.pElems) == \
+	     FIELD_OFFSET(PROPVARIANT, field.pElems) && \
+	 sizeof(((PROPVARIANT *) 0)->field.pElems[0]) == (cbElem))
 
-#define AssertByteVector(field) AssertVarVector(field, sizeof(BYTE))
-#define AssertShortVector(field) AssertVarVector(field, sizeof(SHORT))
-#define AssertLongVector(field) AssertVarVector(field, sizeof(LONG))
+#define AssertByteField(field)	    AssertVarField(field, sizeof(BYTE))
+#define AssertShortField(field)	    AssertVarField(field, sizeof(SHORT))
+#define AssertLongField(field)	    AssertVarField(field, sizeof(LONG))
+#define AssertLongLongField(field)  AssertVarField(field, sizeof(LONGLONG))
+#define AssertStringField(field)    AssertVarField(field, sizeof(VOID *))
+
+#define AssertByteVector(field)	    AssertVarVector(field, sizeof(BYTE))
+#define AssertShortVector(field)    AssertVarVector(field, sizeof(SHORT))
+#define AssertLongVector(field)	    AssertVarVector(field, sizeof(LONG))
 #define AssertLongLongVector(field) AssertVarVector(field, sizeof(LONGLONG))
-#define AssertStringVector(field) AssertVarVector(field, sizeof(VOID *))
-#define AssertVariantVector(field) AssertVarVector(field, sizeof(PROPVARIANT))
+#define AssertStringVector(field)   AssertVarVector(field, sizeof(VOID *))
+#define AssertVariantVector(field)  AssertVarVector(field, sizeof(PROPVARIANT))
 
 
-#define BSTRLEN(bstrVal) *((ULONG *)bstrVal - 1)
+#define BSTRLEN(bstrVal)	*((ULONG *) bstrVal - 1)
 
 
 //+-------------------------------------------------------------------
@@ -171,29 +219,24 @@ class CBufferAllocator : public PMemoryAllocator
 public:
     inline CBufferAllocator(ULONG cbBuffer, VOID *pvBuffer)
     {
-        _cbFree = cbBuffer;
-        _pvCur = _pvBuffer = pvBuffer;
+	_cbFree = cbBuffer;
+	_pvCur = _pvBuffer = pvBuffer;
 #if defined(_X86_)
-        PROPASSERT(((ULONG)_pvCur & (sizeof(LONG) - 1)) == 0);
+	PROPASSERT(((ULONG) _pvCur & (sizeof(LONG) - 1)) == 0);
 #else
-        PROPASSERT(((ULONG_PTR)_pvCur & (sizeof(LONGLONG) - 1)) == 0);
+	PROPASSERT(((ULONG_PTR) _pvCur & (sizeof(LONGLONG) - 1)) == 0);
 #endif // defined(_X86_)
     }
 
     VOID *Allocate(ULONG cbSize);
-    VOID Free(VOID *pv)
-    {
-    }
+    VOID Free(VOID *pv) { }
 
-    inline ULONG GetFreeSize(VOID)
-    {
-        return (_cbFree);
-    }
+    inline ULONG GetFreeSize(VOID) { return(_cbFree); }
 
 private:
-    ULONG _cbFree;
-    VOID *_pvCur;
-    VOID *_pvBuffer;
+    ULONG  _cbFree;
+    VOID  *_pvCur;
+    VOID  *_pvBuffer;
 };
 
 //+-------------------------------------------------------------------
@@ -206,20 +249,21 @@ private:
 // Returns:     pointer to 'allocated' memory -- NULL if no space left
 //--------------------------------------------------------------------
 
-#define DEFINE_CBufferAllocator__Allocate                           \
-    VOID *CBufferAllocator::Allocate(ULONG cb)                      \
-    {                                                               \
-        VOID *pv;                                                   \
-                                                                    \
-        cb = (cb + sizeof(LONGLONG) - 1) & ~(sizeof(LONGLONG) - 1); \
-        if (cb > _cbFree)                                           \
-        {                                                           \
-            return (NULL);                                          \
-        }                                                           \
-        pv = _pvCur;                                                \
-        _pvCur = (BYTE *)_pvCur + cb;                               \
-        _cbFree -= cb;                                              \
-        return (pv);                                                \
-    }
+#define DEFINE_CBufferAllocator__Allocate			\
+VOID *								\
+CBufferAllocator::Allocate(ULONG cb)				\
+{								\
+    VOID *pv;							\
+								\
+    cb = (cb + sizeof(LONGLONG) - 1) & ~(sizeof(LONGLONG) - 1);	\
+    if (cb > _cbFree)						\
+    {								\
+        return(NULL);						\
+    }								\
+    pv = _pvCur;						\
+    _pvCur = (BYTE *) _pvCur + cb;				\
+    _cbFree -= cb;						\
+    return(pv);							\
+}
 
 #endif // !_PROPVAR_H_

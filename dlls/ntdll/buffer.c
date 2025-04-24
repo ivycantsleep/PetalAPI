@@ -32,7 +32,11 @@ Revision History:
 
 NTSTATUS
 NTAPI
-RtlpEnsureBufferSize(IN ULONG Flags, IN OUT PRTL_BUFFER Buffer, IN SIZE_T Size)
+RtlpEnsureBufferSize(
+    IN ULONG    Flags,
+    IN OUT PRTL_BUFFER Buffer,
+    IN SIZE_T          Size
+    )
 /*++
 
 Routine Description:
@@ -58,26 +62,22 @@ Return Value:
     NTSTATUS Status = STATUS_SUCCESS;
     PUCHAR Temp = NULL;
 
-    if ((Flags & ~(RTL_ENSURE_BUFFER_SIZE_NO_COPY)) != 0)
-    {
+    if ((Flags & ~(RTL_ENSURE_BUFFER_SIZE_NO_COPY)) != 0) {
         Status = STATUS_INVALID_PARAMETER;
         goto Exit;
     }
-    if (Buffer == NULL)
-    {
+    if (Buffer == NULL) {
         Status = STATUS_INVALID_PARAMETER;
         goto Exit;
     }
 
-    if (Size <= Buffer->Size)
-    {
+    if (Size <= Buffer->Size) {
         Status = STATUS_SUCCESS;
         goto Exit;
     }
     // Size <= Buffer->StaticSize does not imply static allocation, it
     // could be heap allocation that the client poked smaller.
-    if (Buffer->Buffer == Buffer->StaticBuffer && Size <= Buffer->StaticSize)
-    {
+    if (Buffer->Buffer == Buffer->StaticBuffer && Size <= Buffer->StaticSize) {
         Buffer->Size = Size;
         Status = STATUS_SUCCESS;
         goto Exit;
@@ -87,19 +87,16 @@ Return Value:
     // Put it back in Blackcomb.
     //
     Temp = (PUCHAR)RtlAllocateStringRoutine(Size);
-    if (Temp == NULL)
-    {
+    if (Temp == NULL) {
         Status = STATUS_NO_MEMORY;
         goto Exit;
     }
 
-    if ((Flags & RTL_ENSURE_BUFFER_SIZE_NO_COPY) == 0)
-    {
+    if ((Flags & RTL_ENSURE_BUFFER_SIZE_NO_COPY) == 0) {
         RtlCopyMemory(Temp, Buffer->Buffer, Buffer->Size);
     }
 
-    if (RTLP_BUFFER_IS_HEAP_ALLOCATED(Buffer))
-    {
+    if (RTLP_BUFFER_IS_HEAP_ALLOCATED(Buffer)) {
         RtlFreeStringRoutine(Buffer->Buffer);
         Buffer->Buffer = NULL;
     }
@@ -113,8 +110,11 @@ Exit:
 
 NTSTATUS
 NTAPI
-RtlMultiAppendUnicodeStringBuffer(OUT PRTL_UNICODE_STRING_BUFFER Destination, IN ULONG NumberOfSources,
-                                  IN const UNICODE_STRING *SourceArray)
+RtlMultiAppendUnicodeStringBuffer(
+    OUT PRTL_UNICODE_STRING_BUFFER Destination,
+    IN  ULONG                      NumberOfSources,
+    IN  const UNICODE_STRING*      SourceArray
+    )
 /*++
 
 Routine Description:
@@ -141,28 +141,27 @@ Return Value:
     const ULONG OriginalDestinationLength = Destination->String.Length;
 
     Length = OriginalDestinationLength;
-    for (i = 0; i != NumberOfSources; ++i)
-    {
+    for (i = 0 ; i != NumberOfSources ; ++i) {
         Length += SourceArray[i].Length;
     }
     Length += CharSize;
-    if (Length > MAX_UNICODE_STRING_MAXLENGTH)
-    {
+    if (Length > MAX_UNICODE_STRING_MAXLENGTH) {
         return STATUS_NAME_TOO_LONG;
     }
 
     Status = RtlEnsureBufferSize(0, &Destination->ByteBuffer, Length);
-    if (!NT_SUCCESS(Status))
-    {
+    if (!NT_SUCCESS(Status)) {
         return Status;
     }
     Destination->String.MaximumLength = (USHORT)Length;
     Destination->String.Length = (USHORT)(Length - CharSize);
     Destination->String.Buffer = (PWSTR)Destination->ByteBuffer.Buffer;
     Length = OriginalDestinationLength;
-    for (i = 0; i != NumberOfSources; ++i)
-    {
-        RtlMoveMemory(Destination->String.Buffer + Length / CharSize, SourceArray[i].Buffer, SourceArray[i].Length);
+    for (i = 0 ; i != NumberOfSources ; ++i) {
+        RtlMoveMemory(
+            Destination->String.Buffer + Length / CharSize,
+            SourceArray[i].Buffer,
+            SourceArray[i].Length);
         Length += SourceArray[i].Length;
     }
     Destination->String.Buffer[Length / CharSize] = 0;

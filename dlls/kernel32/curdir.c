@@ -20,7 +20,10 @@ Revision History:
 
 #include "basedll.h"
 
-BOOL CheckForSameCurdir(PUNICODE_STRING PathName)
+BOOL
+CheckForSameCurdir(
+    PUNICODE_STRING PathName
+    )
 {
     PCURDIR CurDir;
     UNICODE_STRING CurrentDir;
@@ -29,34 +32,28 @@ BOOL CheckForSameCurdir(PUNICODE_STRING PathName)
 
     CurDir = &(NtCurrentPeb()->ProcessParameters->CurrentDirectory);
 
-    if (CurDir->DosPath.Length > 6)
-    {
-        if ((CurDir->DosPath.Length - 2) != PathName->Length)
-        {
+    if (CurDir->DosPath.Length > 6 ) {
+        if ( (CurDir->DosPath.Length-2) != PathName->Length ) {
             return FALSE;
+            }
         }
-    }
-    else
-    {
-        if (CurDir->DosPath.Length != PathName->Length)
-        {
+    else {
+        if ( CurDir->DosPath.Length != PathName->Length ) {
             return FALSE;
+            }
         }
-    }
 
     RtlAcquirePebLock();
 
     CurrentDir = CurDir->DosPath;
-    if (CurrentDir.Length > 6)
-    {
+    if ( CurrentDir.Length > 6 ) {
         CurrentDir.Length -= 2;
-    }
+        }
     rv = FALSE;
 
-    if (RtlEqualUnicodeString(&CurrentDir, PathName, TRUE))
-    {
+    if ( RtlEqualUnicodeString(&CurrentDir,PathName,TRUE) ) {
         rv = TRUE;
-    }
+        }
     RtlReleasePebLock();
 
     return rv;
@@ -65,7 +62,12 @@ BOOL CheckForSameCurdir(PUNICODE_STRING PathName)
 
 DWORD
 APIENTRY
-GetFullPathNameA(LPCSTR lpFileName, DWORD nBufferLength, LPSTR lpBuffer, LPSTR *lpFilePart)
+GetFullPathNameA(
+    LPCSTR lpFileName,
+    DWORD nBufferLength,
+    LPSTR lpBuffer,
+    LPSTR *lpFilePart
+    )
 
 /*++
 
@@ -87,29 +89,29 @@ Routine Description:
     PWSTR *FilePartPtr;
     INT PrefixLength = 0;
 
-    if (ARGUMENT_PRESENT(lpFilePart))
-    {
+    if ( ARGUMENT_PRESENT(lpFilePart) ) {
         FilePartPtr = &FilePart;
-    }
-    else
-    {
+    } else {
         FilePartPtr = NULL;
     }
 
-    if (!Basep8BitStringToDynamicUnicodeString(&UnicodeString, lpFileName))
-    {
+    if (!Basep8BitStringToDynamicUnicodeString( &UnicodeString, lpFileName )) {
         return 0;
     }
 
-    Ubuff = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), (MAX_PATH << 1) + sizeof(UNICODE_NULL));
-    if (!Ubuff)
-    {
+    Ubuff = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( TMP_TAG ), (MAX_PATH<<1) + sizeof(UNICODE_NULL));
+    if ( !Ubuff ) {
         RtlFreeUnicodeString(&UnicodeString);
         BaseSetLastNTError(STATUS_NO_MEMORY);
         return 0;
     }
 
-    UnicodeLength = RtlGetFullPathName_U(UnicodeString.Buffer, (MAX_PATH << 1), Ubuff, FilePartPtr);
+    UnicodeLength = RtlGetFullPathName_U(
+                        UnicodeString.Buffer,
+                        (MAX_PATH<<1),
+                        Ubuff,
+                        FilePartPtr
+                        );
 
     //
     // UnicodeLength contains the byte count of unicode string.
@@ -118,41 +120,35 @@ Routine Description:
     // This is correct in SBCS environment. However in DBCS environment,
     // it's definitely WRONG.
     //
-    if (UnicodeLength <= MAX_PATH * sizeof(WCHAR))
-    {
+    if ( UnicodeLength <= MAX_PATH * sizeof (WCHAR) ) {
 
         Status = RtlUnicodeToMultiByteSize(&UnicodeLength, Ubuff, UnicodeLength);
         //
         // At this point, UnicodeLength variable contains
         // Ansi based byte length.
         //
-        if (NT_SUCCESS(Status))
-        {
-            if (UnicodeLength && ARGUMENT_PRESENT(lpFilePart) && FilePart != NULL)
-            {
+        if ( NT_SUCCESS(Status) ) {
+            if ( UnicodeLength && ARGUMENT_PRESENT(lpFilePart) && FilePart != NULL ) {
                 INT UnicodePrefixLength;
 
                 UnicodePrefixLength = (INT)(FilePart - Ubuff) * sizeof(WCHAR);
-                Status = RtlUnicodeToMultiByteSize(&PrefixLength, Ubuff, UnicodePrefixLength);
+                Status = RtlUnicodeToMultiByteSize( &PrefixLength,
+                                                    Ubuff,
+                                                    UnicodePrefixLength );
                 //
                 // At this point, PrefixLength variable contains
                 // Ansi based byte length.
                 //
-                if (!NT_SUCCESS(Status))
-                {
+                if ( !NT_SUCCESS(Status) ) {
                     BaseSetLastNTError(Status);
                     UnicodeLength = 0;
                 }
             }
-        }
-        else
-        {
+        } else {
             BaseSetLastNTError(Status);
             UnicodeLength = 0;
         }
-    }
-    else
-    {
+    } else {
         //
         // we exceed the MAX_PATH limit. we should log the error and
         // return zero. however US code returns the byte count of
@@ -160,49 +156,43 @@ Routine Description:
         //
         UnicodeLength = 0;
     }
-    if (UnicodeLength && UnicodeLength < nBufferLength)
-    {
-        RtlInitUnicodeString(&UnicodeResult, Ubuff);
-        Status = BasepUnicodeStringTo8BitString(&AnsiResult, &UnicodeResult, TRUE);
-        if (NT_SUCCESS(Status))
-        {
-            RtlMoveMemory(lpBuffer, AnsiResult.Buffer, UnicodeLength + 1);
+    if ( UnicodeLength && UnicodeLength < nBufferLength ) {
+        RtlInitUnicodeString(&UnicodeResult,Ubuff);
+        Status = BasepUnicodeStringTo8BitString(&AnsiResult,&UnicodeResult,TRUE);
+        if ( NT_SUCCESS(Status) ) {
+            RtlMoveMemory(lpBuffer,AnsiResult.Buffer,UnicodeLength+1);
             RtlFreeAnsiString(&AnsiResult);
 
-            if (ARGUMENT_PRESENT(lpFilePart))
-            {
-                if (FilePart == NULL)
-                {
+            if ( ARGUMENT_PRESENT(lpFilePart) ) {
+                if ( FilePart == NULL ) {
                     *lpFilePart = NULL;
-                }
-                else
-                {
+                } else {
                     *lpFilePart = lpBuffer + PrefixLength;
                 }
             }
-        }
-        else
-        {
+        } else {
             BaseSetLastNTError(Status);
             UnicodeLength = 0;
         }
-    }
-    else
-    {
-        if (UnicodeLength)
-        {
+    } else {
+        if ( UnicodeLength ) {
             UnicodeLength++;
         }
     }
     RtlFreeUnicodeString(&UnicodeString);
-    RtlFreeHeap(RtlProcessHeap(), 0, Ubuff);
+    RtlFreeHeap(RtlProcessHeap(), 0,Ubuff);
 
     return (DWORD)UnicodeLength;
 }
 
 DWORD
 APIENTRY
-GetFullPathNameW(LPCWSTR lpFileName, DWORD nBufferLength, LPWSTR lpBuffer, LPWSTR *lpFilePart)
+GetFullPathNameW(
+    LPCWSTR lpFileName,
+    DWORD nBufferLength,
+    LPWSTR lpBuffer,
+    LPWSTR *lpFilePart
+    )
 
 /*++
 
@@ -243,13 +233,21 @@ Return Value:
 
 {
 
-    return (DWORD)RtlGetFullPathName_U(lpFileName, nBufferLength * 2, lpBuffer, lpFilePart) / 2;
+    return (DWORD) RtlGetFullPathName_U(
+                        lpFileName,
+                        nBufferLength*2,
+                        lpBuffer,
+                        lpFilePart
+                        )/2;
 }
 
 
 DWORD
 APIENTRY
-GetCurrentDirectoryA(DWORD nBufferLength, LPSTR lpBuffer)
+GetCurrentDirectoryA(
+    DWORD nBufferLength,
+    LPSTR lpBuffer
+    )
 
 /*++
 
@@ -266,13 +264,15 @@ Routine Description:
     DWORD ReturnValue;
     ULONG cbAnsiString;
 
-    if (nBufferLength > MAXUSHORT)
-    {
-        nBufferLength = MAXUSHORT - 2;
-    }
+    if ( nBufferLength > MAXUSHORT ) {
+        nBufferLength = MAXUSHORT-2;
+        }
 
     Unicode = &NtCurrentTeb()->StaticUnicodeString;
-    Unicode->Length = (USHORT)RtlGetCurrentDirectory_U(Unicode->MaximumLength, Unicode->Buffer);
+    Unicode->Length = (USHORT)RtlGetCurrentDirectory_U(
+                                    Unicode->MaximumLength,
+                                    Unicode->Buffer
+                                    );
 
     //
     // Unicode->Length contains the byte count of unicode string.
@@ -281,44 +281,41 @@ Routine Description:
     // This is correct in SBCS environment. However in DBCS
     // environment, it's definitely WRONG.
     //
-    Status = RtlUnicodeToMultiByteSize(&cbAnsiString, Unicode->Buffer, Unicode->Length);
-    if (!NT_SUCCESS(Status))
-    {
+    Status = RtlUnicodeToMultiByteSize( &cbAnsiString, Unicode->Buffer, Unicode->Length );
+    if ( !NT_SUCCESS(Status) ) {
         BaseSetLastNTError(Status);
         ReturnValue = 0;
-    }
-    else
-    {
-        if (nBufferLength > (DWORD)(cbAnsiString))
-        {
+        }
+    else {
+        if ( nBufferLength > (DWORD)(cbAnsiString ) ) {
             AnsiString.Buffer = lpBuffer;
-            AnsiString.MaximumLength = (USHORT)(nBufferLength + 1);
-            Status = BasepUnicodeStringTo8BitString(&AnsiString, Unicode, FALSE);
+            AnsiString.MaximumLength = (USHORT)(nBufferLength+1);
+            Status = BasepUnicodeStringTo8BitString(&AnsiString,Unicode,FALSE);
 
-            if (!NT_SUCCESS(Status))
-            {
+            if ( !NT_SUCCESS(Status) ) {
                 BaseSetLastNTError(Status);
                 ReturnValue = 0;
-            }
-            else
-            {
+                }
+            else {
                 ReturnValue = AnsiString.Length;
+                }
             }
-        }
-        else
-        {
+        else {
             // The return value is the size of the buffer required to hold the
             // pathname (including the terminating null character).
 
-            ReturnValue = cbAnsiString + 1;
+                ReturnValue = cbAnsiString + 1;
+            }
         }
-    }
     return ReturnValue;
 }
 
 DWORD
 APIENTRY
-GetCurrentDirectoryW(DWORD nBufferLength, LPWSTR lpBuffer)
+GetCurrentDirectoryW(
+    DWORD nBufferLength,
+    LPWSTR lpBuffer
+    )
 
 /*++
 
@@ -347,11 +344,15 @@ Return Value:
 --*/
 
 {
-    return (DWORD)RtlGetCurrentDirectory_U(nBufferLength * 2, lpBuffer) / 2;
+    return (DWORD)RtlGetCurrentDirectory_U(nBufferLength*2,lpBuffer)/2;
 }
 
 
-BOOL APIENTRY SetCurrentDirectoryA(LPCSTR lpPathName)
+BOOL
+APIENTRY
+SetCurrentDirectoryA(
+    LPCSTR lpPathName
+    )
 
 /*++
 
@@ -367,19 +368,16 @@ Routine Description:
     PUNICODE_STRING Unicode;
     BOOL rv;
 
-    Unicode = Basep8BitStringToStaticUnicodeString(lpPathName);
-    if (Unicode == NULL)
-    {
+    Unicode = Basep8BitStringToStaticUnicodeString( lpPathName );
+    if (Unicode == NULL) {
         return FALSE;
     }
 
-    if (!CheckForSameCurdir(Unicode))
-    {
+    if ( !CheckForSameCurdir(Unicode) ) {
 
         Status = RtlSetCurrentDirectory_U(Unicode);
 
-        if (!NT_SUCCESS(Status))
-        {
+        if ( !NT_SUCCESS(Status) ) {
 
             //
             // claris works 5.0 has a bug where it doesn't strip leading/trailing
@@ -387,45 +385,41 @@ Routine Description:
             // leading quote, and WinExec with a trailing quote. This error path
             // logic will compensate for the leading quote problem
             //
-            if (Unicode->Buffer[0] == L'"' && Unicode->Length > 2)
-            {
+            if ( Unicode->Buffer[0] == L'"' && Unicode->Length > 2 ) {
 
-                Unicode = Basep8BitStringToStaticUnicodeString(lpPathName + 1);
-                if (Unicode == NULL)
-                {
+                Unicode = Basep8BitStringToStaticUnicodeString( lpPathName+1 );
+                if (Unicode == NULL) {
                     return FALSE;
-                }
+                    }
                 Status = RtlSetCurrentDirectory_U(Unicode);
-                if (!NT_SUCCESS(Status))
-                {
+                if ( !NT_SUCCESS(Status) ) {
                     BaseSetLastNTError(Status);
                     rv = FALSE;
-                }
-                else
-                {
+                    }
+                else {
                     rv = TRUE;
+                    }
                 }
-            }
-            else
-            {
+            else {
                 BaseSetLastNTError(Status);
                 rv = FALSE;
-            }
-        }
-        else
-        {
+                }
+        } else {
             rv = TRUE;
         }
-    }
-    else
-    {
+    } else {
         rv = TRUE;
     }
 
     return rv;
+
 }
 
-BOOL APIENTRY SetCurrentDirectoryW(LPCWSTR lpPathName)
+BOOL
+APIENTRY
+SetCurrentDirectoryW(
+    LPCWSTR lpPathName
+    )
 
 /*++
 
@@ -477,50 +471,49 @@ Return Value:
     UNICODE_STRING UnicodeString;
     BOOL rv;
 
-    RtlInitUnicodeString(&UnicodeString, lpPathName);
+    RtlInitUnicodeString(&UnicodeString,lpPathName);
 
-    if (!CheckForSameCurdir(&UnicodeString))
-    {
+    if ( !CheckForSameCurdir(&UnicodeString) ) {
 
         Status = RtlSetCurrentDirectory_U(&UnicodeString);
 
-        if (!NT_SUCCESS(Status))
-        {
+        if ( !NT_SUCCESS(Status) ) {
             BaseSetLastNTError(Status);
             rv = FALSE;
-        }
-        else
-        {
+            }
+        else {
             rv = TRUE;
+            }
         }
-    }
-    else
-    {
+    else {
         rv = TRUE;
-    }
+        }
     return rv;
 }
 
 
+
 DWORD
 APIENTRY
-GetLogicalDrives(VOID)
+GetLogicalDrives(
+    VOID
+    )
 {
     NTSTATUS Status;
     PROCESS_DEVICEMAP_INFORMATION ProcessDeviceMapInfo;
 
-    Status = NtQueryInformationProcess(NtCurrentProcess(), ProcessDeviceMap, &ProcessDeviceMapInfo.Query,
-                                       sizeof(ProcessDeviceMapInfo.Query), NULL);
-    if (NT_SUCCESS(Status))
-    {
-        if (ProcessDeviceMapInfo.Query.DriveMap == 0)
-        {
+    Status = NtQueryInformationProcess( NtCurrentProcess(),
+                                        ProcessDeviceMap,
+                                        &ProcessDeviceMapInfo.Query,
+                                        sizeof( ProcessDeviceMapInfo.Query ),
+                                        NULL
+                                      );
+    if (NT_SUCCESS (Status)) {
+        if (ProcessDeviceMapInfo.Query.DriveMap == 0) {
             SetLastError(NO_ERROR);
         }
         return ProcessDeviceMapInfo.Query.DriveMap;
-    }
-    else
-    {
+    } else {
         BaseSetLastNTError(Status);
         return 0;
     }

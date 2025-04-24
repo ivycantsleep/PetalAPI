@@ -29,9 +29,12 @@ Revision History:
 
 
 NTSTATUS
-RtlpWow64GetNativeSystemInformation(IN SYSTEM_INFORMATION_CLASS SystemInformationClass,
-                                    IN PVOID NativeSystemInformation, IN ULONG InformationLength,
-                                    OUT PULONG ReturnLength OPTIONAL)
+RtlpWow64GetNativeSystemInformation(
+    IN SYSTEM_INFORMATION_CLASS SystemInformationClass,
+    IN PVOID NativeSystemInformation,
+    IN ULONG InformationLength,
+    OUT PULONG ReturnLength OPTIONAL
+    )
 
 /*++
 
@@ -61,6 +64,11 @@ Return Value:
 
 --*/
 {
-    return NtWow64GetNativeSystemInformation(SystemInformationClass, NativeSystemInformation, InformationLength,
-                                             ReturnLength);
+    return NtWow64GetNativeSystemInformation(
+        SystemInformationClass,
+        NativeSystemInformation,
+        InformationLength,
+        ReturnLength
+        );
 }
+

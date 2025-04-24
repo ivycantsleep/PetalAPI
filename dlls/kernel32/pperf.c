@@ -11,8 +11,7 @@
 // Define local types.
 //
 
-typedef struct _PERFINFO
-{
+typedef struct _PERFINFO {
     LARGE_INTEGER StartTime;
     LARGE_INTEGER StopTime;
     ULONG ContextSwitches;
@@ -24,24 +23,41 @@ typedef struct _PERFINFO
     ULONG Iterations;
 } PERFINFO, *PPERFINFO;
 
-VOID SuspendedProcessTest(VOID);
+VOID
+SuspendedProcessTest(
+    VOID
+    );
 
-VOID FinishBenchMark(IN PPERFINFO PerfInfo);
+VOID
+FinishBenchMark (
+    IN PPERFINFO PerfInfo
+    );
 
-VOID StartBenchMark(IN PCHAR Title, IN ULONG Iterations, IN PPERFINFO PerfInfo);
+VOID
+StartBenchMark (
+    IN PCHAR Title,
+    IN ULONG Iterations,
+    IN PPERFINFO PerfInfo
+    );
 
-VOID main(int argc, char *argv[])
+VOID
+main(
+    int argc,
+    char *argv[]
+    )
 
 {
-    if (!_strcmpi("just exit", GetCommandLine()))
-    {
+    if ( !_strcmpi("just exit",GetCommandLine()) ) {
         return;
-    }
+        }
     SuspendedProcessTest();
     return;
 }
 
-VOID SuspendedProcessTest(VOID)
+VOID
+SuspendedProcessTest (
+    VOID
+    )
 
 {
 
@@ -53,39 +69,56 @@ VOID SuspendedProcessTest(VOID)
     CHAR Buffer[256];
     KPRIORITY Base;
 
-    GetModuleFileName(0, Buffer, 256);
+    GetModuleFileName(0,Buffer,256);
 
-    RtlZeroMemory(&si, sizeof(si));
+    RtlZeroMemory(&si,sizeof(si));
     si.cb = sizeof(si);
 
     Base = 13;
-    NtSetInformationProcess(NtCurrentProcess(), ProcessBasePriority, (PVOID)&Base, sizeof(Base));
-    //    SetPriorityClass(GetCurrentProcess(),HIGH_PRIORITY_CLASS);
-    StartBenchMark("Suspended Process Creation Benchmark)", SPD_PROCESS_ITERATIONS, &PerfInfo);
+    NtSetInformationProcess(
+        NtCurrentProcess(),
+        ProcessBasePriority,
+        (PVOID) &Base,
+        sizeof(Base)
+        );
+//    SetPriorityClass(GetCurrentProcess(),HIGH_PRIORITY_CLASS);
+    StartBenchMark("Suspended Process Creation Benchmark)",
+                   SPD_PROCESS_ITERATIONS,
+                   &PerfInfo);
 
-    for (Index = 0; Index < SPD_PROCESS_ITERATIONS; Index += 1)
-    {
-        b = CreateProcess(Buffer, "just exit", NULL, NULL, TRUE, CREATE_SUSPENDED, NULL, NULL, &si, &pi[Index]);
-        if (!b)
-        {
-            printf("failed %ld\n", Index);
+    for (Index = 0; Index < SPD_PROCESS_ITERATIONS; Index += 1) {
+        b = CreateProcess(
+                Buffer,
+                "just exit",
+                NULL,
+                NULL,
+                TRUE,
+                CREATE_SUSPENDED,
+                NULL,
+                NULL,
+                &si,
+                &pi[Index]
+                );
+        if ( !b ) {
+            printf("failed %ld\n",Index);
+            }
         }
-    }
     //
     // Print out performance statistics.
     //
 
     FinishBenchMark(&PerfInfo);
-    //    SetPriorityClass(GetCurrentProcess(),NORMAL_PRIORITY_CLASS);
+//    SetPriorityClass(GetCurrentProcess(),NORMAL_PRIORITY_CLASS);
 
-    StartBenchMark("Process Startup/Exit Benchmark)", SPD_PROCESS_ITERATIONS, &PerfInfo);
-    for (Index = 0; Index < SPD_PROCESS_ITERATIONS; Index += 1)
-    {
+    StartBenchMark("Process Startup/Exit Benchmark)",
+                   SPD_PROCESS_ITERATIONS,
+                   &PerfInfo);
+    for (Index = 0; Index < SPD_PROCESS_ITERATIONS; Index += 1) {
         ResumeThread(pi[Index].hThread);
         CloseHandle(pi[Index].hThread);
-        WaitForSingleObject(pi[Index].hProcess, -1);
+        WaitForSingleObject(pi[Index].hProcess,-1);
         CloseHandle(pi[Index].hProcess);
-    }
+        }
     FinishBenchMark(&PerfInfo);
 
     //
@@ -95,7 +128,10 @@ VOID SuspendedProcessTest(VOID)
     return;
 }
 
-VOID FinishBenchMark(IN PPERFINFO PerfInfo)
+VOID
+FinishBenchMark (
+    IN PPERFINFO PerfInfo
+    )
 
 {
 
@@ -116,11 +152,12 @@ VOID FinishBenchMark(IN PPERFINFO PerfInfo)
     //
 
     NtQuerySystemTime((PLARGE_INTEGER)&PerfInfo->StopTime);
-    Status = NtQuerySystemInformation(SystemPerformanceInformation, (PVOID)&SystemInfo,
-                                      sizeof(SYSTEM_PERFORMANCE_INFORMATION), NULL);
+    Status = NtQuerySystemInformation(SystemPerformanceInformation,
+                                      (PVOID)&SystemInfo,
+                                      sizeof(SYSTEM_PERFORMANCE_INFORMATION),
+                                      NULL);
 
-    if (NT_SUCCESS(Status) == FALSE)
-    {
+    if (NT_SUCCESS(Status) == FALSE) {
         printf("Failed to query performance information, status = %lx\n", Status);
         return;
     }
@@ -148,7 +185,12 @@ VOID FinishBenchMark(IN PPERFINFO PerfInfo)
     return;
 }
 
-VOID StartBenchMark(IN PCHAR Title, IN ULONG Iterations, IN PPERFINFO PerfInfo)
+VOID
+StartBenchMark (
+    IN PCHAR Title,
+    IN ULONG Iterations,
+    IN PPERFINFO PerfInfo
+    )
 
 {
 
@@ -163,11 +205,12 @@ VOID StartBenchMark(IN PCHAR Title, IN ULONG Iterations, IN PPERFINFO PerfInfo)
     PerfInfo->Title = Title;
     PerfInfo->Iterations = Iterations;
     NtQuerySystemTime((PLARGE_INTEGER)&PerfInfo->StartTime);
-    Status = NtQuerySystemInformation(SystemPerformanceInformation, (PVOID)&SystemInfo,
-                                      sizeof(SYSTEM_PERFORMANCE_INFORMATION), NULL);
+    Status = NtQuerySystemInformation(SystemPerformanceInformation,
+                                      (PVOID)&SystemInfo,
+                                      sizeof(SYSTEM_PERFORMANCE_INFORMATION),
+                                      NULL);
 
-    if (NT_SUCCESS(Status) == FALSE)
-    {
+    if (NT_SUCCESS(Status) == FALSE) {
         printf("Failed to query performance information, status = %lx\n", Status);
         return;
     }

@@ -53,16 +53,22 @@ UNICODE_STRING User32String = RTL_CONSTANT_STRING(L"user32.dll");
 UNICODE_STRING Kernel32String = RTL_CONSTANT_STRING(L"kernel32.dll");
 
 #if DBG // DBG
-PUCHAR MonthOfYear[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
-PUCHAR DaysOfWeek[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+PUCHAR MonthOfYear[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+PUCHAR DaysOfWeek[] =  { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 LARGE_INTEGER MapBeginTime, MapEndTime, MapElapsedTime;
 #endif // DBG
 
 PCUNICODE_STRING LdrpTopLevelDllBeingLoaded;
 BOOLEAN LdrpShowInitRoutines = FALSE;
 
-#if defined(_ALPHA_)
-VOID AlphaFindArchitectureFixups(PIMAGE_NT_HEADERS NtHeaders, PVOID ViewBase, BOOLEAN StaticLink);
+#if defined (_ALPHA_)
+VOID
+AlphaFindArchitectureFixups(
+    PIMAGE_NT_HEADERS NtHeaders,
+    PVOID ViewBase,
+    BOOLEAN StaticLink
+    );
 #endif
 
 #if defined(_WIN64)
@@ -70,33 +76,30 @@ extern ULONG UseWOW64;
 #endif
 
 
-#if defined(_X86_)
+#if defined (_X86_)
 extern PVOID LdrpLockPrefixTable;
 
 //
 // Specify address of kernel32 lock prefixes
 //
 IMAGE_LOAD_CONFIG_DIRECTORY _load_config_used = {
-    0,                               // Reserved
-    0,                               // Reserved
-    0,                               // Reserved
-    0,                               // Reserved
-    0,                               // GlobalFlagsClear
-    0,                               // GlobalFlagsSet
-    0,                               // CriticalSectionTimeout (milliseconds)
-    0,                               // DeCommitFreeBlockThreshold
-    0,                               // DeCommitTotalFreeThreshold
-    (ULONG_PTR)&LdrpLockPrefixTable, // LockPrefixTable
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0 // Reserved
+    0,                             // Reserved
+    0,                             // Reserved
+    0,                             // Reserved
+    0,                             // Reserved
+    0,                             // GlobalFlagsClear
+    0,                             // GlobalFlagsSet
+    0,                             // CriticalSectionTimeout (milliseconds)
+    0,                             // DeCommitFreeBlockThreshold
+    0,                             // DeCommitTotalFreeThreshold
+    (ULONG_PTR) &LdrpLockPrefixTable,  // LockPrefixTable
+    0, 0, 0, 0, 0, 0, 0            // Reserved
 };
 
-void LdrpValidateImageForMp(IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry)
+void
+LdrpValidateImageForMp(
+    IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry
+    )
 {
     PIMAGE_LOAD_CONFIG_DIRECTORY ImageConfigData;
     ULONG i;
@@ -110,47 +113,63 @@ void LdrpValidateImageForMp(IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry)
     // to NOPs
     //
 
-    ImageConfigData =
-        RtlImageDirectoryEntryToData(LdrDataTableEntry->DllBase, TRUE, IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG, &i);
+    ImageConfigData = RtlImageDirectoryEntryToData( LdrDataTableEntry->DllBase,
+                                                    TRUE,
+                                                    IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG,
+                                                    &i
+                                                  );
 
-    if (ImageConfigData != NULL && i == sizeof(*ImageConfigData) && ImageConfigData->LockPrefixTable)
-    {
-        pb = (PUCHAR *)ImageConfigData->LockPrefixTable;
-        while (*pb)
-        {
-            if (**pb == (UCHAR)0x90)
-            {
+    if (ImageConfigData != NULL &&
+        i == sizeof( *ImageConfigData ) &&
+        ImageConfigData->LockPrefixTable ) {
+            pb = (PUCHAR *)ImageConfigData->LockPrefixTable;
+            while ( *pb ) {
+                if ( **pb == (UCHAR)0x90 ) {
 
-                if (LdrpNumberOfProcessors > 1)
-                {
+                    if ( LdrpNumberOfProcessors > 1 ) {
 
-                    //
-                    // Hard error time. One of the know DLL's is corrupt !
-                    //
+                        //
+                        // Hard error time. One of the know DLL's is corrupt !
+                        //
 
-                    ErrorParameters = (ULONG)&LdrDataTableEntry->BaseDllName;
+                        ErrorParameters = (ULONG)&LdrDataTableEntry->BaseDllName;
 
-                    NtRaiseHardError(STATUS_IMAGE_MP_UP_MISMATCH, 1, 1, &ErrorParameters, OptionOk, &ErrorResponse);
+                        NtRaiseHardError(
+                            STATUS_IMAGE_MP_UP_MISMATCH,
+                            1,
+                            1,
+                            &ErrorParameters,
+                            OptionOk,
+                            &ErrorResponse
+                            );
 
-                    if (LdrpInLdrInit)
-                    {
-                        LdrpFatalHardErrorCount++;
+                        if ( LdrpInLdrInit ) {
+                            LdrpFatalHardErrorCount++;
+                            }
+
+                        }
                     }
+                pb++;
                 }
-            }
-            pb++;
         }
-    }
 }
 #endif
 
 NTSTATUS
-LdrpWalkImportDescriptor(IN PWSTR DllPath OPTIONAL, IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry);
+LdrpWalkImportDescriptor (
+    IN PWSTR DllPath OPTIONAL,
+    IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry
+    );
 
 
 NTSTATUS
-LdrpLoadImportModule(IN PWSTR DllPath OPTIONAL, IN LPSTR ImportName, IN PVOID DllBaseImporter,
-                     OUT PLDR_DATA_TABLE_ENTRY *DataTableEntry, OUT PBOOLEAN AlreadyLoaded)
+LdrpLoadImportModule(
+    IN PWSTR DllPath OPTIONAL,
+    IN LPSTR ImportName,
+    IN PVOID DllBaseImporter,
+    OUT PLDR_DATA_TABLE_ENTRY *DataTableEntry,
+    OUT PBOOLEAN AlreadyLoaded
+    )
 {
     NTSTATUS st;
     ANSI_STRING AnsiString;
@@ -165,8 +184,7 @@ LdrpLoadImportModule(IN PWSTR DllPath OPTIONAL, IN LPSTR ImportName, IN PVOID Dl
     ImportDescriptorName_U = &NtCurrentTeb()->StaticUnicodeString;
     RtlInitAnsiString(&AnsiString, ImportName);
     st = RtlAnsiStringToUnicodeString(ImportDescriptorName_U, &AnsiString, FALSE);
-    if (!NT_SUCCESS(st))
-    {
+    if (!NT_SUCCESS(st)) {
         goto Exit;
     }
 
@@ -174,9 +192,8 @@ LdrpLoadImportModule(IN PWSTR DllPath OPTIONAL, IN LPSTR ImportName, IN PVOID Dl
     // If the module name has no '.' in the name then it can't have an extension.
     // Add .dll in this case as 9x does this and some apps rely on it.
     //
-    if (strchr(ImportName, '.') == NULL)
-    {
-        RtlAppendUnicodeToString(ImportDescriptorName_U, L".dll");
+    if (strchr (ImportName, '.') == NULL) {
+        RtlAppendUnicodeToString (ImportDescriptorName_U, L".dll");
     }
 
     RtlInitUnicodeString(&DynamicRedirectedDllName, NULL);
@@ -185,17 +202,20 @@ LdrpLoadImportModule(IN PWSTR DllPath OPTIONAL, IN LPSTR ImportName, IN PVOID Dl
     StaticRedirectedDllName.MaximumLength = sizeof(StaticRedirectedDllNameBuffer);
     StaticRedirectedDllName.Buffer = StaticRedirectedDllNameBuffer;
 
-    st = RtlDosApplyFileIsolationRedirection_Ustr(RTL_DOS_APPLY_FILE_REDIRECTION_USTR_FLAG_RESPECT_DOT_LOCAL,
-                                                  ImportDescriptorName_U, &DefaultExtension, &StaticRedirectedDllName,
-                                                  &DynamicRedirectedDllName, &ImportDescriptorName_U, NULL, NULL, NULL);
-    if (NT_SUCCESS(st))
-    {
+    st = RtlDosApplyFileIsolationRedirection_Ustr(
+                RTL_DOS_APPLY_FILE_REDIRECTION_USTR_FLAG_RESPECT_DOT_LOCAL,
+                ImportDescriptorName_U,
+                &DefaultExtension,
+                &StaticRedirectedDllName,
+                &DynamicRedirectedDllName,
+                &ImportDescriptorName_U,
+                NULL,
+                NULL,
+                NULL);
+    if (NT_SUCCESS(st)){
         Redirected = TRUE;
-    }
-    else if (st != STATUS_SXS_KEY_NOT_FOUND)
-    {
-        if (ShowSnaps)
-        {
+    } else if (st != STATUS_SXS_KEY_NOT_FOUND) {
+        if (ShowSnaps) {
             DbgPrint("LDR: %s - RtlDosApplyFileIsolationRedirection_Ustr failed with status %x\n", __FUNCTION__, st);
         }
 
@@ -209,45 +229,47 @@ LdrpLoadImportModule(IN PWSTR DllPath OPTIONAL, IN LPSTR ImportName, IN PVOID Dl
     // into this image. If not, map it.
     //
 
-    if (LdrpCheckForLoadedDll(DllPath, ImportDescriptorName_U, TRUE, Redirected, DataTableEntry))
-    {
+    if (LdrpCheckForLoadedDll( DllPath,
+                               ImportDescriptorName_U,
+                               TRUE,
+                               Redirected,
+                               DataTableEntry)) {
         *AlreadyLoaded = TRUE;
-    }
-    else
-    {
+    } else {
         *AlreadyLoaded = FALSE;
 
-        st = LdrpMapDll(DllPath, ImportDescriptorName_U->Buffer,
-                        NULL, // MOOCOW
-                        TRUE, Redirected, DataTableEntry);
+        st = LdrpMapDll(DllPath,
+                        ImportDescriptorName_U->Buffer,
+                        NULL,       // MOOCOW
+                        TRUE,
+                        Redirected,
+                        DataTableEntry
+                        );
 
-        if (!NT_SUCCESS(st))
-        {
-            if (ShowSnaps)
-            {
-                DbgPrint("LDR: %s - LdrpMapDll(%p, %ls, NULL, TRUE, %d, %p) failed with status %x\n", __FUNCTION__,
-                         DllPath, ImportDescriptorName_U->Buffer, Redirected, DataTableEntry, st);
+        if (!NT_SUCCESS(st)) {
+            if (ShowSnaps) {
+                DbgPrint("LDR: %s - LdrpMapDll(%p, %ls, NULL, TRUE, %d, %p) failed with status %x\n", __FUNCTION__, DllPath, ImportDescriptorName_U->Buffer, Redirected, DataTableEntry, st);
             }
 
             goto Exit;
         }
-
+        
         //
         // Register dll with the stack tracing module.
         // This is used for getting reliable stack traces on X86.
         //
 
 #if defined(_X86_)
-        RtlpStkMarkDllRange(*DataTableEntry);
+        RtlpStkMarkDllRange (*DataTableEntry);
 #endif
 
-        st = LdrpWalkImportDescriptor(DllPath, *DataTableEntry);
-        if (!NT_SUCCESS(st))
-        {
-            if (ShowSnaps)
-            {
-                DbgPrint("LDR: %s - LdrpWalkImportDescriptor [dll %ls]  failed with status %x\n", __FUNCTION__,
-                         ImportDescriptorName_U->Buffer, st);
+        st = LdrpWalkImportDescriptor(
+                DllPath,
+                *DataTableEntry
+                );
+        if (!NT_SUCCESS(st)) {
+            if (ShowSnaps) {
+                DbgPrint("LDR: %s - LdrpWalkImportDescriptor [dll %ls]  failed with status %x\n", __FUNCTION__, ImportDescriptorName_U->Buffer, st);
             }
             InsertTailList(&NtCurrentPeb()->Ldr->InInitializationOrderModuleList,
                            &(*DataTableEntry)->InInitializationOrderLinks);
@@ -262,10 +284,13 @@ Exit:
 }
 
 NTSTATUS
-LdrpHandleOneNewFormatImportDescriptor(IN PPEB Peb, IN PWSTR DllPath OPTIONAL,
-                                       IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry,
-                                       PIMAGE_BOUND_IMPORT_DESCRIPTOR *NewImportDescriptorInOut,
-                                       PSZ NewImportStringBase)
+LdrpHandleOneNewFormatImportDescriptor(
+    IN PPEB Peb,
+    IN PWSTR DllPath OPTIONAL,
+    IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry,
+    PIMAGE_BOUND_IMPORT_DESCRIPTOR *NewImportDescriptorInOut,
+    PSZ NewImportStringBase
+    )
 {
     NTSTATUS st = STATUS_INTERNAL_ERROR;
 
@@ -284,13 +309,16 @@ LdrpHandleOneNewFormatImportDescriptor(IN PPEB Peb, IN PWSTR DllPath OPTIONAL,
     if (ShowSnaps)
         DbgPrint("LDR: %wZ bound to %s\n", &LdrDataTableEntry->BaseDllName, NewImportName);
 
-    st = LdrpLoadImportModule(DllPath, NewImportName, LdrDataTableEntry->DllBase, &DataTableEntry, &AlreadyLoaded);
+    st = LdrpLoadImportModule(
+            DllPath,
+            NewImportName,
+            LdrDataTableEntry->DllBase,
+            &DataTableEntry,
+            &AlreadyLoaded);
 
-    if (!NT_SUCCESS(st))
-    {
+    if (!NT_SUCCESS(st)) {
         if (ShowSnaps)
-            DbgPrint("LDR: %wZ failed to load import module %s; status = %x\n", &LdrDataTableEntry->BaseDllName,
-                     NewImportName, st);
+            DbgPrint("LDR: %wZ failed to load import module %s; status = %x\n", &LdrDataTableEntry->BaseDllName, NewImportName, st);
 
         goto Exit;
     }
@@ -303,15 +331,12 @@ LdrpHandleOneNewFormatImportDescriptor(IN PPEB Peb, IN PWSTR DllPath OPTIONAL,
         InsertTailList(&Peb->Ldr->InInitializationOrderModuleList, &DataTableEntry->InInitializationOrderLinks);
 
     if ((NewImportDescriptor->TimeDateStamp != DataTableEntry->TimeDateStamp) ||
-        (DataTableEntry->Flags & LDRP_IMAGE_NOT_AT_BASE))
-    {
+        (DataTableEntry->Flags & LDRP_IMAGE_NOT_AT_BASE)) {
         if (ShowSnaps)
             DbgPrint("LDR: %wZ has stale binding to %s\n", &LdrDataTableEntry->BaseDllName, NewImportName);
 
         StaleBinding = TRUE;
-    }
-    else
-    {
+    } else {
 #if DBG
         LdrpSnapBypass++;
 #endif
@@ -321,51 +346,52 @@ LdrpHandleOneNewFormatImportDescriptor(IN PPEB Peb, IN PWSTR DllPath OPTIONAL,
         StaleBinding = FALSE;
     }
 
-    NewImportForwarder = (PIMAGE_BOUND_FORWARDER_REF)(NewImportDescriptor + 1);
-    for (i = 0; i < NewImportDescriptor->NumberOfModuleForwarderRefs; i++)
-    {
+    NewImportForwarder = (PIMAGE_BOUND_FORWARDER_REF) (NewImportDescriptor + 1);
+    for (i=0; i<NewImportDescriptor->NumberOfModuleForwarderRefs; i++) {
         NewFwdImportName = NewImportStringBase + NewImportForwarder->OffsetModuleName;
-        if (ShowSnaps)
-        {
-            DbgPrint("LDR: %wZ bound to %s via forwarder(s) from %wZ\n", &LdrDataTableEntry->BaseDllName,
-                     NewFwdImportName, &DataTableEntry->BaseDllName);
+        if (ShowSnaps) {
+            DbgPrint("LDR: %wZ bound to %s via forwarder(s) from %wZ\n",
+                &LdrDataTableEntry->BaseDllName,
+                NewFwdImportName,
+                &DataTableEntry->BaseDllName);
         }
 
-        st = LdrpLoadImportModule(DllPath, NewFwdImportName, LdrDataTableEntry->DllBase, &FwdDataTableEntry,
-                                  &AlreadyLoaded);
-        if (NT_SUCCESS(st))
-        {
+        st = LdrpLoadImportModule( DllPath,
+                                   NewFwdImportName,
+                                   LdrDataTableEntry->DllBase,
+                                   &FwdDataTableEntry,
+                                   &AlreadyLoaded
+                                   );
+        if ( NT_SUCCESS(st) ) {
             if (!AlreadyLoaded)
-                InsertTailList(&Peb->Ldr->InInitializationOrderModuleList,
-                               &FwdDataTableEntry->InInitializationOrderLinks);
+                InsertTailList(&Peb->Ldr->InInitializationOrderModuleList, &FwdDataTableEntry->InInitializationOrderLinks);
         }
 
-        if ((!NT_SUCCESS(st)) || (NewImportForwarder->TimeDateStamp != FwdDataTableEntry->TimeDateStamp) ||
-            (FwdDataTableEntry->Flags & LDRP_IMAGE_NOT_AT_BASE))
-        {
+        if ( (!NT_SUCCESS(st)) ||
+             (NewImportForwarder->TimeDateStamp != FwdDataTableEntry->TimeDateStamp) ||
+             (FwdDataTableEntry->Flags & LDRP_IMAGE_NOT_AT_BASE)) {
             if (ShowSnaps)
                 DbgPrint("LDR: %wZ has stale binding to %s\n", &LdrDataTableEntry->BaseDllName, NewFwdImportName);
 
             StaleBinding = TRUE;
-        }
-        else
-        {
+        } else {
 #if DBG
             LdrpSnapBypass++;
 #endif
-            if (ShowSnaps)
-            {
-                DbgPrint("LDR: %wZ has correct binding to %s\n", &LdrDataTableEntry->BaseDllName, NewFwdImportName);
+            if (ShowSnaps) {
+                DbgPrint("LDR: %wZ has correct binding to %s\n",
+                        &LdrDataTableEntry->BaseDllName,
+                        NewFwdImportName
+                        );
             }
         }
 
         NewImportForwarder += 1;
     }
 
-    NewImportDescriptor = (PIMAGE_BOUND_IMPORT_DESCRIPTOR)NewImportForwarder;
+    NewImportDescriptor = (PIMAGE_BOUND_IMPORT_DESCRIPTOR) NewImportForwarder;
 
-    if (StaleBinding)
-    {
+    if (StaleBinding) {
 #if DBG
         LdrpNormalSnap++;
 #endif
@@ -375,10 +401,12 @@ LdrpHandleOneNewFormatImportDescriptor(IN PPEB Peb, IN PWSTR DllPath OPTIONAL,
         //
 
         ImportDescriptor = (PIMAGE_IMPORT_DESCRIPTOR)RtlImageDirectoryEntryToData(
-            LdrDataTableEntry->DllBase, TRUE, IMAGE_DIRECTORY_ENTRY_IMPORT, &ImportSize);
+                            LdrDataTableEntry->DllBase,
+                            TRUE,
+                            IMAGE_DIRECTORY_ENTRY_IMPORT,
+                            &ImportSize);
 
-        while (ImportDescriptor->Name != 0)
-        {
+        while (ImportDescriptor->Name != 0) {
             ImportName = (PSZ)((ULONG_PTR)LdrDataTableEntry->DllBase + ImportDescriptor->Name);
             if (_stricmp(ImportName, NewImportName) == 0)
                 break;
@@ -386,11 +414,9 @@ LdrpHandleOneNewFormatImportDescriptor(IN PPEB Peb, IN PWSTR DllPath OPTIONAL,
             ImportDescriptor += 1;
         }
 
-        if (ImportDescriptor->Name == 0)
-        {
+        if (ImportDescriptor->Name == 0) {
             if (ShowSnaps)
-                DbgPrint("LDR: LdrpWalkImportTable - failing with STATUS_OBJECT_NAME_INVALID due to no import "
-                         "descriptor name\n");
+                DbgPrint("LDR: LdrpWalkImportTable - failing with STATUS_OBJECT_NAME_INVALID due to no import descriptor name\n");
 
             st = STATUS_OBJECT_NAME_INVALID;
             goto Exit;
@@ -399,12 +425,15 @@ LdrpHandleOneNewFormatImportDescriptor(IN PPEB Peb, IN PWSTR DllPath OPTIONAL,
         if (ShowSnaps)
             DbgPrint("LDR: Stale Bind %s from %wZ\n", ImportName, &LdrDataTableEntry->BaseDllName);
 
-        st = LdrpSnapIAT(DataTableEntry, LdrDataTableEntry, ImportDescriptor, FALSE);
-        if (!NT_SUCCESS(st))
-        {
+        st = LdrpSnapIAT(
+                DataTableEntry,
+                LdrDataTableEntry,
+                ImportDescriptor,
+                FALSE);
+        if (!NT_SUCCESS(st)) {
             if (ShowSnaps)
                 DbgPrint("LDR: LdrpWalkImportTable - LdrpSnapIAT failed with status %x\n", st);
-
+            
             goto Exit;
         }
     }
@@ -417,17 +446,19 @@ Exit:
 }
 
 NTSTATUS
-LdrpHandleNewFormatImportDescriptors(IN PPEB Peb, IN PWSTR DllPath OPTIONAL, IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry,
-                                     PIMAGE_BOUND_IMPORT_DESCRIPTOR NewImportDescriptor)
+LdrpHandleNewFormatImportDescriptors(
+    IN PPEB Peb,
+    IN PWSTR DllPath OPTIONAL,
+    IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry,
+    PIMAGE_BOUND_IMPORT_DESCRIPTOR NewImportDescriptor
+    )
 {
     NTSTATUS st = STATUS_INTERNAL_ERROR;
     PSZ NewImportStringBase;
 
-    NewImportStringBase = (LPSTR)NewImportDescriptor;
-    while (NewImportDescriptor->OffsetModuleName)
-    {
-        st = LdrpHandleOneNewFormatImportDescriptor(Peb, DllPath, LdrDataTableEntry, &NewImportDescriptor,
-                                                    NewImportStringBase);
+    NewImportStringBase = (LPSTR) NewImportDescriptor;
+    while (NewImportDescriptor->OffsetModuleName) {
+        st = LdrpHandleOneNewFormatImportDescriptor(Peb, DllPath, LdrDataTableEntry, &NewImportDescriptor, NewImportStringBase);
         if (!NT_SUCCESS(st))
             goto Exit;
     }
@@ -438,9 +469,12 @@ Exit:
 }
 
 NTSTATUS
-LdrpHandleOneOldFormatImportDescriptor(IN PPEB Peb, IN PWSTR DllPath OPTIONAL,
-                                       IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry,
-                                       PIMAGE_IMPORT_DESCRIPTOR *ImportDescriptorInOut)
+LdrpHandleOneOldFormatImportDescriptor(
+    IN PPEB Peb,
+    IN PWSTR DllPath OPTIONAL,
+    IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry,
+    PIMAGE_IMPORT_DESCRIPTOR *ImportDescriptorInOut
+    )
 {
     NTSTATUS st = STATUS_INTERNAL_ERROR;
     PIMAGE_IMPORT_DESCRIPTOR ImportDescriptor = *ImportDescriptorInOut;
@@ -455,18 +489,19 @@ LdrpHandleOneOldFormatImportDescriptor(IN PPEB Peb, IN PWSTR DllPath OPTIONAL,
     // check for import that has no references
     //
 
-    FirstThunk = (PIMAGE_THUNK_DATA)((ULONG_PTR)LdrDataTableEntry->DllBase + ImportDescriptor->FirstThunk);
-    if (FirstThunk->u1.Function != 0)
-    {
+    FirstThunk = (PIMAGE_THUNK_DATA) ((ULONG_PTR)LdrDataTableEntry->DllBase + ImportDescriptor->FirstThunk);
+    if (FirstThunk->u1.Function != 0) {
         if (ShowSnaps)
             DbgPrint("LDR: %s used by %wZ\n", ImportName, &LdrDataTableEntry->BaseDllName);
 
-        st = LdrpLoadImportModule(DllPath, ImportName, LdrDataTableEntry->DllBase, &DataTableEntry, &AlreadyLoaded);
-        if (!NT_SUCCESS(st))
-        {
+        st = LdrpLoadImportModule( DllPath,
+                                   ImportName,
+                                   LdrDataTableEntry->DllBase,
+                                   &DataTableEntry,
+                                   &AlreadyLoaded);
+        if (!NT_SUCCESS(st)) {
             if (ShowSnaps)
-                DbgPrint("LDR: LdrpWalkImportTable - LdrpLoadImportModule failed on import %s with status %x\n",
-                         ImportName, st);
+                DbgPrint("LDR: LdrpWalkImportTable - LdrpLoadImportModule failed on import %s with status %x\n", ImportName, st);
 
             goto Exit;
         }
@@ -534,9 +569,12 @@ LdrpHandleOneOldFormatImportDescriptor(IN PPEB Peb, IN PWSTR DllPath OPTIONAL,
         if (!AlreadyLoaded)
             InsertTailList(&Peb->Ldr->InInitializationOrderModuleList, &DataTableEntry->InInitializationOrderLinks);
 
-        st = LdrpSnapIAT(DataTableEntry, LdrDataTableEntry, ImportDescriptor, SnapForwardersOnly);
-        if (!NT_SUCCESS(st))
-        {
+        st = LdrpSnapIAT(
+                DataTableEntry,
+                LdrDataTableEntry,
+                ImportDescriptor,
+                SnapForwardersOnly);
+        if (!NT_SUCCESS(st)) {
             if (ShowSnaps)
                 DbgPrint("LDR: LdrpWalkImportTable - LdrpSnapIAT #2 failed with status %x\n", st);
 
@@ -547,7 +585,7 @@ LdrpHandleOneOldFormatImportDescriptor(IN PPEB Peb, IN PWSTR DllPath OPTIONAL,
 
         // See comment above.  Snap is always taken, so bypass_snap
         // never gets reference during execution.
-        // bypass_snap:
+// bypass_snap:
 
         //
         // Add to initialization list.
@@ -566,8 +604,12 @@ Exit:
 }
 
 NTSTATUS
-LdrpHandleOldFormatImportDescriptors(IN PPEB Peb, IN PWSTR DllPath OPTIONAL, IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry,
-                                     PIMAGE_IMPORT_DESCRIPTOR ImportDescriptor)
+LdrpHandleOldFormatImportDescriptors(
+    IN PPEB Peb,
+    IN PWSTR DllPath OPTIONAL,
+    IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry,
+    PIMAGE_IMPORT_DESCRIPTOR ImportDescriptor
+    )
 {
     NTSTATUS st = STATUS_INTERNAL_ERROR;
 
@@ -576,8 +618,7 @@ LdrpHandleOldFormatImportDescriptors(IN PPEB Peb, IN PWSTR DllPath OPTIONAL, IN 
     // the IAT, and call the DLL's init routine.
     //
 
-    while (ImportDescriptor->Name && ImportDescriptor->FirstThunk)
-    {
+    while (ImportDescriptor->Name && ImportDescriptor->FirstThunk) {
         st = LdrpHandleOneOldFormatImportDescriptor(Peb, DllPath, LdrDataTableEntry, &ImportDescriptor);
         if (!NT_SUCCESS(st))
             goto Exit;
@@ -589,12 +630,14 @@ Exit:
 }
 
 NTSTATUS
-LdrpMungHeapImportsForTagging(IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry)
+LdrpMungHeapImportsForTagging(
+    IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry
+    )
 {
     NTSTATUS st = STATUS_INTERNAL_ERROR;
     PVOID IATBase;
     SIZE_T BigIATSize;
-    ULONG LittleIATSize;
+    ULONG  LittleIATSize;
     PVOID *ProcAddresses;
     ULONG NumberOfProcAddresses;
     ULONG OldProtect;
@@ -607,17 +650,23 @@ LdrpMungHeapImportsForTagging(IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry)
     // replace the tag with a unique tag for this image.
     //
 
-    IATBase = RtlImageDirectoryEntryToData(LdrDataTableEntry->DllBase, TRUE, IMAGE_DIRECTORY_ENTRY_IAT, &LittleIATSize);
+    IATBase = RtlImageDirectoryEntryToData( LdrDataTableEntry->DllBase,
+                                            TRUE,
+                                            IMAGE_DIRECTORY_ENTRY_IAT,
+                                            &LittleIATSize
+                                          );
 
-    if (IATBase != NULL)
-    {
+    if (IATBase != NULL) {
 
         BigIATSize = LittleIATSize;
 
-        st = NtProtectVirtualMemory(NtCurrentProcess(), &IATBase, &BigIATSize, PAGE_READWRITE, &OldProtect);
-        if (!NT_SUCCESS(st))
-        {
-            DbgPrint("LDR: Unable to unprotect IAT to enable tagging by DLL.\n");
+        st = NtProtectVirtualMemory( NtCurrentProcess(),
+                                     &IATBase,
+                                     &BigIATSize,
+                                     PAGE_READWRITE,
+                                     &OldProtect);
+        if (!NT_SUCCESS(st)) {
+            DbgPrint( "LDR: Unable to unprotect IAT to enable tagging by DLL.\n");
             st = STATUS_SUCCESS;
             goto Exit;
         }
@@ -625,10 +674,8 @@ LdrpMungHeapImportsForTagging(IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry)
         ProcAddresses = (PVOID *)IATBase;
         NumberOfProcAddresses = (ULONG)(BigIATSize / sizeof(PVOID));
 
-        while (NumberOfProcAddresses--)
-        {
-            if (*ProcAddresses == RtlAllocateHeap)
-            {
+        while (NumberOfProcAddresses--) {
+            if (*ProcAddresses == RtlAllocateHeap) {
                 *ProcAddresses = LdrpDefineDllTag(LdrDataTableEntry->BaseDllName.Buffer, &TagIndex);
                 if (*ProcAddresses == NULL)
                     *ProcAddresses = RtlAllocateHeap;
@@ -637,17 +684,25 @@ LdrpMungHeapImportsForTagging(IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry)
             ProcAddresses += 1;
         }
 
-        NtProtectVirtualMemory(NtCurrentProcess(), &IATBase, &BigIATSize, OldProtect, &OldProtect);
+        NtProtectVirtualMemory( NtCurrentProcess(),
+                                &IATBase,
+                                &BigIATSize,
+                                OldProtect,
+                                &OldProtect);
     }
 
     st = STATUS_SUCCESS;
 Exit:
     return st;
+
 }
 
 
 NTSTATUS
-LdrpWalkImportDescriptor(IN PWSTR DllPath OPTIONAL, IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry)
+LdrpWalkImportDescriptor (
+    IN PWSTR DllPath OPTIONAL,
+    IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry
+    )
 
 /*++
 
@@ -676,79 +731,76 @@ Return Value:
     PIMAGE_BOUND_IMPORT_DESCRIPTOR NewImportDescriptor = NULL;
     NTSTATUS st;
     CONST PPEB Peb = NtCurrentPeb();
-    RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME ActivationFrame = {
-        sizeof(ActivationFrame), RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_FORMAT_WHISTLER
-    };
+    RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME ActivationFrame = { sizeof(ActivationFrame), RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_FORMAT_WHISTLER };
     CONST PLDR_DATA_TABLE_ENTRY Entry = LdrDataTableEntry;
 
-    if (LdrpManifestProberRoutine != NULL)
-    {
+    if (LdrpManifestProberRoutine != NULL) {
         PVOID SavedEntry = Peb->Ldr->EntryInProgress;
 
-        __try
-        {
+        __try {
 
             //
             // don't check .exes that have id 1 manifest, id 1 in an .exe makes Peb->ActivationContextData not NULL
             //
-            if (Peb->ActivationContextData == NULL || LdrDataTableEntry != LdrpImageEntry)
-            {
+            if (Peb->ActivationContextData == NULL || LdrDataTableEntry != LdrpImageEntry) {
                 CONST PVOID ViewBase = LdrDataTableEntry->DllBase;
                 PVOID ResourceViewBase = ViewBase;
                 NTSTATUS stTemp;
                 PCWSTR DllName;
-#if defined(_WIN64)
+    #if defined(_WIN64)
                 PIMAGE_NT_HEADERS NtHeaders = RtlImageNtHeader(ViewBase);
-                if (NtHeaders->OptionalHeader.SectionAlignment < NATIVE_PAGE_SIZE)
-                {
+                if (NtHeaders->OptionalHeader.SectionAlignment < NATIVE_PAGE_SIZE) {
                     ResourceViewBase = LDR_VIEW_TO_DATAFILE(ViewBase);
                 }
-#endif
+    #endif
                 DllName = Entry->FullDllName.Buffer;
                 //
                 // RtlCreateUserProcess() causes this.
                 //
-                if (LdrDataTableEntry == LdrpImageEntry && DllName[0] == L'\\' && DllName[1] == L'?' &&
-                    DllName[2] == L'?' && DllName[3] == L'\\' && DllName[4] != UNICODE_NULL && DllName[5] == ':' &&
-                    DllName[6] == L'\\')
-                {
+                if (LdrDataTableEntry == LdrpImageEntry &&
+                    DllName[0] == L'\\' &&
+                    DllName[1] == L'?' &&
+                    DllName[2] == L'?' &&
+                    DllName[3] == L'\\' &&
+                    DllName[4] != UNICODE_NULL &&
+                    DllName[5] == ':' &&
+                    DllName[6] == L'\\'
+                    ) {
                     DllName += 4;
                 }
 
                 Peb->Ldr->EntryInProgress = Entry;
 
                 stTemp = (*LdrpManifestProberRoutine)(ResourceViewBase, DllName, &Entry->EntryPointActivationContext);
-                if (!NT_SUCCESS(stTemp))
-                {
-                    if ((stTemp != STATUS_NO_SUCH_FILE) && (stTemp != STATUS_RESOURCE_DATA_NOT_FOUND) &&
-                        (stTemp != STATUS_RESOURCE_TYPE_NOT_FOUND) && (stTemp != STATUS_RESOURCE_LANG_NOT_FOUND) &&
-                        (stTemp != STATUS_RESOURCE_NAME_NOT_FOUND))
-                    {
+                if (!NT_SUCCESS(stTemp)) {
+                    if ((stTemp != STATUS_NO_SUCH_FILE) &&
+                        (stTemp != STATUS_RESOURCE_DATA_NOT_FOUND) &&
+                        (stTemp != STATUS_RESOURCE_TYPE_NOT_FOUND) &&
+                        (stTemp != STATUS_RESOURCE_LANG_NOT_FOUND) &&
+                        (stTemp != STATUS_RESOURCE_NAME_NOT_FOUND)) {
                         DbgPrintEx(
-                            DPFLTR_SXS_ID, DPFLTR_ERROR_LEVEL,
-                            "LDR: LdrpWalkImportDescriptor() failed to probe %wZ for its manifest, ntstatus 0x%08lx\n",
-                            &LdrDataTableEntry->FullDllName, stTemp);
+                            DPFLTR_SXS_ID,
+                            DPFLTR_ERROR_LEVEL,
+                            "LDR: LdrpWalkImportDescriptor() failed to probe %wZ for its manifest, ntstatus 0x%08lx\n", &LdrDataTableEntry->FullDllName, stTemp);
                         st = stTemp;
                         goto Exit;
                     }
                 }
             }
-        }
-        __finally
-        {
+        } __finally {
             Peb->Ldr->EntryInProgress = SavedEntry;
         }
     }
 
     // If we didn't start a private activation context for the DLL, let's use the currently/previously active one.
-    if (Entry->EntryPointActivationContext == NULL)
-    {
-        st = RtlGetActiveActivationContext((PACTIVATION_CONTEXT *)&LdrDataTableEntry->EntryPointActivationContext);
-        if (!NT_SUCCESS(st))
-        {
+    if (Entry->EntryPointActivationContext == NULL) {
+        st = RtlGetActiveActivationContext((PACTIVATION_CONTEXT *) &LdrDataTableEntry->EntryPointActivationContext);
+        if (!NT_SUCCESS(st)) {
 #if DBG
-            DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_ERROR_LEVEL,
-                       "LDR: RtlGetActiveActivationContext() failed; ntstatus = 0x%08lx\n", st);
+            DbgPrintEx(
+                DPFLTR_SXS_ID,
+                DPFLTR_ERROR_LEVEL,
+                "LDR: RtlGetActiveActivationContext() failed; ntstatus = 0x%08lx\n", st);
 #endif
             goto Exit;
         }
@@ -756,8 +808,7 @@ Return Value:
 
     RtlActivateActivationContextUnsafeFast(&ActivationFrame, LdrDataTableEntry->EntryPointActivationContext);
 
-    __try
-    {
+    __try {
         //
         // See if there is a bound import table.  If so, walk that to
         // verify if the binding is good.  If so, then succeed with
@@ -770,31 +821,34 @@ Return Value:
         // are built at the same time. This has been seen to happen,
         // with comctl32.dll and comctlv6.dll on September 30, 2000. a-JayK
         //
-        if ((LdrDataTableEntry->Flags & LDRP_REDIRECTED) == 0)
-        {
+        if ((LdrDataTableEntry->Flags & LDRP_REDIRECTED) == 0) {
             NewImportDescriptor = (PIMAGE_BOUND_IMPORT_DESCRIPTOR)RtlImageDirectoryEntryToData(
-                LdrDataTableEntry->DllBase, TRUE, IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT, &NewImportSize);
+                                   LdrDataTableEntry->DllBase,
+                                   TRUE,
+                                   IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT,
+                                   &NewImportSize
+                                   );
         }
 
         ImportDescriptor = (PIMAGE_IMPORT_DESCRIPTOR)RtlImageDirectoryEntryToData(
-            LdrDataTableEntry->DllBase, TRUE, IMAGE_DIRECTORY_ENTRY_IMPORT, &ImportSize);
+                            LdrDataTableEntry->DllBase,
+                            TRUE,
+                            IMAGE_DIRECTORY_ENTRY_IMPORT,
+                            &ImportSize
+                            );
 
 
-        if (NewImportDescriptor != NULL)
-        {
+        if (NewImportDescriptor != NULL) {
             st = LdrpHandleNewFormatImportDescriptors(Peb, DllPath, LdrDataTableEntry, NewImportDescriptor);
             if (!NT_SUCCESS(st))
                 goto Exit;
-        }
-        else if (ImportDescriptor != NULL)
-        {
+        } else if (ImportDescriptor != NULL) {
             st = LdrpHandleOldFormatImportDescriptors(Peb, DllPath, LdrDataTableEntry, ImportDescriptor);
             if (!NT_SUCCESS(st))
                 goto Exit;
         }
 
-        if (Peb->NtGlobalFlag & FLG_HEAP_ENABLE_TAG_BY_DLL)
-        {
+        if (Peb->NtGlobalFlag & FLG_HEAP_ENABLE_TAG_BY_DLL) {
             st = LdrpMungHeapImportsForTagging(LdrDataTableEntry);
             if (!NT_SUCCESS(st))
                 goto Exit;
@@ -808,22 +862,18 @@ Return Value:
         // verifier.dll.
         //
 
-        if (Peb->NtGlobalFlag & FLG_HEAP_PAGE_ALLOCS)
-        {
-            AVrfPageHeapDllNotification(LdrDataTableEntry);
+        if (Peb->NtGlobalFlag & FLG_HEAP_PAGE_ALLOCS) {
+            AVrfPageHeapDllNotification (LdrDataTableEntry);
         }
 
         //
         // Notify verifier that a dll got loaded.
         //
 
-        if (Peb->NtGlobalFlag & FLG_APPLICATION_VERIFIER)
-        {
-            AVrfDllLoadNotification(LdrDataTableEntry);
+        if (Peb->NtGlobalFlag & FLG_APPLICATION_VERIFIER) {
+            AVrfDllLoadNotification (LdrDataTableEntry);
         }
-    }
-    __finally
-    {
+    } __finally {
         RtlDeactivateActivationContextUnsafeFast(&ActivationFrame);
     }
 
@@ -834,7 +884,9 @@ Exit:
 
 
 ULONG
-LdrpClearLoadInProgress(VOID)
+LdrpClearLoadInProgress(
+    VOID
+    )
 {
     PLIST_ENTRY Head, Next;
     PLDR_DATA_TABLE_ENTRY LdrDataTableEntry;
@@ -843,8 +895,7 @@ LdrpClearLoadInProgress(VOID)
     Head = &NtCurrentPeb()->Ldr->InInitializationOrderModuleList;
     Next = Head->Flink;
     i = 0;
-    while (Next != Head)
-    {
+    while ( Next != Head ) {
         LdrDataTableEntry = CONTAINING_RECORD(Next, LDR_DATA_TABLE_ENTRY, InInitializationOrderLinks);
         LdrDataTableEntry->Flags &= ~LDRP_LOAD_IN_PROGRESS;
 
@@ -853,18 +904,19 @@ LdrpClearLoadInProgress(VOID)
         // have init routines
         //
 
-        if (!(LdrDataTableEntry->Flags & LDRP_ENTRY_PROCESSED) && LdrDataTableEntry->EntryPoint)
-        {
+        if ( !(LdrDataTableEntry->Flags & LDRP_ENTRY_PROCESSED) && LdrDataTableEntry->EntryPoint) {
             i++;
-        }
+            }
 
         Next = Next->Flink;
-    }
+        }
     return i;
 }
 
 NTSTATUS
-LdrpRunInitializeRoutines(IN PCONTEXT Context OPTIONAL)
+LdrpRunInitializeRoutines(
+    IN PCONTEXT Context OPTIONAL
+    )
 {
     PLIST_ENTRY Head, Next;
     PLDR_DATA_TABLE_ENTRY LdrDataTableEntry;
@@ -890,54 +942,52 @@ LdrpRunInitializeRoutines(IN PCONTEXT Context OPTIONAL)
 
     NumberOfRoutines = LdrpClearLoadInProgress();
 
-    if (NumberOfRoutines != 0)
-    {
+    if (NumberOfRoutines != 0) {
         if (NumberOfRoutines <= RTL_NUMBER_OF(StackLdrDataTable))
             LdrDataTableBase = StackLdrDataTable;
-        else
-        {
-            LdrDataTableBase =
-                RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TEMP_TAG), NumberOfRoutines * sizeof(PLDR_DATA_TABLE_ENTRY));
-            if (LdrDataTableBase == NULL)
-            {
-                DbgPrintEx(DPFLTR_LDR_ID, LDR_ERROR_DPFLTR,
-                           "LDR: %s - failed to allocate dynamic array of %u DLL initializers to run\n", __FUNCTION__,
-                           NumberOfRoutines);
+        else {
+            LdrDataTableBase = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TEMP_TAG), NumberOfRoutines * sizeof(PLDR_DATA_TABLE_ENTRY));
+            if (LdrDataTableBase == NULL) {
+                DbgPrintEx(
+                    DPFLTR_LDR_ID,
+                    LDR_ERROR_DPFLTR,
+                    "LDR: %s - failed to allocate dynamic array of %u DLL initializers to run\n",
+                    __FUNCTION__,
+                    NumberOfRoutines);
 
                 return STATUS_NO_MEMORY;
             }
         }
-    }
-    else
+    } else
         LdrDataTableBase = NULL;
 
     Head = &NtCurrentPeb()->Ldr->InInitializationOrderModuleList;
     Next = Head->Flink;
 
-    if (ShowSnaps || LdrpShowInitRoutines)
-    {
-        DbgPrint(
-            "[%x,%x] LDR: Real INIT LIST for process %wZ pid %u 0x%x\n",
-            HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess), HandleToULong(NtCurrentTeb()->ClientId.UniqueThread),
-            &NtCurrentPeb()->ProcessParameters->ImagePathName, HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess),
-            HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess));
+    if (ShowSnaps || LdrpShowInitRoutines) {
+        DbgPrint("[%x,%x] LDR: Real INIT LIST for process %wZ pid %u 0x%x\n",
+            HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess),
+            HandleToULong(NtCurrentTeb()->ClientId.UniqueThread),
+            &NtCurrentPeb()->ProcessParameters->ImagePathName,
+            HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess),
+            HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess)
+            );
     }
 
     i = 0;
-    while (Next != Head)
-    {
+    while ( Next != Head ) {
         LdrDataTableEntry = CONTAINING_RECORD(Next, LDR_DATA_TABLE_ENTRY, InInitializationOrderLinks);
 
-        if (LdrDataTableBase && !(LdrDataTableEntry->Flags & LDRP_ENTRY_PROCESSED) && LdrDataTableEntry->EntryPoint)
-        {
+        if (LdrDataTableBase && !(LdrDataTableEntry->Flags & LDRP_ENTRY_PROCESSED) && LdrDataTableEntry->EntryPoint) {
             ASSERT(i < NumberOfRoutines);
             LdrDataTableBase[i] = LdrDataTableEntry;
 
-            if (ShowSnaps || LdrpShowInitRoutines)
-            {
-                DbgPrint("[%x,%x]    %wZ init routine %p\n", HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess),
-                         HandleToULong(NtCurrentTeb()->ClientId.UniqueThread), &LdrDataTableEntry->FullDllName,
-                         LdrDataTableEntry->EntryPoint);
+            if (ShowSnaps || LdrpShowInitRoutines) {
+                DbgPrint("[%x,%x]    %wZ init routine %p\n",
+                    HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess),
+                    HandleToULong(NtCurrentTeb()->ClientId.UniqueThread),
+                    &LdrDataTableEntry->FullDllName,
+                    LdrDataTableEntry->EntryPoint);
             }
 
             i++;
@@ -949,8 +999,7 @@ LdrpRunInitializeRoutines(IN PCONTEXT Context OPTIONAL)
 
     ASSERT(i == NumberOfRoutines);
 
-    if (LdrDataTableBase == NULL)
-    {
+    if (LdrDataTableBase == NULL) {
         return STATUS_SUCCESS;
     }
 
@@ -959,10 +1008,8 @@ LdrpRunInitializeRoutines(IN PCONTEXT Context OPTIONAL)
     OldTopLevelDllBeingLoadedTeb = LdrpTopLevelDllBeingLoadedTeb;
     LdrpTopLevelDllBeingLoadedTeb = NtCurrentTeb();
 
-    try
-    {
-        while (i < NumberOfRoutines)
-        {
+    try {
+        while ( i < NumberOfRoutines ) {
             LdrDataTableEntry = LdrDataTableBase[i];
             i++;
             InitRoutine = (PDLL_INIT_ROUTINE)LdrDataTableEntry->EntryPoint;
@@ -980,73 +1027,75 @@ LdrpRunInitializeRoutines(IN PCONTEXT Context OPTIONAL)
             if (NtCurrentPeb()->BeingDebugged || NtCurrentPeb()->ReadImageFileExecOptions)
 #endif
             {
-                Status = LdrQueryImageFileExecutionOptions(&LdrDataTableEntry->BaseDllName, L"BreakOnDllLoad",
-                                                           REG_DWORD, &BreakOnDllLoad, sizeof(BreakOnDllLoad), NULL);
-                if (!NT_SUCCESS(Status))
-                {
+                Status = LdrQueryImageFileExecutionOptions( &LdrDataTableEntry->BaseDllName,
+                                                            L"BreakOnDllLoad",
+                                                            REG_DWORD,
+                                                            &BreakOnDllLoad,
+                                                            sizeof( BreakOnDllLoad ),
+                                                            NULL
+                                                          );
+                if (!NT_SUCCESS( Status )) {
                     BreakOnDllLoad = 0;
+                    }
                 }
-            }
 
-            if (BreakOnDllLoad)
-            {
-                if (ShowSnaps)
-                {
-                    DbgPrint("LDR: %wZ loaded.", &LdrDataTableEntry->BaseDllName);
-                    DbgPrint(" - About to call init routine at %p\n", InitRoutine);
-                }
+            if (BreakOnDllLoad) {
+                if (ShowSnaps) {
+                    DbgPrint( "LDR: %wZ loaded.", &LdrDataTableEntry->BaseDllName );
+                    DbgPrint( " - About to call init routine at %p\n", InitRoutine );
+                    }
                 DbgBreakPoint();
-            }
-            else if (ShowSnaps)
-            {
-                if (InitRoutine)
-                {
-                    DbgPrint("[%x,%x] LDR: %wZ loaded", HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess),
-                             HandleToULong(NtCurrentTeb()->ClientId.UniqueThread), &LdrDataTableEntry->BaseDllName);
+
+            } else if (ShowSnaps) {
+                if ( InitRoutine ) {
+                    DbgPrint( "[%x,%x] LDR: %wZ loaded",
+                        HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess),
+                        HandleToULong(NtCurrentTeb()->ClientId.UniqueThread),
+                        &LdrDataTableEntry->BaseDllName);
 
                     DbgPrint(" - Calling init routine at %p\n", InitRoutine);
                 }
             }
 
-            if (InitRoutine)
-            {
+            if ( InitRoutine ) {
                 PLDR_DATA_TABLE_ENTRY SavedInitializer = LdrpCurrentDllInitializer;
                 LdrpCurrentDllInitializer = LdrDataTableEntry;
 
-                __try
-                {
+                __try {
                     LDRP_ACTIVATE_ACTIVATION_CONTEXT(LdrDataTableEntry);
                     //
                     // If the DLL has TLS data, then call the optional initializers
                     //
                     if ((LdrDataTableEntry->TlsIndex != 0) && (Context != NULL))
-                        LdrpCallTlsInitializers(LdrDataTableEntry->DllBase, DLL_PROCESS_ATTACH);
+                        LdrpCallTlsInitializers(LdrDataTableEntry->DllBase,DLL_PROCESS_ATTACH);
 
-                    if (LdrpShowInitRoutines)
-                    {
+                    if (LdrpShowInitRoutines) {
                         DbgPrint("[%x,%x] LDR: calling init routine %p for DLL_PROCESS_ATTACH\n",
-                                 HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess),
-                                 HandleToULong(NtCurrentTeb()->ClientId.UniqueThread), InitRoutine);
+                            HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess),
+                            HandleToULong(NtCurrentTeb()->ClientId.UniqueThread),
+                            InitRoutine);
                     }
 
-                    InitStatus =
-                        LdrpCallInitRoutine(InitRoutine, LdrDataTableEntry->DllBase, DLL_PROCESS_ATTACH, Context);
+                    InitStatus = LdrpCallInitRoutine(InitRoutine,
+                                                     LdrDataTableEntry->DllBase,
+                                                     DLL_PROCESS_ATTACH,
+                                                     Context);
                     LDRP_DEACTIVATE_ACTIVATION_CONTEXT();
-                }
-                __finally
-                {
+                } __finally {
                     LdrpCurrentDllInitializer = SavedInitializer;
                 }
 
                 LdrDataTableEntry->Flags |= LDRP_PROCESS_ATTACH_CALLED;
 
-                if (!InitStatus)
-                {
-                    DbgPrintEx(DPFLTR_LDR_ID, LDR_ERROR_DPFLTR,
-                               "[%x,%x] LDR: DLL_PROCESS_ATTACH for dll \"%wZ\" (InitRoutine: %p) failed\n",
-                               HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess),
-                               HandleToULong(NtCurrentTeb()->ClientId.UniqueThread), &LdrDataTableEntry->FullDllName,
-                               InitRoutine);
+                if (!InitStatus) {
+                    DbgPrintEx(
+                        DPFLTR_LDR_ID,
+                        LDR_ERROR_DPFLTR,
+                        "[%x,%x] LDR: DLL_PROCESS_ATTACH for dll \"%wZ\" (InitRoutine: %p) failed\n",
+                        HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess),
+                        HandleToULong(NtCurrentTeb()->ClientId.UniqueThread),
+                        &LdrDataTableEntry->FullDllName,
+                        InitRoutine);
 
                     return STATUS_DLL_INIT_FAILED;
                 }
@@ -1060,25 +1109,29 @@ LdrpRunInitializeRoutines(IN PCONTEXT Context OPTIONAL)
         if (LdrpImageHasTls && (Context != NULL))
         {
             LDRP_ACTIVATE_ACTIVATION_CONTEXT(LdrpImageEntry);
-            LdrpCallTlsInitializers(NtCurrentPeb()->ImageBaseAddress, DLL_PROCESS_ATTACH);
+            LdrpCallTlsInitializers(NtCurrentPeb()->ImageBaseAddress,DLL_PROCESS_ATTACH);
 
             LDRP_DEACTIVATE_ACTIVATION_CONTEXT();
         }
-    }
-    finally
-    {
+    } finally {
         LdrpTopLevelDllBeingLoadedTeb = OldTopLevelDllBeingLoadedTeb;
 
-        if ((LdrDataTableBase != NULL) && (LdrDataTableBase != StackLdrDataTable))
-            RtlFreeHeap(RtlProcessHeap(), 0, LdrDataTableBase);
+        if ((LdrDataTableBase != NULL) &&
+            (LdrDataTableBase != StackLdrDataTable))
+            RtlFreeHeap(RtlProcessHeap(),0,LdrDataTableBase);
     }
 
     return STATUS_SUCCESS;
 }
 
 BOOLEAN
-LdrpCheckForLoadedDll(IN PWSTR DllPath OPTIONAL, IN PUNICODE_STRING DllName, IN BOOLEAN StaticLink,
-                      IN BOOLEAN Redirected, OUT PLDR_DATA_TABLE_ENTRY *LdrDataTableEntry)
+LdrpCheckForLoadedDll (
+    IN PWSTR DllPath OPTIONAL,
+    IN PUNICODE_STRING DllName,
+    IN BOOLEAN StaticLink,
+    IN BOOLEAN Redirected,
+    OUT PLDR_DATA_TABLE_ENTRY *LdrDataTableEntry
+    )
 
 /*++
 
@@ -1123,13 +1176,12 @@ Return Value:
     WCHAR FullDllNameStaticBuffer[LDR_MAX_PATH];
     UNICODE_STRING FullDllNameDynamicString;
     ULONG Length = 0;
-    PWCH src, dest;
+    PWCH src,dest;
     NTSTATUS Status;
 
     FullDllNameDynamicString.Buffer = NULL;
 
-    if (!DllName->Buffer || !DllName->Buffer[0])
-    {
+    if (!DllName->Buffer || !DllName->Buffer[0]) {
         goto alldone;
     }
 
@@ -1139,18 +1191,15 @@ Return Value:
     // for static links, just go to the hash table
     //
 staticlink:
-    if (StaticLink)
-    {
+    if ( StaticLink ) {
 
         // If this is a redirected static load, the dll name is a fully qualified path.  The
         // hash table is maintained based on the first character of the base dll name, so find
         // the base dll name.
-        if (Redirected)
-        {
+        if (Redirected) {
             PWSTR LastChar = DllName->Buffer + (DllName->Length / sizeof(WCHAR)) - (DllName->Length == 0 ? 0 : 1);
 
-            while (LastChar != DllName->Buffer)
-            {
+            while (LastChar != DllName->Buffer) {
                 const WCHAR wch = *LastChar;
 
                 if ((wch == L'\\') || (wch == L'/'))
@@ -1161,16 +1210,13 @@ staticlink:
 
             // This assert ignores the "possibility" that the first and only slash is the first character, but that's
             // an error, too.  The redirection should be a complete DOS path.
-            ASSERTMSG("Redirected DLL name does not have full path; either caller lied or redirection info is in error",
-                      LastChar != DllName->Buffer);
+            ASSERTMSG(
+                "Redirected DLL name does not have full path; either caller lied or redirection info is in error",
+                LastChar != DllName->Buffer);
 
-            if (LastChar == DllName->Buffer)
-            {
-                if (ShowSnaps)
-                {
-                    DbgPrint(
-                        "LDR: Failing LdrpCheckForLoadedDll because redirected DLL name %wZ does not include a slash\n",
-                        DllName);
+            if (LastChar == DllName->Buffer) {
+                if (ShowSnaps) {
+                    DbgPrint("LDR: Failing LdrpCheckForLoadedDll because redirected DLL name %wZ does not include a slash\n", DllName);
                 }
 
                 Result = FALSE;
@@ -1180,37 +1226,29 @@ staticlink:
             LastChar++;
 
             i = LDRP_COMPUTE_HASH_INDEX(*LastChar);
-        }
-        else
-        {
+        } else {
             i = LDRP_COMPUTE_HASH_INDEX(DllName->Buffer[0]);
         }
 
         Head = &LdrpHashTable[i];
         Next = Head->Flink;
-        while (Next != Head)
-        {
+        while ( Next != Head ) {
             Entry = CONTAINING_RECORD(Next, LDR_DATA_TABLE_ENTRY, HashLinks);
 #if DBG
             LdrpCompareCount++;
-#endif
+#endif            
             // Redirected static loads never match unredirected entries and vice versa
-            if (Redirected)
-            {
+            if (Redirected) {
                 if (((Entry->Flags & LDRP_REDIRECTED) != 0) &&
-                    RtlEqualUnicodeString(DllName, &Entry->FullDllName, TRUE))
-                {
+                    RtlEqualUnicodeString(DllName, &Entry->FullDllName, TRUE)) {
                     *LdrDataTableEntry = Entry;
                     Result = TRUE;
                     goto alldone;
                 }
-            }
-            else
-            {
+            } else {
                 // Not redirected...
                 if (((Entry->Flags & LDRP_REDIRECTED) == 0) &&
-                    RtlEqualUnicodeString(DllName, &Entry->BaseDllName, TRUE))
-                {
+                    RtlEqualUnicodeString(DllName, &Entry->BaseDllName, TRUE)) {
                     *LdrDataTableEntry = Entry;
                     Result = TRUE;
                     goto alldone;
@@ -1218,14 +1256,13 @@ staticlink:
             }
 
             Next = Next->Flink;
+            }
         }
-    }
 
-    if (StaticLink)
-    {
+    if ( StaticLink ) {
         Result = FALSE;
         goto alldone;
-    }
+        }
 
     //
     // If the dll name contained a hard coded path
@@ -1237,20 +1274,15 @@ staticlink:
     p = DllName->Buffer;
     HardCodedPath = FALSE;
 
-    if (Redirected)
-    {
+    if (Redirected) {
         HardCodedPath = TRUE;
         FullDllName.Length = DllName->Length;
         FullDllName.MaximumLength = DllName->MaximumLength;
         FullDllName.Buffer = DllName->Buffer;
-    }
-    else
-    {
-        while (*p)
-        {
+    } else {
+        while (*p) {
             const WCHAR wch = *p++;
-            if (wch == (WCHAR)'\\' || wch == (WCHAR)'/')
-            {
+            if (wch == (WCHAR)'\\' || wch == (WCHAR)'/' ) {
 
                 HardCodedPath = TRUE;
 
@@ -1261,31 +1293,32 @@ staticlink:
                 FullDllName.Buffer = FullDllNameStaticBuffer;
 
                 Length = RtlDosSearchPath_U(
-                    ARGUMENT_PRESENT(DllPath) ? DllPath : LdrpDefaultPath.Buffer, DllName->Buffer, NULL,
-                    sizeof(FullDllNameStaticBuffer) - sizeof(UNICODE_NULL), FullDllName.Buffer, NULL);
+                            ARGUMENT_PRESENT(DllPath) ? DllPath : LdrpDefaultPath.Buffer,
+                            DllName->Buffer,
+                            NULL,
+                            sizeof(FullDllNameStaticBuffer)-sizeof(UNICODE_NULL),
+                            FullDllName.Buffer,
+                            NULL
+                            );
 
-                if (Length == 0)
-                {
-                    if (ShowSnaps)
-                    {
+                if (Length == 0) {
+                    if (ShowSnaps) {
                         DbgPrint("LDR: LdrpCheckForLoadedDll - Unable To Locate ");
-                        DbgPrint("%ws from %ws\n", DllName->Buffer,
-                                 ARGUMENT_PRESENT(DllPath) ? DllPath : LdrpDefaultPath.Buffer);
+                        DbgPrint("%ws from %ws\n",
+                            DllName->Buffer,
+                            ARGUMENT_PRESENT(DllPath) ? DllPath : LdrpDefaultPath.Buffer
+                            );
                     }
 
                     Result = FALSE;
                     goto alldone;
                 }
 
-                if ((Length + sizeof(WCHAR)) > sizeof(FullDllNameStaticBuffer))
-                {
-                    if (Length > UNICODE_STRING_MAX_BYTES)
-                    {
-                        if (ShowSnaps)
-                        {
+                if ((Length + sizeof(WCHAR)) > sizeof(FullDllNameStaticBuffer)) {
+                    if (Length > UNICODE_STRING_MAX_BYTES) {
+                        if (ShowSnaps) {
                             DbgPrint("LDR: LdrpCheckForLoadedDll - Failing load of ");
-                            DbgPrint("%wZ from %ws", DllName,
-                                     ARGUMENT_PRESENT(DllPath) ? DllPath : LdrpDefaultPath.Buffer);
+                            DbgPrint("%wZ from %ws", DllName, ARGUMENT_PRESENT(DllPath) ? DllPath : LdrpDefaultPath.Buffer);
                             DbgPrint(" because path search required %u bytes\n", Length + sizeof(WCHAR));
                         }
 
@@ -1294,30 +1327,29 @@ staticlink:
                     }
 
                     FullDllNameDynamicString.Buffer = (RtlAllocateStringRoutine)(Length + sizeof(WCHAR));
-                    if (FullDllNameDynamicString.Buffer == NULL)
-                    {
-                        if (ShowSnaps)
-                        {
-                            DbgPrint("LDR: LdrpCheckForLoadedDll - Failing load of %wZ because we could not "
-                                     "dynamically allocate its full dll path buffer\n",
-                                     DllName);
+                    if (FullDllNameDynamicString.Buffer == NULL) {
+                        if (ShowSnaps) {
+                            DbgPrint("LDR: LdrpCheckForLoadedDll - Failing load of %wZ because we could not dynamically allocate its full dll path buffer\n", DllName);
                         }
                         Result = FALSE;
                         goto alldone;
                     }
 
-                    FullDllNameDynamicString.MaximumLength = (USHORT)(Length + sizeof(WCHAR));
+                    FullDllNameDynamicString.MaximumLength = (USHORT) (Length + sizeof(WCHAR));
                     FullDllNameDynamicString.Length = 0;
 
-                    Length = RtlDosSearchPath_U(ARGUMENT_PRESENT(DllPath) ? DllPath : LdrpDefaultPath.Buffer,
-                                                DllName->Buffer, NULL, Length, FullDllNameDynamicString.Buffer, NULL);
-                    if ((Length == 0) || ((Length + sizeof(WCHAR)) > FullDllNameDynamicString.MaximumLength))
-                    {
-                        if (ShowSnaps)
-                        {
-                            DbgPrint("LDR: LdrpCheckForLoadedDll - Failing load of %wZ because searching path into "
-                                     "dynamic buffer failed; buffer size: returned length: %lu\n",
-                                     DllName, FullDllNameDynamicString.MaximumLength, Length);
+                    Length = RtlDosSearchPath_U(
+                            ARGUMENT_PRESENT(DllPath) ? DllPath : LdrpDefaultPath.Buffer,
+                            DllName->Buffer,
+                            NULL,
+                            Length,
+                            FullDllNameDynamicString.Buffer,
+                            NULL
+                            );
+                    if ((Length == 0) || ((Length + sizeof(WCHAR)) > FullDllNameDynamicString.MaximumLength)) {
+                        if (ShowSnaps) {
+                            DbgPrint("LDR: LdrpCheckForLoadedDll - Failing load of %wZ because searching path into dynamic buffer failed; buffer size: returned length: %lu\n",
+                                DllName, FullDllNameDynamicString.MaximumLength, Length);
                         }
 
                         Result = FALSE;
@@ -1341,24 +1373,21 @@ staticlink:
     // coded path, then go to the static lib hash table for resolution
     //
 
-    if (!HardCodedPath)
-    {
+    if ( !HardCodedPath ) {
         // If we're redirecting this DLL, don't check if there's another DLL by the same name already loaded.
-        if (NT_SUCCESS(RtlFindActivationContextSectionString(0, NULL, ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION,
-                                                             DllName, NULL)))
+        if (NT_SUCCESS(RtlFindActivationContextSectionString(0, NULL, ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, DllName, NULL)))
             return FALSE;
 
         StaticLink = TRUE;
 
         goto staticlink;
-    }
+        }
 
     Result = FALSE;
     Head = &NtCurrentPeb()->Ldr->InLoadOrderModuleList;
     Next = Head->Flink;
 
-    while (Next != Head)
-    {
+    while ( Next != Head ) {
         Entry = CONTAINING_RECORD(Next, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
         Next = Next->Flink;
 
@@ -1367,8 +1396,7 @@ staticlink:
         // this is used to skip the entry pending list removal.
         //
 
-        if (!Entry->InMemoryOrderLinks.Flink)
-        {
+        if ( !Entry->InMemoryOrderLinks.Flink ) {
             continue;
         }
 
@@ -1376,17 +1404,19 @@ staticlink:
         // want to load the dll from a particular path more than once just because one of them
         // explicitly (and erroneously) specified the magic side-by-side location of the
         // DLL and the other loaded it via side-by-side isolation automagically.
-        if (RtlEqualUnicodeString(&FullDllName, &Entry->FullDllName, TRUE))
-        {
+        if (RtlEqualUnicodeString(
+                &FullDllName,
+                &Entry->FullDllName,
+                TRUE
+                ) ) {
 
-            Result = TRUE;
-            *LdrDataTableEntry = Entry;
-            break;
+                Result = TRUE;
+                *LdrDataTableEntry = Entry;
+                break;
+            }
         }
-    }
 
-    if (!Result)
-    {
+    if ( !Result ) {
 
         //
         // no names matched. This might be a long short name mismatch or
@@ -1402,59 +1432,87 @@ staticlink:
         IO_STATUS_BLOCK IoStatus;
         PVOID ViewBase;
         SIZE_T ViewSize;
-        PIMAGE_NT_HEADERS NtHeadersSrc, NtHeadersE;
+        PIMAGE_NT_HEADERS NtHeadersSrc,NtHeadersE;
         UNICODE_STRING NtFileName;
 
 
-        if (!RtlDosPathNameToNtPathName_U(FullDllName.Buffer, &NtFileName, NULL, NULL))
-        {
+        if (!RtlDosPathNameToNtPathName_U( FullDllName.Buffer,
+                                           &NtFileName,
+                                           NULL,
+                                           NULL
+                                         )
+           ) {
             goto alldone;
-        }
+            }
 
-        InitializeObjectAttributes(&ObjectAttributes, &NtFileName, OBJ_CASE_INSENSITIVE, NULL, NULL);
+        InitializeObjectAttributes(
+            &ObjectAttributes,
+            &NtFileName,
+            OBJ_CASE_INSENSITIVE,
+            NULL,
+            NULL
+            );
 
-        st = NtOpenFile(&File, SYNCHRONIZE | FILE_EXECUTE, &ObjectAttributes, &IoStatus,
-                        FILE_SHARE_READ | FILE_SHARE_DELETE, FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT);
+        st = NtOpenFile(
+                &File,
+                SYNCHRONIZE | FILE_EXECUTE,
+                &ObjectAttributes,
+                &IoStatus,
+                FILE_SHARE_READ | FILE_SHARE_DELETE,
+                FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT
+                );
         RtlFreeHeap(RtlProcessHeap(), 0, NtFileName.Buffer);
 
-        if (!NT_SUCCESS(st))
-        {
+        if (!NT_SUCCESS(st)) {
             goto alldone;
-        }
+            }
 
-        st = NtCreateSection(&Section, SECTION_MAP_READ | SECTION_MAP_EXECUTE | SECTION_MAP_WRITE, NULL, NULL,
-                             PAGE_EXECUTE, SEC_COMMIT, File);
-        NtClose(File);
+        st = NtCreateSection(
+                &Section,
+                SECTION_MAP_READ | SECTION_MAP_EXECUTE | SECTION_MAP_WRITE,
+                NULL,
+                NULL,
+                PAGE_EXECUTE,
+                SEC_COMMIT,
+                File
+                );
+        NtClose( File );
 
-        if (!NT_SUCCESS(st))
-        {
+        if (!NT_SUCCESS(st)) {
             goto alldone;
-        }
+            }
 
         ViewBase = NULL;
         ViewSize = 0;
-        st = NtMapViewOfSection(Section, NtCurrentProcess(), (PVOID *)&ViewBase, 0L, 0L, NULL, &ViewSize, ViewShare, 0L,
-                                PAGE_EXECUTE);
+        st = NtMapViewOfSection(
+                Section,
+                NtCurrentProcess(),
+                (PVOID *)&ViewBase,
+                0L,
+                0L,
+                NULL,
+                &ViewSize,
+                ViewShare,
+                0L,
+                PAGE_EXECUTE
+                );
         NtClose(Section);
-        if (!NT_SUCCESS(st))
-        {
+        if (!NT_SUCCESS(st)) {
             goto alldone;
-        }
+            }
 
         //
         // The section is mapped. Now find the headers
         //
         NtHeadersSrc = RtlImageNtHeader(ViewBase);
-        if (!NtHeadersSrc)
-        {
-            NtUnmapViewOfSection(NtCurrentProcess(), ViewBase);
+        if ( !NtHeadersSrc ) {
+            NtUnmapViewOfSection(NtCurrentProcess(),ViewBase);
             goto alldone;
-        }
+            }
         Head = &NtCurrentPeb()->Ldr->InLoadOrderModuleList;
         Next = Head->Flink;
 
-        while (Next != Head)
-        {
+        while ( Next != Head ) {
             Entry = CONTAINING_RECORD(Next, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
             Next = Next->Flink;
 
@@ -1463,16 +1521,13 @@ staticlink:
             // this is used to skip the entry pending list removal.
             //
 
-            if (!Entry->InMemoryOrderLinks.Flink)
-            {
+            if ( !Entry->InMemoryOrderLinks.Flink ) {
                 continue;
             }
 
-            try
-            {
-                if (Entry->TimeDateStamp == NtHeadersSrc->FileHeader.TimeDateStamp &&
-                    Entry->SizeOfImage == NtHeadersSrc->OptionalHeader.SizeOfImage)
-                {
+            try {
+                if ( Entry->TimeDateStamp == NtHeadersSrc->FileHeader.TimeDateStamp &&
+                     Entry->SizeOfImage == NtHeadersSrc->OptionalHeader.SizeOfImage ) {
 
                     //
                     // there is a very good chance we have an image match. Check the
@@ -1482,43 +1537,42 @@ staticlink:
 
                     NtHeadersE = RtlImageNtHeader(Entry->DllBase);
 
-                    if (RtlCompareMemory(NtHeadersE, NtHeadersSrc, sizeof(*NtHeadersE)))
-                    {
+                    if ( RtlCompareMemory(NtHeadersE,NtHeadersSrc,sizeof(*NtHeadersE)) ) {
 
                         //
                         // Now that it looks like we have a match, compare
                         // volume serial number's and file index's
                         //
 
-                        st = NtAreMappedFilesTheSame(Entry->DllBase, ViewBase);
+                        st = NtAreMappedFilesTheSame(Entry->DllBase,ViewBase);
 
-                        if (!NT_SUCCESS(st))
-                        {
+                        if ( !NT_SUCCESS(st) ) {
                             continue;
-                        }
-                        else
-                        {
+                            }
+                        else {
                             Result = TRUE;
                             *LdrDataTableEntry = Entry;
                             break;
+                            }
                         }
                     }
                 }
-            }
-            except(LdrpGenericExceptionFilter(GetExceptionInformation(), __FUNCTION__))
-            {
-                DbgPrintEx(DPFLTR_LDR_ID, LDR_ERROR_DPFLTR, "LDR: %s - Caught exception %08lx\n", __FUNCTION__,
-                           GetExceptionCode());
+            except (LdrpGenericExceptionFilter(GetExceptionInformation(), __FUNCTION__)) {
+                DbgPrintEx(
+                    DPFLTR_LDR_ID,
+                    LDR_ERROR_DPFLTR,
+                    "LDR: %s - Caught exception %08lx\n",
+                    __FUNCTION__,
+                    GetExceptionCode());
 
                 break;
+                }
             }
+        NtUnmapViewOfSection(NtCurrentProcess(),ViewBase);
         }
-        NtUnmapViewOfSection(NtCurrentProcess(), ViewBase);
-    }
 
 alldone:
-    if (FullDllNameDynamicString.Buffer != NULL)
-    {
+    if (FullDllNameDynamicString.Buffer != NULL) {
         RtlFreeUnicodeString(&FullDllNameDynamicString);
     }
 
@@ -1527,7 +1581,10 @@ alldone:
 
 
 BOOLEAN
-LdrpCheckForLoadedDllHandle(IN PVOID DllHandle, OUT PLDR_DATA_TABLE_ENTRY *LdrDataTableEntry)
+LdrpCheckForLoadedDllHandle (
+    IN PVOID DllHandle,
+    OUT PLDR_DATA_TABLE_ENTRY *LdrDataTableEntry
+    )
 
 /*++
 
@@ -1556,19 +1613,18 @@ Return Value:
 
 {
     PLDR_DATA_TABLE_ENTRY Entry;
-    PLIST_ENTRY Head, Next;
+    PLIST_ENTRY Head,Next;
 
-    if (LdrpLoadedDllHandleCache && (PVOID)LdrpLoadedDllHandleCache->DllBase == DllHandle)
-    {
+    if ( LdrpLoadedDllHandleCache &&
+        (PVOID) LdrpLoadedDllHandleCache->DllBase == DllHandle ) {
         *LdrDataTableEntry = LdrpLoadedDllHandleCache;
         return TRUE;
-    }
+        }
 
     Head = &NtCurrentPeb()->Ldr->InLoadOrderModuleList;
     Next = Head->Flink;
 
-    while (Next != Head)
-    {
+    while ( Next != Head ) {
         Entry = CONTAINING_RECORD(Next, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
         Next = Next->Flink;
         //
@@ -1576,13 +1632,11 @@ Return Value:
         // this is used to skip the entry pending list removal.
         //
 
-        if (!Entry->InMemoryOrderLinks.Flink)
-        {
+        if ( !Entry->InMemoryOrderLinks.Flink ) {
             continue;
         }
 
-        if (DllHandle == (PVOID)Entry->DllBase)
-        {
+        if (DllHandle == (PVOID)Entry->DllBase ){
             LdrpLoadedDllHandleCache = Entry;
             *LdrDataTableEntry = Entry;
             return TRUE;
@@ -1592,28 +1646,29 @@ Return Value:
 }
 
 NTSTATUS
-LdrpCheckCorImage(IN PIMAGE_COR20_HEADER Cor20Header, IN PUNICODE_STRING FullDllName, IN OUT PVOID *ViewBase,
-                  OUT PBOOLEAN Cor20ILOnly)
+LdrpCheckCorImage (
+    IN PIMAGE_COR20_HEADER Cor20Header,
+    IN PUNICODE_STRING FullDllName,
+    IN OUT PVOID *ViewBase,
+    OUT PBOOLEAN Cor20ILOnly
+    )
 
 {
     PIMAGE_NT_HEADERS NtHeaders;
     NTSTATUS NtStatus = STATUS_SUCCESS;
     PVOID OriginalViewBase = *ViewBase;
 
-
-    if (Cor20Header)
-    {
+    
+    if (Cor20Header) {
 
 #if defined(_WIN64)
-
+        
         //
         // Validate that the COM+ image contains the right flags
         //
-        if ((Cor20Header->Flags & (COMIMAGE_FLAGS_32BITREQUIRED | COMIMAGE_FLAGS_ILONLY)) != COMIMAGE_FLAGS_ILONLY)
-        {
-
-            if (ShowSnaps)
-            {
+        if ((Cor20Header->Flags & (COMIMAGE_FLAGS_32BITREQUIRED | COMIMAGE_FLAGS_ILONLY)) != COMIMAGE_FLAGS_ILONLY) {
+            
+            if (ShowSnaps) {
                 DbgPrint("LDR: COM+ image (dll) flags %lx didn't specify ILONLY\n", Cor20Header->Flags);
             }
 
@@ -1628,9 +1683,8 @@ LdrpCheckCorImage(IN PIMAGE_COR20_HEADER Cor20Header, IN PUNICODE_STRING FullDll
         //
 
         NtStatus = LdrpCorValidateImage(ViewBase, FullDllName->Buffer);
-        if (!NT_SUCCESS(NtStatus))
-        {
-
+        if (!NT_SUCCESS (NtStatus)) {
+            
             //
             // Image is bad, or mscoree failed, etc.
             //
@@ -1638,19 +1692,17 @@ LdrpCheckCorImage(IN PIMAGE_COR20_HEADER Cor20Header, IN PUNICODE_STRING FullDll
             *ViewBase = OriginalViewBase;
             goto return_result;
         }
-
+        
         //
         // Indicates it's an ILONLY image if the flag is set in the header.
         //
 
-        if ((Cor20Header->Flags & COMIMAGE_FLAGS_ILONLY) == COMIMAGE_FLAGS_ILONLY)
-        {
+        if ((Cor20Header->Flags & COMIMAGE_FLAGS_ILONLY) == COMIMAGE_FLAGS_ILONLY) {
             *Cor20ILOnly = TRUE;
         }
 
-        if (*ViewBase != OriginalViewBase)
-        {
-
+        if (*ViewBase != OriginalViewBase) {
+            
             //
             // Mscoree has substituted a new image at a new base in place
             // of the original image.  Unmap the original image and use
@@ -1659,9 +1711,8 @@ LdrpCheckCorImage(IN PIMAGE_COR20_HEADER Cor20Header, IN PUNICODE_STRING FullDll
 
             NtUnmapViewOfSection(NtCurrentProcess(), OriginalViewBase);
             NtHeaders = RtlImageNtHeader(*ViewBase);
-
-            if (!NtHeaders)
-            {
+            
+            if (!NtHeaders) {
 
                 NtStatus = STATUS_INVALID_IMAGE_FORMAT;
                 goto return_result;
@@ -1676,8 +1727,14 @@ return_result:
 
 
 NTSTATUS
-LdrpMapDll(IN PWSTR DllPath OPTIONAL, IN PWSTR DllName, IN PULONG DllCharacteristics OPTIONAL, IN BOOLEAN StaticLink,
-           IN BOOLEAN Redirected, OUT PLDR_DATA_TABLE_ENTRY *LdrDataTableEntry)
+LdrpMapDll(
+    IN PWSTR DllPath OPTIONAL,
+    IN PWSTR DllName,
+    IN PULONG DllCharacteristics OPTIONAL,
+    IN BOOLEAN StaticLink,
+    IN BOOLEAN Redirected,
+    OUT PLDR_DATA_TABLE_ENTRY *LdrDataTableEntry
+    )
 
 /*++
 
@@ -1716,7 +1773,7 @@ Return Value:
     UNICODE_STRING CollidingDll;
     PUCHAR ImageBase, ImageBounds, ScanBase, ScanTop;
     PLDR_DATA_TABLE_ENTRY ScanEntry;
-    PLIST_ENTRY ScanHead, ScanNext;
+    PLIST_ENTRY ScanHead,ScanNext;
     BOOLEAN CollidingDllFound;
     NTSTATUS ErrorStatus;
     ULONG_PTR ErrorParameters[2];
@@ -1733,10 +1790,11 @@ Return Value:
     //
 
 #if LDRDBG
-    if (ShowSnaps)
-    {
-        DbgPrint("LDR: LdrpMapDll: Image Name %ws, Search Path %ws\n", DllName,
-                 ARGUMENT_PRESENT(DllPath) ? DllPath : L"");
+    if (ShowSnaps) {
+        DbgPrint("LDR: LdrpMapDll: Image Name %ws, Search Path %ws\n",
+                DllName,
+                ARGUMENT_PRESENT(DllPath) ? DllPath : L""
+                );
     }
 #endif
 
@@ -1747,30 +1805,34 @@ Return Value:
     LdrpEnsureLoaderLockIsHeld();
 
     // No capturing etc. of the globals since we "know" that the loader lock is taken to synchronize access.
-    if (LdrpAppCompatDllRedirectionCallbackFunction != NULL)
-    {
-        st = (*LdrpAppCompatDllRedirectionCallbackFunction)(0, // Flags - reserved for the future
-                                                            DllName, DllPath, DllCharacteristics,
-                                                            LdrpAppCompatDllRedirectionCallbackData, &AppCompatDllName);
-        if (!NT_SUCCESS(st))
-        {
+    if (LdrpAppCompatDllRedirectionCallbackFunction != NULL) {
+        st = (*LdrpAppCompatDllRedirectionCallbackFunction)(
+                0,              // Flags - reserved for the future
+                DllName,
+                DllPath,
+                DllCharacteristics,
+                LdrpAppCompatDllRedirectionCallbackData,
+                &AppCompatDllName);
+        if (!NT_SUCCESS(st)) {
             DbgPrintEx(
-                DPFLTR_LDR_ID, LDR_ERROR_DPFLTR,
+                DPFLTR_LDR_ID,
+                LDR_ERROR_DPFLTR,
                 "LDR: %s - call back to app compat redirection function @ %p (cb data: %p) failed with status %x\n",
-                __FUNCTION__, LdrpAppCompatDllRedirectionCallbackFunction, LdrpAppCompatDllRedirectionCallbackData, st);
+                __FUNCTION__,
+                LdrpAppCompatDllRedirectionCallbackFunction,
+                LdrpAppCompatDllRedirectionCallbackData,
+                st);
 
             goto Exit;
         }
 
-        if (AppCompatDllName != NULL)
-        {
+        if (AppCompatDllName != NULL) {
             Redirected = TRUE;
             DllName = AppCompatDllName;
         }
     }
 
-    if ((LdrpKnownDllObjectDirectory != NULL) && !Redirected)
-    {
+    if ((LdrpKnownDllObjectDirectory != NULL) && !Redirected) {
         PCWCH p = DllName;
         WCHAR wch;
 
@@ -1778,88 +1840,110 @@ Return Value:
         // Skip the KnownDll check if this is an explicit path.
         //
 
-        while ((wch = *p) != L'\0')
-        {
+        while ((wch = *p) != L'\0') {
             p++;
             if (RTL_IS_PATH_SEPARATOR(wch))
                 break;
         }
 
         // If we hit the end of the string, there must have not been a path separator.
-        if (wch == L'\0')
-        {
+        if (wch == L'\0') {
             st = LdrpCheckForKnownDll(DllName, &FullDllName, &BaseDllName, &Section);
-            if ((!NT_SUCCESS(st)) && (st != STATUS_DLL_NOT_FOUND))
-            {
-                DbgPrintEx(DPFLTR_LDR_ID, LDR_ERROR_DPFLTR,
-                           "LDR: %s - call to LdrpCheckForKnownDll(\"%ws\", ...) failed with status %x\n", __FUNCTION__,
-                           DllName, st);
+            if ((!NT_SUCCESS(st)) && (st != STATUS_DLL_NOT_FOUND)) {
+                DbgPrintEx(
+                    DPFLTR_LDR_ID,
+                    LDR_ERROR_DPFLTR,
+                    "LDR: %s - call to LdrpCheckForKnownDll(\"%ws\", ...) failed with status %x\n",
+                    __FUNCTION__,
+                    DllName,
+                    st);
 
                 goto Exit;
             }
         }
     }
 
-    if (Section == NULL)
-    {
+    if (Section == NULL) {
         st = LdrpResolveDllName(DllPath, DllName, Redirected, &FullDllName, &BaseDllName, &DllFile);
-        if (!NT_SUCCESS(st))
-        {
-            if (st == STATUS_DLL_NOT_FOUND)
-            {
-                if (StaticLink)
-                {
+        if (!NT_SUCCESS(st)) {
+            if (st == STATUS_DLL_NOT_FOUND) {
+                if (StaticLink) {
                     UNICODE_STRING ErrorDllName, ErrorDllPath;
                     PUNICODE_STRING ErrorStrings[2] = { &ErrorDllName, &ErrorDllPath };
                     ULONG ErrorResponse;
 
-                    RtlInitUnicodeString(&ErrorDllName, DllName);
-                    RtlInitUnicodeString(&ErrorDllPath, ARGUMENT_PRESENT(DllPath) ? DllPath : LdrpDefaultPath.Buffer);
+                    RtlInitUnicodeString(&ErrorDllName,DllName);
+                    RtlInitUnicodeString(&ErrorDllPath,ARGUMENT_PRESENT(DllPath) ? DllPath : LdrpDefaultPath.Buffer);
 
-                    NtRaiseHardError(STATUS_DLL_NOT_FOUND,
-                                     2, // Number of error strings
-                                     0x00000003, (PULONG_PTR)ErrorStrings, OptionOk, &ErrorResponse);
+                    NtRaiseHardError(
+                        STATUS_DLL_NOT_FOUND,
+                        2,              // Number of error strings
+                        0x00000003,
+                        (PULONG_PTR)ErrorStrings,
+                        OptionOk,
+                        &ErrorResponse);
 
                     if (LdrpInLdrInit)
                         LdrpFatalHardErrorCount++;
                 }
+            } else {
+                DbgPrintEx(
+                    DPFLTR_LDR_ID,
+                    LDR_ERROR_DPFLTR,
+                    "LDR: %s - call to LdrpResolveDllName on dll \"%ws\" failed with status %x\n",
+                    __FUNCTION__,
+                    DllName,
+                    st);
             }
-            else
-            {
-                DbgPrintEx(DPFLTR_LDR_ID, LDR_ERROR_DPFLTR,
-                           "LDR: %s - call to LdrpResolveDllName on dll \"%ws\" failed with status %x\n", __FUNCTION__,
-                           DllName, st);
-            }
+
 
 
             goto Exit;
         }
 
-        if (ShowSnaps)
-        {
+        if (ShowSnaps) {
             PSZ type;
             PSZ type2;
             type = StaticLink ? "STATIC" : "DYNAMIC";
             type2 = Redirected ? "REDIRECTED" : "NON_REDIRECTED";
 
-            DbgPrint("LDR: Loading (%s, %s) %wZ\n", type, type2, &FullDllName);
+            DbgPrint(
+                "LDR: Loading (%s, %s) %wZ\n",
+                type,
+                type2,
+                &FullDllName);
         }
 
-        if (!RtlDosPathNameToNtPathName_U(FullDllName.Buffer, &NtFileName, NULL, NULL))
-        {
+        if (!RtlDosPathNameToNtPathName_U(
+                FullDllName.Buffer,
+                &NtFileName,
+                NULL,
+                NULL)) {
             st = STATUS_OBJECT_PATH_SYNTAX_BAD;
-            DbgPrintEx(DPFLTR_LDR_ID, LDR_ERROR_DPFLTR,
-                       "LDR: %s - call to RtlDosPathNameToNtPathName_U on path \"%wZ\" failed; returning status %x\n",
-                       __FUNCTION__, &FullDllName, st);
+            DbgPrintEx(
+                DPFLTR_LDR_ID,
+                LDR_ERROR_DPFLTR,
+                "LDR: %s - call to RtlDosPathNameToNtPathName_U on path \"%wZ\" failed; returning status %x\n",
+                __FUNCTION__,
+                &FullDllName,
+                st);
             goto Exit;
         }
 
-        st = LdrpCreateDllSection(&NtFileName, DllFile, &BaseDllName, DllCharacteristics, &Section);
+        st = LdrpCreateDllSection(&NtFileName,
+                                  DllFile,
+                                  &BaseDllName,
+                                  DllCharacteristics,
+                                  &Section);
 
-        if (!NT_SUCCESS(st))
-        {
-            DbgPrintEx(DPFLTR_LDR_ID, LDR_ERROR_DPFLTR, "LDR: %s - LdrpCreateDllSection (%wZ) failed with status %x\n",
-                       __FUNCTION__, &NtFileName, st);
+        if (!NT_SUCCESS(st)) {
+            DbgPrintEx(
+                DPFLTR_LDR_ID,
+                LDR_ERROR_DPFLTR,
+                "LDR: %s - LdrpCreateDllSection (%wZ) failed with status %x\n",
+                __FUNCTION__,
+                &NtFileName,
+                st);
 
             LdrpFreeUnicodeString(&FullDllName);
             // We do not free BaseDllName since it's just a substring of FullDllName.
@@ -1871,9 +1955,7 @@ Return Value:
 #if DBG
         LdrpSectionCreates++;
 #endif
-    }
-    else
-    {
+    } else {
         KnownDll = TRUE;
     }
 
@@ -1882,8 +1964,7 @@ Return Value:
 
 #if DBG
     LdrpSectionMaps++;
-    if (LdrpDisplayLoadTime)
-    {
+    if (LdrpDisplayLoadTime) {
         NtQueryPerformanceCounter(&MapBeginTime, NULL);
     }
 #endif
@@ -1894,33 +1975,49 @@ Return Value:
 
     ArbitraryUserPointer = Teb->NtTib.ArbitraryUserPointer;
     Teb->NtTib.ArbitraryUserPointer = (PVOID)FullDllName.Buffer;
-    st = NtMapViewOfSection(Section, NtCurrentProcess(), (PVOID *)&ViewBase, 0L, 0L, NULL, &ViewSize, ViewShare, 0L,
-                            PAGE_READWRITE);
+    st = NtMapViewOfSection(
+            Section,
+            NtCurrentProcess(),
+            (PVOID *)&ViewBase,
+            0L,
+            0L,
+            NULL,
+            &ViewSize,
+            ViewShare,
+            0L,
+            PAGE_READWRITE
+            );
     Teb->NtTib.ArbitraryUserPointer = ArbitraryUserPointer;
 
-    if (!NT_SUCCESS(st))
-    {
-        DbgPrintEx(DPFLTR_LDR_ID, LDR_ERROR_DPFLTR, "LDR: %s - failed to map view of section; status = %x\n",
-                   __FUNCTION__, st);
+    if (!NT_SUCCESS(st)) {
+        DbgPrintEx(
+            DPFLTR_LDR_ID,
+            LDR_ERROR_DPFLTR,
+            "LDR: %s - failed to map view of section; status = %x\n",
+            __FUNCTION__,
+            st);
 
         goto Exit;
     }
 
     NtHeaders = RtlImageNtHeader(ViewBase);
-    if (!NtHeaders)
-    {
-        NtUnmapViewOfSection(NtCurrentProcess(), ViewBase);
+    if ( !NtHeaders ) {
+        NtUnmapViewOfSection(NtCurrentProcess(),ViewBase);
         st = STATUS_INVALID_IMAGE_FORMAT;
-        DbgPrintEx(DPFLTR_LDR_ID, LDR_ERROR_DPFLTR,
-                   "LDR: %s - unable to map ViewBase (%p) to image headers; failing with status %x\n", __FUNCTION__,
-                   ViewBase, st);
+        DbgPrintEx(
+            DPFLTR_LDR_ID,
+            LDR_ERROR_DPFLTR,
+            "LDR: %s - unable to map ViewBase (%p) to image headers; failing with status %x\n",
+            __FUNCTION__,
+            ViewBase,
+            st);
         goto Exit;
-    }
+        }
 
 #if _WIN64
-    if (st != STATUS_IMAGE_NOT_AT_BASE && (NtCurrentPeb()->NtGlobalFlag & FLG_LDR_TOP_DOWN) &&
-        !(NtHeaders->FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED))
-    {
+    if (st != STATUS_IMAGE_NOT_AT_BASE &&
+        (NtCurrentPeb()->NtGlobalFlag & FLG_LDR_TOP_DOWN) &&
+        !(NtHeaders->FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED)) {
 
         // The image was loaded at its preferred base and has relocs.  Map
         // it again using the default ViewBase.  This will collide with the
@@ -1935,20 +2032,15 @@ Return Value:
 
         LoadTopDown = TRUE;
         SystemDll = &User32String;
-        if (RtlEqualUnicodeString(&BaseDllName, &User32String, TRUE))
-        {
+        if (RtlEqualUnicodeString(&BaseDllName, &User32String, TRUE)) {
             LoadTopDown = FALSE;
-        }
-        else
-        {
+        } else {
             SystemDll = &Kernel32String;
-            if (RtlEqualUnicodeString(&BaseDllName, &Kernel32String, TRUE))
-            {
+            if (RtlEqualUnicodeString(&BaseDllName, &Kernel32String, TRUE)) {
                 LoadTopDown = FALSE;
             }
         }
-        if (LoadTopDown)
-        {
+        if (LoadTopDown) {
             //
             // Map the image again.  It will collide with itself, and
             // the 64-bit mm will find a new base address for it,
@@ -1958,11 +2050,20 @@ Return Value:
             AlternateViewSize = 0;
             ArbitraryUserPointer = Teb->NtTib.ArbitraryUserPointer;
             Teb->NtTib.ArbitraryUserPointer = (PVOID)FullDllName.Buffer;
-            AlternateSt = NtMapViewOfSection(Section, NtCurrentProcess(), (PVOID *)&AlternateViewBase, 0L, 0L, NULL,
-                                             &AlternateViewSize, ViewShare, 0L, PAGE_READWRITE);
+            AlternateSt = NtMapViewOfSection(
+                    Section,
+                    NtCurrentProcess(),
+                    (PVOID *)&AlternateViewBase,
+                    0L,
+                    0L,
+                    NULL,
+                    &AlternateViewSize,
+                    ViewShare,
+                    0L,
+                    PAGE_READWRITE
+                    );
             Teb->NtTib.ArbitraryUserPointer = ArbitraryUserPointer;
-            if (NT_SUCCESS(AlternateSt))
-            {
+            if (NT_SUCCESS(AlternateSt)) {
                 //
                 // Success.  Unmap the original image from the low
                 // part of the address space and keep the new mapping
@@ -1973,10 +2074,9 @@ Return Value:
                 ViewBase = AlternateViewBase;
                 NtHeaders = RtlImageNtHeader(ViewBase);
                 st = AlternateSt;
-                if (!NtHeaders)
-                {
-                    NtUnmapViewOfSection(NtCurrentProcess(), AlternateViewBase);
-                    NtUnmapViewOfSection(NtCurrentProcess(), ViewBase);
+                if ( !NtHeaders ) {
+                    NtUnmapViewOfSection(NtCurrentProcess(),AlternateViewBase);
+                    NtUnmapViewOfSection(NtCurrentProcess(),ViewBase);
                     st = STATUS_INVALID_IMAGE_FORMAT;
                     goto Exit;
                 }
@@ -1985,35 +2085,43 @@ Return Value:
     }
 #endif
 
-#if defined(BUILD_WOW6432)
-    if (NtHeaders->OptionalHeader.SectionAlignment < NATIVE_PAGE_SIZE)
-    {
-        if (!NT_SUCCESS(stTemp = LdrpWx86FormatVirtualImage(&FullDllName, (PIMAGE_NT_HEADERS32)NtHeaders, ViewBase)))
-        {
+#if defined (BUILD_WOW6432)
+    if (NtHeaders->OptionalHeader.SectionAlignment < NATIVE_PAGE_SIZE) {
+        if (!NT_SUCCESS(stTemp = LdrpWx86FormatVirtualImage(&FullDllName, (PIMAGE_NT_HEADERS32)NtHeaders, ViewBase))) {
             st = stTemp;
-            DbgPrintEx(DPFLTR_LDR_ID, LDR_ERROR_DPFLTR,
-                       "LDR: %s - Call to LdrpWx86FormatVirtualImage(%ls) failed with status 0x%08lx\n", __FUNCTION__,
-                       FullDllName.Buffer, st);
+            DbgPrintEx(
+                DPFLTR_LDR_ID,
+                LDR_ERROR_DPFLTR,
+                "LDR: %s - Call to LdrpWx86FormatVirtualImage(%ls) failed with status 0x%08lx\n",
+                __FUNCTION__,
+                FullDllName.Buffer,
+                st);
 
             goto Exit;
         }
     }
 #endif
 
-    Cor20Header = RtlImageDirectoryEntryToData(ViewBase, TRUE, IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, &Cor20HeaderSize);
+    Cor20Header = RtlImageDirectoryEntryToData(ViewBase,
+                                               TRUE,
+                                               IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR,
+                                               &Cor20HeaderSize);
     OriginalViewBase = ViewBase;
 
     //
     // if this is an IL_ONLY image, then validate the image now
     //
 
-    if ((Cor20Header != NULL) && ((Cor20Header->Flags & COMIMAGE_FLAGS_ILONLY) != 0))
-    {
-
+    if ((Cor20Header != NULL) && 
+        ((Cor20Header->Flags & COMIMAGE_FLAGS_ILONLY) != 0)) {
+        
         // This is wacky but code later on depends on the fact that st *was* STATUS_IMAGE_MACHINE_TYPE_MISMATCH
         // and got overwritten with STATUS_SUCCESS.  This in effect means that COR images can never have
         // relocation information.  -mgrier 5/21/2001, XP Bug #400007.
-        st = LdrpCheckCorImage(Cor20Header, &FullDllName, &ViewBase, &Cor20ILOnly);
+        st = LdrpCheckCorImage (Cor20Header,
+                                &FullDllName,
+                                &ViewBase,
+                                &Cor20ILOnly);
 
         if (!NT_SUCCESS(st))
             goto Exit;
@@ -2021,8 +2129,7 @@ Return Value:
 
 
 #if DBG
-    if (LdrpDisplayLoadTime)
-    {
+    if (LdrpDisplayLoadTime) {
         NtQueryPerformanceCounter(&MapEndTime, NULL);
         MapElapsedTime.QuadPart = MapEndTime.QuadPart - MapBeginTime.QuadPart;
         DbgPrint("Map View of Section Time %ld %ws\n", MapElapsedTime.LowPart, DllName);
@@ -2035,10 +2142,13 @@ Return Value:
 
     Entry = LdrpAllocateDataTableEntry(ViewBase);
 
-    if (!Entry)
-    {
-        DbgPrintEx(DPFLTR_LDR_ID, LDR_ERROR_DPFLTR, "LDR: %s - failed to allocate new data table entry for %p\n",
-                   __FUNCTION__, ViewBase);
+    if (!Entry) {
+        DbgPrintEx(
+            DPFLTR_LDR_ID,
+            LDR_ERROR_DPFLTR,
+            "LDR: %s - failed to allocate new data table entry for %p\n",
+            __FUNCTION__,
+            ViewBase);
 
         st = STATUS_NO_MEMORY;
         goto Exit;
@@ -2068,17 +2178,19 @@ Return Value:
 
 #if LDRDBG
     if (ShowSnaps)
-        DbgPrint("LDR: LdrpMapDll: Full Name %wZ, Base Name %wZ\n", &Entry->FullDllName, &Entry->BaseDllName);
+        DbgPrint(
+            "LDR: LdrpMapDll: Full Name %wZ, Base Name %wZ\n",
+            &Entry->FullDllName,
+            &Entry->BaseDllName);
 #endif
 
     LdrpInsertMemoryTableEntry(Entry);
 
     LdrpSendDllLoadedNotifications(Entry, (st == STATUS_IMAGE_NOT_AT_BASE) ? LDR_DLL_LOADED_FLAG_RELOCATED : 0);
 
-    if (st == STATUS_IMAGE_MACHINE_TYPE_MISMATCH)
-    {
+    if ( st == STATUS_IMAGE_MACHINE_TYPE_MISMATCH ) {
 
-        PIMAGE_NT_HEADERS ImageHeader = RtlImageNtHeader(NtCurrentPeb()->ImageBaseAddress);
+        PIMAGE_NT_HEADERS ImageHeader = RtlImageNtHeader( NtCurrentPeb()->ImageBaseAddress );
 
         //
         // apps compiled for NT 3.x and below can load cross architecture
@@ -2088,8 +2200,7 @@ Return Value:
         ErrorStatus = STATUS_SUCCESS;
         ErrorResponse = ResponseCancel;
 
-        if (ImageHeader->OptionalHeader.MajorSubsystemVersion <= 3)
-        {
+        if ( ImageHeader->OptionalHeader.MajorSubsystemVersion <= 3 ) {
 
             Entry->EntryPoint = 0;
 
@@ -2103,17 +2214,23 @@ Return Value:
 
             ErrorParameters[0] = (ULONG_PTR)&FullDllName;
 
-            ErrorStatus = NtRaiseHardError(STATUS_IMAGE_MACHINE_TYPE_MISMATCH, 1, 1, ErrorParameters, OptionOkCancel,
-                                           &ErrorResponse);
-        }
-        if (NT_SUCCESS(ErrorStatus) && ErrorResponse == ResponseCancel)
-        {
+            ErrorStatus = NtRaiseHardError(
+                            STATUS_IMAGE_MACHINE_TYPE_MISMATCH,
+                            1,
+                            1,
+                            ErrorParameters,
+                            OptionOkCancel,
+                            &ErrorResponse
+                            );
+            }
+        if ( NT_SUCCESS(ErrorStatus) && ErrorResponse == ResponseCancel ) {
 
 
 #if defined(_AMD64_) // || defined(_IA64_)
 
 
-            RtlRemoveInvertedFunctionTable(&LdrpInvertedFunctionTable, Entry->DllBase);
+            RtlRemoveInvertedFunctionTable(&LdrpInvertedFunctionTable,
+                                           Entry->DllBase);
 
 #endif
 
@@ -2122,34 +2239,28 @@ Return Value:
             RemoveEntryList(&Entry->HashLinks);
             LdrpDeallocateDataTableEntry(Entry);
 
-            if (ImageHeader->OptionalHeader.MajorSubsystemVersion <= 3)
-            {
-                if (LdrpInLdrInit)
-                {
+            if ( ImageHeader->OptionalHeader.MajorSubsystemVersion <= 3 ) {
+                if ( LdrpInLdrInit ) {
                     LdrpFatalHardErrorCount++;
+                    }
                 }
-            }
             st = STATUS_INVALID_IMAGE_FORMAT;
             goto Exit;
+            }
         }
-    }
-    else
-    {
-        if (NtHeaders->FileHeader.Characteristics & IMAGE_FILE_DLL)
-        {
+    else {
+        if (NtHeaders->FileHeader.Characteristics & IMAGE_FILE_DLL) {
             Entry->Flags |= LDRP_IMAGE_DLL;
-        }
+            }
 
-        if (!(Entry->Flags & LDRP_IMAGE_DLL))
-        {
+        if (!(Entry->Flags & LDRP_IMAGE_DLL)) {
             Entry->EntryPoint = 0;
+            }
         }
-    }
 
     *LdrDataTableEntry = Entry;
 
-    if (st == STATUS_IMAGE_NOT_AT_BASE)
-    {
+    if (st == STATUS_IMAGE_NOT_AT_BASE) {
 
         Entry->Flags |= LDRP_IMAGE_NOT_AT_BASE;
 
@@ -2166,8 +2277,7 @@ Return Value:
         ScanHead = &NtCurrentPeb()->Ldr->InLoadOrderModuleList;
         ScanNext = ScanHead->Flink;
 
-        while (ScanNext != ScanHead)
-        {
+        while ( ScanNext != ScanHead ) {
             ScanEntry = CONTAINING_RECORD(ScanNext, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
             ScanNext = ScanNext->Flink;
 
@@ -2179,56 +2289,54 @@ Return Value:
             // this is used to skip the entry pending list removal.
             //
 
-            if (!ScanEntry->InMemoryOrderLinks.Flink)
-            {
+            if ( !ScanEntry->InMemoryOrderLinks.Flink ) {
                 continue;
-            }
+                }
 
             //
             // See if the base address of the scan image is within the relocating dll
             // or if the top address of the scan image is within the relocating dll
             //
 
-            if ((ImageBase >= ScanBase && ImageBase <= ScanTop)
+            if ( (ImageBase >= ScanBase && ImageBase <= ScanTop)
 
-                ||
+                 ||
 
-                (ImageBounds >= ScanBase && ImageBounds <= ScanTop)
+                 (ImageBounds >= ScanBase && ImageBounds <= ScanTop)
 
-                ||
+                 ||
 
-                (ScanBase >= ImageBase && ScanBase <= ImageBounds)
+                 (ScanBase >= ImageBase && ScanBase <= ImageBounds)
 
-            )
-            {
+                 ){
 
                 CollidingDllFound = TRUE;
                 CollidingDll = ScanEntry->FullDllName;
                 break;
+                }
             }
-        }
 
-        if (!CollidingDllFound)
-        {
+        if ( !CollidingDllFound ) {
             RtlInitUnicodeString(&CollidingDll, L"Dynamically Allocated Memory");
-        }
+            }
 
 #if DBG
-        if (BeginTime.LowPart || BeginTime.HighPart)
-        {
-            DbgPrint("\nLDR: %s Relocating Image Name %ws\n", __FUNCTION__, DllName);
+        if ( BeginTime.LowPart || BeginTime.HighPart ) {
+            DbgPrint(
+                "\nLDR: %s Relocating Image Name %ws\n",
+                __FUNCTION__,
+                DllName
+                );
         }
         LdrpSectionRelocates++;
 #endif
 
-        if (Entry->Flags & LDRP_IMAGE_DLL)
-        {
+        if (Entry->Flags & LDRP_IMAGE_DLL) {
 
             BOOLEAN AllowRelocation;
             PCUNICODE_STRING SystemDll;
 
-            if (!(NtHeaders->FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED))
-            {
+            if (!(NtHeaders->FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED)) {
                 PVOID pBaseRelocs;
                 ULONG BaseRelocCountBytes = 0;
 
@@ -2238,8 +2346,8 @@ Return Value:
                 // a pure forwarder dll or data w/o relocs.
                 //
 
-                pBaseRelocs =
-                    RtlImageDirectoryEntryToData(ViewBase, TRUE, IMAGE_DIRECTORY_ENTRY_BASERELOC, &BaseRelocCountBytes);
+                pBaseRelocs = RtlImageDirectoryEntryToData(
+                        ViewBase, TRUE, IMAGE_DIRECTORY_ENTRY_BASERELOC, &BaseRelocCountBytes);
 
                 if (!pBaseRelocs && !BaseRelocCountBytes)
                     goto NoRelocNeeded;
@@ -2254,19 +2362,15 @@ Return Value:
 
             AllowRelocation = TRUE;
             SystemDll = &User32String;
-            if (RtlEqualUnicodeString(&Entry->BaseDllName, SystemDll, TRUE))
-            {
+            if ( RtlEqualUnicodeString(&Entry->BaseDllName, SystemDll, TRUE)) {
                 AllowRelocation = FALSE;
-            }
-            else
-            {
+            } else {
                 SystemDll = &Kernel32String;
                 if (RtlEqualUnicodeString(&Entry->BaseDllName, SystemDll, TRUE))
                     AllowRelocation = FALSE;
             }
 
-            if (!AllowRelocation && KnownDll)
-            {
+            if ( !AllowRelocation && KnownDll ) {
 
                 //
                 // totally disallow the relocation since this is a knowndll
@@ -2280,10 +2384,15 @@ Return Value:
                 ErrorParameters[0] = (ULONG_PTR)SystemDll;
                 ErrorParameters[1] = (ULONG_PTR)&CollidingDll;
 
-                NtRaiseHardError(STATUS_ILLEGAL_DLL_RELOCATION, 2, 3, ErrorParameters, OptionOk, &ErrorResponse);
+                NtRaiseHardError(
+                    STATUS_ILLEGAL_DLL_RELOCATION,
+                    2,
+                    3,
+                    ErrorParameters,
+                    OptionOk,
+                    &ErrorResponse);
 
-                if (LdrpInLdrInit)
-                {
+                if ( LdrpInLdrInit ) {
                     LdrpFatalHardErrorCount++;
                 }
 
@@ -2291,21 +2400,19 @@ Return Value:
                 goto skipreloc;
             }
 
-            st = LdrpSetProtection(ViewBase, FALSE, StaticLink);
-            if (NT_SUCCESS(st))
-            {
-                __try
-                {
-                    st = LdrRelocateImage(ViewBase, "LDR", STATUS_SUCCESS, STATUS_CONFLICTING_ADDRESSES,
-                                          STATUS_INVALID_IMAGE_FORMAT);
-                }
-                __except (LdrpGenericExceptionFilter(GetExceptionInformation(), __FUNCTION__))
-                {
+            st = LdrpSetProtection(ViewBase, FALSE, StaticLink );
+            if (NT_SUCCESS(st)) {
+                __try {
+                    st = LdrRelocateImage(ViewBase,
+                                "LDR",
+                                STATUS_SUCCESS,
+                                STATUS_CONFLICTING_ADDRESSES,
+                                STATUS_INVALID_IMAGE_FORMAT);
+                } __except (LdrpGenericExceptionFilter(GetExceptionInformation(), __FUNCTION__)) {
                     st = GetExceptionCode();
                 }
 
-                if (NT_SUCCESS(st))
-                {
+                if (NT_SUCCESS(st)) {
                     //
                     // If we did relocations, then map the section again.
                     // this will force the debug event
@@ -2318,15 +2425,26 @@ Return Value:
                     ArbitraryUserPointer = Teb->NtTib.ArbitraryUserPointer;
                     Teb->NtTib.ArbitraryUserPointer = (PVOID)FullDllName.Buffer;
 
-                    st = NtMapViewOfSection(Section, NtCurrentProcess(), (PVOID *)&ViewBase, 0L, 0L, NULL, &ViewSize,
-                                            ViewShare, 0L, PAGE_READWRITE);
+                    st = NtMapViewOfSection(
+                        Section,
+                        NtCurrentProcess(),
+                        (PVOID *)&ViewBase,
+                        0L,
+                        0L,
+                        NULL,
+                        &ViewSize,
+                        ViewShare,
+                        0L,
+                        PAGE_READWRITE);
 
-                    if ((st != STATUS_CONFLICTING_ADDRESSES) && !NT_SUCCESS(st))
-                    {
-                        DbgPrintEx(DPFLTR_LDR_ID, LDR_ERROR_DPFLTR,
-                                   "[%x,%x] LDR: Failed to map view of section; ntstatus = %x\n",
-                                   HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess),
-                                   HandleToULong(NtCurrentTeb()->ClientId.UniqueThread), st);
+                    if ((st != STATUS_CONFLICTING_ADDRESSES) && !NT_SUCCESS(st)) {
+                        DbgPrintEx(
+                            DPFLTR_LDR_ID,
+                            LDR_ERROR_DPFLTR,
+                            "[%x,%x] LDR: Failed to map view of section; ntstatus = %x\n",
+                            HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess),
+                            HandleToULong(NtCurrentTeb()->ClientId.UniqueThread),
+                            st);
 
                         goto Exit;
                     }
@@ -2336,41 +2454,39 @@ Return Value:
                     st = LdrpSetProtection(ViewBase, TRUE, StaticLink);
                 }
             }
-        skipreloc:
+skipreloc:
             //
             // if the set protection failed, or if the relocation failed, then
             // remove the partially loaded dll from the lists and clear entry
             // that it has been freed.
             //
 
-            if (!NT_SUCCESS(st))
-            {
+            if ( !NT_SUCCESS(st) ) {
 
 #if defined(_AMD64_) // || defined(_IA64_)
 
 
-                RtlRemoveInvertedFunctionTable(&LdrpInvertedFunctionTable, Entry->DllBase);
+                RtlRemoveInvertedFunctionTable(&LdrpInvertedFunctionTable,
+                                               Entry->DllBase);
 
 #endif
 
                 RemoveEntryList(&Entry->InLoadOrderLinks);
                 RemoveEntryList(&Entry->InMemoryOrderLinks);
                 RemoveEntryList(&Entry->HashLinks);
-                if (ShowSnaps)
-                {
-                    DbgPrint("LDR: Fixups unsuccessfully re-applied @ %p\n", ViewBase);
+                if (ShowSnaps) {
+                    DbgPrint("LDR: Fixups unsuccessfully re-applied @ %p\n",
+                           ViewBase);
                 }
                 goto Exit;
             }
 
-            if (ShowSnaps)
-            {
-                DbgPrint("LDR: Fixups successfully re-applied @ %p\n", ViewBase);
+            if (ShowSnaps) {                
+                DbgPrint("LDR: Fixups successfully re-applied @ %p\n",
+                       ViewBase);               
             }
-        }
-        else
-        {
-        NoRelocNeeded:
+        } else {
+NoRelocNeeded:
             st = STATUS_SUCCESS;
 
             //
@@ -2380,8 +2496,18 @@ Return Value:
             ArbitraryUserPointer = Teb->NtTib.ArbitraryUserPointer;
             Teb->NtTib.ArbitraryUserPointer = (PVOID)FullDllName.Buffer;
 
-            st = NtMapViewOfSection(Section, NtCurrentProcess(), (PVOID *)&ViewBase, 0L, 0L, NULL, &ViewSize, ViewShare,
-                                    0L, PAGE_READWRITE);
+            st = NtMapViewOfSection(
+                Section,
+                NtCurrentProcess(),
+                (PVOID *)&ViewBase,
+                0L,
+                0L,
+                NULL,
+                &ViewSize,
+                ViewShare,
+                0L,
+                PAGE_READWRITE
+                );
             Teb->NtTib.ArbitraryUserPointer = ArbitraryUserPointer;
 
             // If the thing was relocated, we get back the failure status STATUS_CONFLICTING_ADDRESSES
@@ -2389,10 +2515,14 @@ Return Value:
             // asking about this behavior but who knows how many legacy apps depend on dlls that statically
             // link to EXEs which from time to time are not loaded at their default addresses.  -mgrier 4/9/2001
             if ((st != STATUS_CONFLICTING_ADDRESSES) && !NT_SUCCESS(st))
-                DbgPrintEx(DPFLTR_LDR_ID, LDR_ERROR_DPFLTR,
-                           "[%x,%x] LDR: %s - NtMapViewOfSection on no reloc needed dll failed with status %x\n",
-                           HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess),
-                           HandleToULong(NtCurrentTeb()->ClientId.UniqueThread), __FUNCTION__, st);
+                DbgPrintEx(
+                    DPFLTR_LDR_ID,
+                    LDR_ERROR_DPFLTR,
+                    "[%x,%x] LDR: %s - NtMapViewOfSection on no reloc needed dll failed with status %x\n",
+                    HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess),
+                    HandleToULong(NtCurrentTeb()->ClientId.UniqueThread),
+                    __FUNCTION__,
+                    st);
             else
                 st = STATUS_SUCCESS;
 
@@ -2406,27 +2536,27 @@ Return Value:
     // fixups
     //
 
-    if ((Cor20Header != NULL) && ((Cor20Header->Flags & COMIMAGE_FLAGS_ILONLY) == 0))
-    {
-
-        st = LdrpCheckCorImage(Cor20Header, &FullDllName, &ViewBase, &Cor20ILOnly);
-        if (!NT_SUCCESS(st))
-        {
+    if ((Cor20Header != NULL) && 
+        ((Cor20Header->Flags & COMIMAGE_FLAGS_ILONLY) == 0)) {
+        
+        st = LdrpCheckCorImage (Cor20Header,
+                                &FullDllName,
+                                &ViewBase,
+                                &Cor20ILOnly);
+        if (!NT_SUCCESS (st)) {
             goto Exit;
         }
     }
 
-    if (Cor20ILOnly)
-    {
+    if (Cor20ILOnly) {
         Entry->Flags |= LDRP_COR_IMAGE;
     }
 
-    if (ViewBase != OriginalViewBase)
-    {
+    if (ViewBase != OriginalViewBase) {
         Entry->Flags |= LDRP_COR_OWNS_UNMAP;
     }
 
-#if defined(_ALPHA_)
+#if defined (_ALPHA_)
     //
     // Find and apply Alpha architecture fixups for this dll
     //
@@ -2435,22 +2565,20 @@ Return Value:
 #endif
 
 #if defined(_X86_)
-    if (LdrpNumberOfProcessors > 1 && (Entry->Flags & LDRP_IMAGE_DLL))
-    {
+    if ( LdrpNumberOfProcessors > 1 && (Entry->Flags & LDRP_IMAGE_DLL) ) {
         LdrpValidateImageForMp(Entry);
-    }
+        }
 #endif
 
     ViewBase = NULL;
 
 Exit:
-    if (ViewBase != NULL)
-    {
+    if (ViewBase != NULL) {
         if (Cor20ILOnly)
             LdrpCorUnloadImage(ViewBase);
 
         if (ViewBase == OriginalViewBase)
-            NtUnmapViewOfSection(NtCurrentProcess(), ViewBase);
+            NtUnmapViewOfSection(NtCurrentProcess(),ViewBase);
     }
 
     if (Section != NULL)
@@ -2470,13 +2598,17 @@ Exit:
     return st;
 }
 
-#if defined(_ALPHA_)
+#if defined (_ALPHA_)
 
 #define asm __asm
-#pragma intrinsic(__asm)
+#pragma intrinsic (__asm)
 
-VOID AlphaApplyArchitectureFixups(IN PIMAGE_ARCHITECTURE_HEADER ArchHeader, IN ULONG ArchHeaderByteSize,
-                                  IN ULONG_PTR BaseAddr)
+VOID
+AlphaApplyArchitectureFixups(
+    IN PIMAGE_ARCHITECTURE_HEADER ArchHeader,
+    IN ULONG ArchHeaderByteSize,
+    IN ULONG_PTR BaseAddr
+    )
 
 /*++
 
@@ -2524,16 +2656,14 @@ Return Value:
 
     SystemAmask = ~asm("amask $16, $0", -1);
 
-    while ((*(PULONGLONG)ArchHeader != 0xffffffffL) && (ArchHeader < ArchHeaderEnd))
-    {
-        if (*(PULONGLONG)ArchHeader != 0L)
-        { // maybe zero's intermixed
+    while ((*(PULONGLONG)ArchHeader != 0xffffffffL) && (ArchHeader < ArchHeaderEnd)) {
+        if (*(PULONGLONG)ArchHeader != 0L) { // maybe zero's intermixed
 #if DBG && ARCH_DBG
-            DbgPrint("ARCH: Amask=0x%x, Current Header=0x%08x, Shift=%d, Value=%d\n", SystemAmask, *ArchHeader,
-                     ArchHeader->AmaskShift, ArchHeader->AmaskValue);
+            DbgPrint("ARCH: Amask=0x%x, Current Header=0x%08x, Shift=%d, Value=%d\n",
+                    SystemAmask, *ArchHeader,
+                    ArchHeader->AmaskShift, ArchHeader->AmaskValue);
 #endif
-            if (((SystemAmask >> ArchHeader->AmaskShift) & 1) != ArchHeader->AmaskValue)
-            {
+            if (((SystemAmask >> ArchHeader->AmaskShift) & 1) != ArchHeader->AmaskValue) {
 
                 //
                 // fixup needed
@@ -2543,14 +2673,14 @@ Return Value:
 
                 ArchEntry = (PIMAGE_ARCHITECTURE_ENTRY)(ArchHeader->FirstEntryRVA + BaseAddr);
 
-                while (*(PULONGLONG)ArchEntry != 0xffffffffL)
-                {
+                while (*(PULONGLONG)ArchEntry != 0xffffffffL) {
 
-                    if (*(PULONGLONG)ArchEntry != 0L)
-                    { // maybe zero's intermixed
+                    if (*(PULONGLONG)ArchEntry != 0L) { // maybe zero's intermixed
 #if DBG && ARCH_DBG
-                        DbgPrint("ARCH: 0x%08x -> 0x%08x\n", *(PALPHA_INSTRUCTION)(ArchEntry->FixupInstRVA + BaseAddr),
-                                 ArchEntry->NewInst);
+                        DbgPrint("ARCH: 0x%08x -> 0x%08x\n",
+                                 *(PALPHA_INSTRUCTION)(ArchEntry->FixupInstRVA + BaseAddr),
+                                 ArchEntry->NewInst
+                                );
 #endif
                         *(ULONG *)(ArchEntry->FixupInstRVA + BaseAddr) = ArchEntry->NewInst;
                     }
@@ -2562,7 +2692,12 @@ Return Value:
     }
 }
 
-VOID AlphaFindArchitectureFixups(PIMAGE_NT_HEADERS NtHeaders, PVOID ViewBase, BOOLEAN StaticLink)
+VOID
+AlphaFindArchitectureFixups(
+    PIMAGE_NT_HEADERS NtHeaders,
+    PVOID ViewBase,
+    BOOLEAN StaticLink
+    )
 
 /*++
 
@@ -2589,8 +2724,7 @@ Return Value:
     ULONG Size;
     PIMAGE_ARCHITECTURE_HEADER ImageArchData;
 
-    if (NtHeaders->FileHeader.Machine != IMAGE_FILE_MACHINE_ALPHA)
-    {
+    if (NtHeaders->FileHeader.Machine != IMAGE_FILE_MACHINE_ALPHA) {
         //
         // If the image isnt Alpha, don't try to find/apply Alpha fixups.
         // The image may be an x86 image linked with the x86 Watcom
@@ -2600,16 +2734,19 @@ Return Value:
         return;
     }
 
-    ImageArchData = (PIMAGE_ARCHITECTURE_HEADER)RtlImageDirectoryEntryToData(ViewBase, TRUE,
-                                                                             IMAGE_DIRECTORY_ENTRY_ARCHITECTURE, &Size);
-    if (ImageArchData)
-    {
+    ImageArchData =
+        (PIMAGE_ARCHITECTURE_HEADER)RtlImageDirectoryEntryToData(
+                                ViewBase,
+                                TRUE,
+                                IMAGE_DIRECTORY_ENTRY_ARCHITECTURE,
+                                &Size
+                                );
+    if (ImageArchData) {
         NTSTATUS st;
 
         st = LdrpSetProtection(ViewBase, FALSE, StaticLink); // access to r/w
 
-        if (NT_SUCCESS(st))
-        {
+        if (NT_SUCCESS(st)) {
             AlphaApplyArchitectureFixups(ImageArchData, Size, (ULONG_PTR)ViewBase);
             LdrpSetProtection(ViewBase, TRUE, StaticLink); // back to r/o
         }
@@ -2618,12 +2755,17 @@ Return Value:
 #endif
 
 
+
+
 //#define SAFER_DEBUGGING
 //#define SAFER_ERRORS_ARE_FATAL
 
 
 NTSTATUS
-LdrpCodeAuthzCheckDllAllowed(IN PUNICODE_STRING FileName, IN HANDLE FileImageHandle)
+LdrpCodeAuthzCheckDllAllowed(
+    IN PUNICODE_STRING  FileName,
+    IN HANDLE           FileImageHandle
+    )
 /*++
 
 Routine Description:
@@ -2671,41 +2813,58 @@ Return Value:
 
 #define SAFER_USER_KEY_NAME L"\\Software\\Policies\\Microsoft\\Windows\\Safer\\CodeIdentifiers"
 
-    typedef BOOL(WINAPI * ComputeAccessTokenFromCodeAuthzLevelT)(
-        IN SAFER_LEVEL_HANDLE LevelObject, IN HANDLE InAccessToken OPTIONAL, OUT PHANDLE OutAccessToken,
-        IN DWORD dwFlags, IN LPVOID lpReserved);
+    typedef BOOL (WINAPI *ComputeAccessTokenFromCodeAuthzLevelT) (
+        IN SAFER_LEVEL_HANDLE      LevelObject,
+        IN HANDLE           InAccessToken         OPTIONAL,
+        OUT PHANDLE         OutAccessToken,
+        IN DWORD            dwFlags,
+        IN LPVOID           lpReserved
+        );
 
-    typedef BOOL(WINAPI * IdentifyCodeAuthzLevelWT)(IN DWORD dwCheckFlags, IN PSAFER_CODE_PROPERTIES CodeProperties,
-                                                    OUT SAFER_LEVEL_HANDLE * pLevelObject, IN LPVOID lpReserved);
+    typedef BOOL (WINAPI *IdentifyCodeAuthzLevelWT) (
+        IN DWORD                dwCheckFlags,
+        IN PSAFER_CODE_PROPERTIES    CodeProperties,
+        OUT SAFER_LEVEL_HANDLE        *pLevelObject,
+        IN LPVOID               lpReserved
+        );
 
-    typedef BOOL(WINAPI * CloseCodeAuthzLevelT)(IN SAFER_LEVEL_HANDLE hLevelObject);
+    typedef BOOL (WINAPI *CloseCodeAuthzLevelT) (
+        IN SAFER_LEVEL_HANDLE      hLevelObject);
 
     NTSTATUS Status;
     SAFER_LEVEL_HANDLE hAuthzLevel = NULL;
     SAFER_CODE_PROPERTIES codeproperties;
     DWORD dwCompareResult = 0;
-    HANDLE hProcessToken = NULL;
+    HANDLE hProcessToken= NULL;
     HANDLE TempAdvApi32Handle = NULL;
 
-    const static SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
+    const static SID_IDENTIFIER_AUTHORITY NtAuthority =
+            SECURITY_NT_AUTHORITY;
     const static UNICODE_STRING UnicodeSafeBootKeyName =
         RTL_CONSTANT_STRING(L"\\Registry\\MACHINE\\System\\CurrentControlSet\\Control\\SafeBoot\\Option");
-    const static UNICODE_STRING UnicodeSafeBootValueName = RTL_CONSTANT_STRING(L"OptionValue");
+    const static UNICODE_STRING UnicodeSafeBootValueName =
+        RTL_CONSTANT_STRING(L"OptionValue");
     const static OBJECT_ATTRIBUTES ObjectAttributesSafeBoot =
         RTL_CONSTANT_OBJECT_ATTRIBUTES(&UnicodeSafeBootKeyName, OBJ_CASE_INSENSITIVE);
     const static UNICODE_STRING UnicodeKeyName =
         RTL_CONSTANT_STRING(L"\\Registry\\Machine\\Software\\Policies\\Microsoft\\Windows\\Safer\\CodeIdentifiers");
-    const static UNICODE_STRING UnicodeTransparentValueName = RTL_CONSTANT_STRING(L"TransparentEnabled");
+    const static UNICODE_STRING UnicodeTransparentValueName =
+        RTL_CONSTANT_STRING(L"TransparentEnabled");
     const static OBJECT_ATTRIBUTES ObjectAttributesCodeIdentifiers =
         RTL_CONSTANT_OBJECT_ATTRIBUTES(&UnicodeKeyName, OBJ_CASE_INSENSITIVE);
-    const static UNICODE_STRING ModuleNameAdvapi = RTL_CONSTANT_STRING(L"ADVAPI32.DLL");
-    const static ANSI_STRING ProcedureNameIdentify = RTL_CONSTANT_STRING("SaferIdentifyLevel");
-    const static ANSI_STRING ProcedureNameCompute = RTL_CONSTANT_STRING("SaferComputeTokenFromLevel");
-    const static ANSI_STRING ProcedureNameClose = RTL_CONSTANT_STRING("SaferCloseLevel");
+    const static UNICODE_STRING ModuleNameAdvapi =
+        RTL_CONSTANT_STRING(L"ADVAPI32.DLL");
+    const static ANSI_STRING ProcedureNameIdentify =
+        RTL_CONSTANT_STRING("SaferIdentifyLevel");
+    const static ANSI_STRING ProcedureNameCompute =
+        RTL_CONSTANT_STRING("SaferComputeTokenFromLevel");
+    const static ANSI_STRING ProcedureNameClose =
+        RTL_CONSTANT_STRING("SaferCloseLevel");
 
-    static volatile HANDLE AdvApi32ModuleHandleMaster = (HANDLE)(ULONG_PTR)-1;
+    static volatile HANDLE AdvApi32ModuleHandleMaster = (HANDLE) (ULONG_PTR) -1;
     static IdentifyCodeAuthzLevelWT lpfnIdentifyCodeAuthzLevelW;
-    static ComputeAccessTokenFromCodeAuthzLevelT lpfnComputeAccessTokenFromCodeAuthzLevel;
+    static ComputeAccessTokenFromCodeAuthzLevelT
+            lpfnComputeAccessTokenFromCodeAuthzLevel;
     static CloseCodeAuthzLevelT lpfnCloseCodeAuthzLevel;
 
 
@@ -2715,8 +2874,7 @@ Return Value:
 
     // Check for NULL header.
 
-    if (!NtHeader)
-    {
+    if (!NtHeader) {
         return STATUS_SUCCESS;
     }
 
@@ -2724,8 +2882,7 @@ Return Value:
     // of problems because kernel32 might not initialize for others.
 
     if (!((NtHeader->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI) ||
-          (NtHeader->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)))
-    {
+        (NtHeader->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI))) {
         return STATUS_SUCCESS;
     }
 
@@ -2735,14 +2892,11 @@ Return Value:
     // should definitely not occur for this process anymore.
     //
     TempAdvApi32Handle = AdvApi32ModuleHandleMaster;
-    if (TempAdvApi32Handle == NULL)
-    {
+    if (TempAdvApi32Handle == NULL) {
         // We tried to load ADVAPI32.DLL once before, but failed.
         Status = STATUS_ACCESS_DENIED;
         goto ExitHandler;
-    }
-    else if (TempAdvApi32Handle == LongToHandle(-2))
-    {
+    } else if (TempAdvApi32Handle == LongToHandle(-2)) {
         // Indicates that DLL checking should never be done for this process.
         Status = STATUS_SUCCESS;
         goto ExitHandler;
@@ -2754,9 +2908,11 @@ Return Value:
     // We care only about the process token, and not the
     // thread impersonation token.
     //
-    Status = NtOpenProcessToken(NtCurrentProcess(), TOKEN_QUERY, &hProcessToken);
-    if (!NT_SUCCESS(Status))
-    {
+    Status = NtOpenProcessToken(
+                    NtCurrentProcess(),
+                    TOKEN_QUERY,
+                    &hProcessToken);
+    if (!NT_SUCCESS(Status)) {
 #ifdef SAFER_ERRORS_ARE_FATAL
         AdvApi32ModuleHandleMaster = NULL;
         Status = STATUS_ACCESS_DENIED;
@@ -2781,8 +2937,7 @@ Return Value:
         // We need to prevent multiple threads from simultaneously
         // getting stuck and trying to load advapi at the same time.
         //
-        if (InterlockedCompareExchange(&LoadInProgress, 1, 0) != 0)
-        {
+        if (InterlockedCompareExchange(&LoadInProgress, 1, 0) != 0) {
             Status = STATUS_SUCCESS;
             goto ExitHandler2;
         }
@@ -2793,22 +2948,24 @@ Return Value:
         //
         {
             BYTE tokenuserbuff[sizeof(TOKEN_USER) + 128];
-            PTOKEN_USER ptokenuser = (PTOKEN_USER)tokenuserbuff;
+            PTOKEN_USER ptokenuser = (PTOKEN_USER) tokenuserbuff;
             BYTE localsystembuff[128];
-            PSID LocalSystemSid = (PSID)localsystembuff;
+            PSID LocalSystemSid = (PSID) localsystembuff;
             ULONG ulReturnLength;
 
 
-            Status = NtQueryInformationToken(hProcessToken, TokenUser, tokenuserbuff, sizeof(tokenuserbuff),
-                                             &ulReturnLength);
-            if (NT_SUCCESS(Status))
-            {
-                Status = RtlInitializeSid(LocalSystemSid, (PSID_IDENTIFIER_AUTHORITY)&NtAuthority, 1);
+            Status = NtQueryInformationToken(
+                            hProcessToken, TokenUser,
+                            tokenuserbuff, sizeof(tokenuserbuff),
+                            &ulReturnLength);
+            if (NT_SUCCESS(Status)) {
+                Status = RtlInitializeSid(
+                            LocalSystemSid,
+                            (PSID_IDENTIFIER_AUTHORITY) &NtAuthority, 1);
                 ASSERTMSG("InitializeSid should not fail.", NT_SUCCESS(Status));
                 *RtlSubAuthoritySid(LocalSystemSid, 0) = SECURITY_LOCAL_SYSTEM_RID;
 
-                if (RtlEqualSid(ptokenuser->User.Sid, LocalSystemSid))
-                {
+                if (RtlEqualSid(ptokenuser->User.Sid, LocalSystemSid)) {
                     goto FailSuccessfully;
                 }
             }
@@ -2825,7 +2982,8 @@ Return Value:
         {
             HANDLE hKeySafeBoot;
             BYTE QueryBuffer[sizeof(KEY_VALUE_PARTIAL_INFORMATION) + 64];
-            PKEY_VALUE_PARTIAL_INFORMATION pKeyValueInfo = (PKEY_VALUE_PARTIAL_INFORMATION)QueryBuffer;
+            PKEY_VALUE_PARTIAL_INFORMATION pKeyValueInfo =
+                (PKEY_VALUE_PARTIAL_INFORMATION) QueryBuffer;
             DWORD dwActualSize;
             BOOLEAN bSafeModeBoot = FALSE;
 
@@ -2834,30 +2992,33 @@ Return Value:
             // under this key.  This allows us to combine our test of
             // being an Administrator and having booted in Safe mode.
             Status = NtOpenKey(&hKeySafeBoot, KEY_QUERY_VALUE | KEY_SET_VALUE,
-                               (POBJECT_ATTRIBUTES)&ObjectAttributesSafeBoot);
-            if (NT_SUCCESS(Status))
-            {
-                Status = NtQueryValueKey(hKeySafeBoot, (PUNICODE_STRING)&UnicodeSafeBootValueName,
-                                         KeyValuePartialInformation, pKeyValueInfo, sizeof(QueryBuffer), &dwActualSize);
+                               (POBJECT_ATTRIBUTES) &ObjectAttributesSafeBoot);
+            if (NT_SUCCESS(Status)) {
+                Status = NtQueryValueKey(
+                            hKeySafeBoot,
+                            (PUNICODE_STRING) &UnicodeSafeBootValueName,
+                            KeyValuePartialInformation,
+                            pKeyValueInfo,
+                            sizeof(QueryBuffer),
+                            &dwActualSize);
                 NtClose(hKeySafeBoot);
-                if (NT_SUCCESS(Status))
-                {
-                    if (pKeyValueInfo->Type == REG_DWORD && pKeyValueInfo->DataLength == sizeof(DWORD) &&
-                        *((PDWORD)pKeyValueInfo->Data) > 0)
-                    {
+                if (NT_SUCCESS(Status)) {
+                    if (pKeyValueInfo->Type == REG_DWORD &&
+                        pKeyValueInfo->DataLength == sizeof(DWORD) &&
+                        *((PDWORD) pKeyValueInfo->Data) > 0) {
                         bSafeModeBoot = TRUE;
                     }
                 }
             }
 
-            if (bSafeModeBoot)
-            {
-            FailSuccessfully:
+            if (bSafeModeBoot) {
+FailSuccessfully:
                 AdvApi32ModuleHandleMaster = LongToHandle(-2);
                 Status = STATUS_SUCCESS;
                 goto ExitHandler2;
             }
         }
+
 
 
         //
@@ -2872,21 +3033,24 @@ Return Value:
             // BUG 240635: change to use existence of policy instead.
             HANDLE hKeyEnabled;
             BYTE QueryBuffer[sizeof(KEY_VALUE_PARTIAL_INFORMATION) + 64];
-            PKEY_VALUE_PARTIAL_INFORMATION pKeyValueInfo = (PKEY_VALUE_PARTIAL_INFORMATION)QueryBuffer;
+            PKEY_VALUE_PARTIAL_INFORMATION pKeyValueInfo =
+                (PKEY_VALUE_PARTIAL_INFORMATION) QueryBuffer;
             DWORD dwActualSize;
             BOOLEAN bPolicyEnabled = FALSE;
 
-            Status = NtOpenKey(&hKeyEnabled, KEY_QUERY_VALUE, (POBJECT_ATTRIBUTES)&ObjectAttributesCodeIdentifiers);
-            if (NT_SUCCESS(Status))
-            {
-                Status = NtQueryValueKey(hKeyEnabled, (PUNICODE_STRING)&UnicodeTransparentValueName,
-                                         KeyValuePartialInformation, pKeyValueInfo, sizeof(QueryBuffer), &dwActualSize);
+            Status = NtOpenKey(&hKeyEnabled, KEY_QUERY_VALUE,
+                               (POBJECT_ATTRIBUTES) &ObjectAttributesCodeIdentifiers);
+            if (NT_SUCCESS(Status)) {
+                Status = NtQueryValueKey(
+                            hKeyEnabled,
+                            (PUNICODE_STRING) &UnicodeTransparentValueName,
+                            KeyValuePartialInformation,
+                            pKeyValueInfo, sizeof(QueryBuffer), &dwActualSize);
                 NtClose(hKeyEnabled);
-                if (NT_SUCCESS(Status))
-                {
-                    if (pKeyValueInfo->Type == REG_DWORD && pKeyValueInfo->DataLength == sizeof(DWORD) &&
-                        *((PDWORD)pKeyValueInfo->Data) > 1)
-                    {
+                if (NT_SUCCESS(Status)) {
+                    if (pKeyValueInfo->Type == REG_DWORD &&
+                        pKeyValueInfo->DataLength == sizeof(DWORD) &&
+                        *((PDWORD) pKeyValueInfo->Data) > 1) {
                         bPolicyEnabled = TRUE;
                     }
                 }
@@ -2897,8 +3061,7 @@ Return Value:
             // There was no machine policy. Check if user policy is enabled.
             //
 
-            if (!bPolicyEnabled)
-            {
+            if (!bPolicyEnabled) {
                 UNICODE_STRING CurrentUserKeyPath;
                 UNICODE_STRING SubKeyNameUser;
                 OBJECT_ATTRIBUTES ObjectAttributesUser;
@@ -2907,77 +3070,85 @@ Return Value:
                 // Get the prefix for the user key.
                 //
 
-                Status = RtlFormatCurrentUserKeyPath(&CurrentUserKeyPath);
+                Status = RtlFormatCurrentUserKeyPath( &CurrentUserKeyPath );
 
-                if (NT_SUCCESS(Status))
-                {
+                if (NT_SUCCESS( Status ) ) {
 
                     SubKeyNameUser.Length = 0;
-                    SubKeyNameUser.MaximumLength =
-                        CurrentUserKeyPath.Length + sizeof(WCHAR) + sizeof(SAFER_USER_KEY_NAME);
+                    SubKeyNameUser.MaximumLength = CurrentUserKeyPath.Length + 
+                                                   sizeof(WCHAR) + 
+                                                   sizeof(SAFER_USER_KEY_NAME); 
 
                     //
                     // Allocate memory big enough to hold the unicode string.
                     //
 
-                    SubKeyNameUser.Buffer =
-                        RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TEMP_TAG), SubKeyNameUser.MaximumLength);
+                    SubKeyNameUser.Buffer = RtlAllocateHeap( 
+                                                RtlProcessHeap(),
+                                                MAKE_TAG( TEMP_TAG ),
+                                                SubKeyNameUser.MaximumLength);
 
-                    if (SubKeyNameUser.Buffer != NULL)
-                    {
+                    if (SubKeyNameUser.Buffer != NULL) {
 
                         //
                         // Copy the prefix into the string.
                         // This is of the type Registry\S-1-5-21-xxx-xxx-xxx-xxx.
                         //
 
-                        Status = RtlAppendUnicodeStringToString(&SubKeyNameUser, &CurrentUserKeyPath);
+                        Status = RtlAppendUnicodeStringToString(
+                                    &SubKeyNameUser, 
+                                    &CurrentUserKeyPath );
 
-                        if (NT_SUCCESS(Status))
-                        {
+                        if (NT_SUCCESS( Status ) ) {
 
                             //
                             // Append the Safer suffix.
                             //
 
-                            Status = RtlAppendUnicodeToString(&SubKeyNameUser, SAFER_USER_KEY_NAME);
+                            Status = RtlAppendUnicodeToString( 
+                                         &SubKeyNameUser,
+                                         SAFER_USER_KEY_NAME );
 
-                            if (NT_SUCCESS(Status))
-                            {
+                            if (NT_SUCCESS( Status ) ) {
 
-                                InitializeObjectAttributes(&ObjectAttributesUser, &SubKeyNameUser, OBJ_CASE_INSENSITIVE,
-                                                           NULL, NULL);
+                                InitializeObjectAttributes(
+                                    &ObjectAttributesUser,
+                                    &SubKeyNameUser,
+                                    OBJ_CASE_INSENSITIVE,
+                                    NULL,
+                                    NULL
+                                );
 
-                                Status =
-                                    NtOpenKey(&hKeyEnabled, KEY_QUERY_VALUE, (POBJECT_ATTRIBUTES)&ObjectAttributesUser);
+                                Status = NtOpenKey( &hKeyEnabled,KEY_QUERY_VALUE,
+                                             (POBJECT_ATTRIBUTES) &ObjectAttributesUser);
 
-                                if (NT_SUCCESS(Status))
-                                {
-                                    Status = NtQueryValueKey(hKeyEnabled, (PUNICODE_STRING)&UnicodeTransparentValueName,
-                                                             KeyValuePartialInformation, pKeyValueInfo,
-                                                             sizeof(QueryBuffer), &dwActualSize);
+                                if (NT_SUCCESS(Status)) {
+                                    Status = NtQueryValueKey(
+                                                hKeyEnabled,
+                                                (PUNICODE_STRING) &UnicodeTransparentValueName,
+                                                KeyValuePartialInformation,
+                                                pKeyValueInfo, sizeof(QueryBuffer), &dwActualSize);
 
-                                    if (NT_SUCCESS(Status))
-                                    {
+                                    if (NT_SUCCESS(Status)) {
                                         if (pKeyValueInfo->Type == REG_DWORD &&
                                             pKeyValueInfo->DataLength == sizeof(DWORD) &&
-                                            *((PDWORD)pKeyValueInfo->Data) > 1)
-                                        {
+                                            *((PDWORD) pKeyValueInfo->Data) > 1) {
                                             bPolicyEnabled = TRUE;
                                         }
                                     }
                                 }
                             }
+
                         }
                         RtlFreeHeap(RtlProcessHeap(), 0, SubKeyNameUser.Buffer);
                     }
-                    RtlFreeUnicodeString(&CurrentUserKeyPath);
+                    RtlFreeUnicodeString( &CurrentUserKeyPath );
                 }
             }
 
 
-            if (!bPolicyEnabled)
-            {
+
+            if (!bPolicyEnabled) {
                 goto FailSuccessfully;
             }
         }
@@ -2994,14 +3165,14 @@ Return Value:
             // BUG 241835: the WinSafer supression doesn't affect dependencies.
             ULONG DllCharacteristics = IMAGE_FILE_SYSTEM;
             Status = LdrLoadDll(UNICODE_NULL,
-                                &DllCharacteristics, // prevents recursion too
-                                (PUNICODE_STRING)&ModuleNameAdvapi, &TempAdvApi32Handle);
-            if (!NT_SUCCESS(Status))
-            {
-#if DBG
-                DbgPrint("LDR: AuthzCheck: load failure on advapi (Status=%d) inside %d for %wZ\n", Status,
-                         HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess), FileName);
-#endif
+                                &DllCharacteristics,  // prevents recursion too
+                                (PUNICODE_STRING) &ModuleNameAdvapi,
+                                &TempAdvApi32Handle);
+            if (!NT_SUCCESS(Status)) {
+                #if DBG
+                DbgPrint("LDR: AuthzCheck: load failure on advapi (Status=%d) inside %d for %wZ\n",
+                         Status, HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess), FileName);
+                #endif
                 AdvApi32ModuleHandleMaster = NULL;
                 Status = STATUS_ENTRYPOINT_NOT_FOUND;
                 goto ExitHandler2;
@@ -3009,50 +3180,61 @@ Return Value:
         }
 
 
+
         //
         // Get function pointers to the APIs that we'll need.  If we fail
         // to get pointers for any of them, then just unload advapi and
         // ignore all future attempts to load it within this process.
         //
-        Status = LdrpGetProcedureAddress(TempAdvApi32Handle, (PANSI_STRING)&ProcedureNameIdentify, 0,
-                                         (PVOID *)&lpfnIdentifyCodeAuthzLevelW, FALSE);
+        Status = LdrpGetProcedureAddress(
+                TempAdvApi32Handle,
+                (PANSI_STRING) &ProcedureNameIdentify,
+                0,
+                (PVOID*)&lpfnIdentifyCodeAuthzLevelW, 
+                FALSE);
 
-        if (!NT_SUCCESS(Status) || !lpfnIdentifyCodeAuthzLevelW)
-        {
-#if DBG
-            DbgPrint("LDR: AuthzCheck: advapi getprocaddress identify (Status=%X) inside %d for %wZ\n", Status,
-                     HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess), FileName);
-#endif
+        if (!NT_SUCCESS(Status) || !lpfnIdentifyCodeAuthzLevelW) {
+            #if DBG
+            DbgPrint("LDR: AuthzCheck: advapi getprocaddress identify (Status=%X) inside %d for %wZ\n",
+                     Status, HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess), FileName);
+            #endif
             LdrUnloadDll(TempAdvApi32Handle);
             AdvApi32ModuleHandleMaster = NULL;
             Status = STATUS_ENTRYPOINT_NOT_FOUND;
             goto ExitHandler2;
         }
 
-        Status = LdrpGetProcedureAddress(TempAdvApi32Handle, (PANSI_STRING)&ProcedureNameCompute, 0,
-                                         (PVOID *)&lpfnComputeAccessTokenFromCodeAuthzLevel, FALSE);
+        Status = LdrpGetProcedureAddress(
+                TempAdvApi32Handle,
+                (PANSI_STRING) &ProcedureNameCompute,
+                0,
+                (PVOID*)&lpfnComputeAccessTokenFromCodeAuthzLevel,
+                FALSE);
 
-        if (!NT_SUCCESS(Status) || !lpfnComputeAccessTokenFromCodeAuthzLevel)
-        {
-#if DBG
-            DbgPrint("LDR: AuthzCheck: advapi getprocaddress compute (Status=%X) inside %d for %wZ\n", Status,
-                     HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess), FileName);
-#endif
+        if (!NT_SUCCESS(Status) ||
+            !lpfnComputeAccessTokenFromCodeAuthzLevel) {
+            #if DBG
+            DbgPrint("LDR: AuthzCheck: advapi getprocaddress compute (Status=%X) inside %d for %wZ\n",
+                     Status, HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess), FileName);
+            #endif
             LdrUnloadDll(TempAdvApi32Handle);
             AdvApi32ModuleHandleMaster = NULL;
             Status = STATUS_ENTRYPOINT_NOT_FOUND;
             goto ExitHandler2;
         }
 
-        Status = LdrpGetProcedureAddress(TempAdvApi32Handle, (PANSI_STRING)&ProcedureNameClose, 0,
-                                         (PVOID *)&lpfnCloseCodeAuthzLevel, FALSE);
+        Status = LdrpGetProcedureAddress(
+                TempAdvApi32Handle,
+                (PANSI_STRING) &ProcedureNameClose,
+                0,
+                (PVOID*)&lpfnCloseCodeAuthzLevel,
+                FALSE);
 
-        if (!NT_SUCCESS(Status) || !lpfnCloseCodeAuthzLevel)
-        {
-#if DBG
-            DbgPrint("LDR: AuthzCheck: advapi getprocaddress close (Status=%X) inside %d for %wZ\n", Status,
-                     HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess), FileName);
-#endif
+        if (!NT_SUCCESS(Status) || !lpfnCloseCodeAuthzLevel) {
+            #if DBG
+            DbgPrint("LDR: AuthzCheck: advapi getprocaddress close (Status=%X) inside %d for %wZ\n",
+                     Status, HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess), FileName);
+            #endif
             LdrUnloadDll(TempAdvApi32Handle);
             AdvApi32ModuleHandleMaster = NULL;
             Status = STATUS_ENTRYPOINT_NOT_FOUND;
@@ -3067,8 +3249,11 @@ Return Value:
     //
     RtlZeroMemory(&codeproperties, sizeof(codeproperties));
     codeproperties.cbSize = sizeof(codeproperties);
-    codeproperties.dwCheckFlags = (SAFER_CRITERIA_IMAGEPATH | SAFER_CRITERIA_IMAGEHASH | SAFER_CRITERIA_IMAGEPATH_NT);
-    ASSERTMSG("FileName not null terminated", FileName->Buffer[FileName->Length / sizeof(WCHAR)] == UNICODE_NULL);
+    codeproperties.dwCheckFlags =
+            (SAFER_CRITERIA_IMAGEPATH | SAFER_CRITERIA_IMAGEHASH |
+             SAFER_CRITERIA_IMAGEPATH_NT);
+    ASSERTMSG("FileName not null terminated",
+              FileName->Buffer[FileName->Length / sizeof(WCHAR)] == UNICODE_NULL);
     codeproperties.ImagePath = FileName->Buffer;
     codeproperties.hImageFileHandle = FileImageHandle;
 
@@ -3077,10 +3262,11 @@ Return Value:
     // Ask the system to find the Authorization Level that classifies it.
     //
     ASSERT(lpfnIdentifyCodeAuthzLevelW != NULL);
-    if (lpfnIdentifyCodeAuthzLevelW(1,               // 1 structure
-                                    &codeproperties, // details to identify
-                                    &hAuthzLevel,    // Safer level
-                                    NULL))           // reserved.
+    if (lpfnIdentifyCodeAuthzLevelW(
+            1,                      // 1 structure
+            &codeproperties,        // details to identify
+            &hAuthzLevel,           // Safer level
+            NULL))                  // reserved.
     {
         //
         // We found an Authorization Level applicable to this application.
@@ -3088,43 +3274,39 @@ Return Value:
         //
 
         ASSERT(lpfnComputeAccessTokenFromCodeAuthzLevel != NULL);
-        if (!lpfnComputeAccessTokenFromCodeAuthzLevel(hAuthzLevel,              // Safer Level
-                                                      hProcessToken,            // source token.
-                                                      NULL,                     // output token not used for compare.
-                                                      SAFER_TOKEN_COMPARE_ONLY, // we want to compare
-                                                      &dwCompareResult))        // reserved
+        if (!lpfnComputeAccessTokenFromCodeAuthzLevel(
+                hAuthzLevel,                // Safer Level
+                hProcessToken,              // source token.
+                NULL,                       // output token not used for compare.
+                SAFER_TOKEN_COMPARE_ONLY,    // we want to compare
+                &dwCompareResult))          // reserved
         {
-// failed to compare, for some reason.
-#if DBG
+            // failed to compare, for some reason.
+            #if DBG
             DbgPrint("LDR: AuthzCheck: compute failed in %d for %wZ\n",
                      HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess), FileName);
-#endif
+            #endif
             Status = STATUS_ACCESS_DENIED;
-        }
-        else if (dwCompareResult == -1)
-        {
-// less privileged, deny access.
-#ifdef SAFER_DEBUGGING
+        } else if (dwCompareResult == -1) {
+            // less privileged, deny access.
+            #ifdef SAFER_DEBUGGING
             DbgPrint("LDR: AuthzCheck: compute access denied in %d for %wZ\n",
                      HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess), FileName);
-#endif
+            #endif
             Status = STATUS_ACCESS_DENIED;
-        }
-        else
-        {
-// greater or equally privileged, allow access to load.
-#ifdef SAFER_DEBUGGING
+        } else {
+            // greater or equally privileged, allow access to load.
+            #ifdef SAFER_DEBUGGING
             DbgPrint("LDR: AuthzCheck: compute access ok in %d for %wZ\n",
                      HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess), FileName);
-#endif
+            #endif
             Status = STATUS_SUCCESS;
         }
 
         ASSERT(lpfnCloseCodeAuthzLevel != NULL);
         lpfnCloseCodeAuthzLevel(hAuthzLevel);
-    }
-    else
-    {
+
+    } else {
         // No authorization level found for this DLL, and the
         // policy does not have a Default Level in effect.
         Status = STATUS_NOT_FOUND;
@@ -3138,9 +3320,16 @@ ExitHandler:
 }
 
 
+
+
 NTSTATUS
-LdrpCreateDllSection(IN PUNICODE_STRING NtFullDllName, IN HANDLE DllFile, IN PUNICODE_STRING BaseName,
-                     IN PULONG DllCharacteristics OPTIONAL, OUT PHANDLE SectionHandle)
+LdrpCreateDllSection(
+    IN PUNICODE_STRING NtFullDllName,
+    IN HANDLE DllFile,
+    IN PUNICODE_STRING BaseName,
+    IN PULONG DllCharacteristics OPTIONAL,
+    OUT PHANDLE SectionHandle
+    )
 {
     HANDLE File;
     HANDLE Section;
@@ -3149,41 +3338,56 @@ LdrpCreateDllSection(IN PUNICODE_STRING NtFullDllName, IN HANDLE DllFile, IN PUN
     IO_STATUS_BLOCK IoStatus;
     SECTION_IMAGE_INFORMATION ImageInformation;
 
-    if (!DllFile)
-    {
+    if ( !DllFile ) {
         //
         // Since ntsdk does not search paths well, we can't use
         // relative object names
         //
 
-        InitializeObjectAttributes(&ObjectAttributes, NtFullDllName, OBJ_CASE_INSENSITIVE, NULL, NULL);
+        InitializeObjectAttributes(
+            &ObjectAttributes,
+            NtFullDllName,
+            OBJ_CASE_INSENSITIVE,
+            NULL,
+            NULL
+            );
 
-        st = NtOpenFile(&File, SYNCHRONIZE | FILE_EXECUTE, &ObjectAttributes, &IoStatus,
-                        FILE_SHARE_READ | FILE_SHARE_DELETE, FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT);
-        if (!NT_SUCCESS(st))
-        {
-            if (ShowSnaps)
-            {
+        st = NtOpenFile(
+                &File,
+                SYNCHRONIZE | FILE_EXECUTE,
+                &ObjectAttributes,
+                &IoStatus,
+                FILE_SHARE_READ | FILE_SHARE_DELETE,
+                FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT
+                );
+        if (!NT_SUCCESS(st)) {
+            if (ShowSnaps) {
                 DbgPrint("LDR: %s - NtOpenFile failed; status = %x\n", __FUNCTION__, st);
             }
             *SectionHandle = NULL;
             return st;
         }
-    }
-    else
-    {
-        File = DllFile;
-    }
+
+    } else {
+             File = DllFile;
+           }
+
 
 
     //
     // Create a memory section of the library file's contents.
     //
-    st = NtCreateSection(SectionHandle, SECTION_MAP_READ | SECTION_MAP_EXECUTE | SECTION_MAP_WRITE | SECTION_QUERY,
-                         NULL, NULL, PAGE_EXECUTE, SEC_IMAGE, File);
+    st = NtCreateSection(
+            SectionHandle,
+            SECTION_MAP_READ | SECTION_MAP_EXECUTE | SECTION_MAP_WRITE | SECTION_QUERY,
+            NULL,
+            NULL,
+            PAGE_EXECUTE,
+            SEC_IMAGE,
+            File
+            );
 
-    if (!NT_SUCCESS(st))
-    {
+    if (!NT_SUCCESS(st)) {
 
         //
         // hard error time
@@ -3195,43 +3399,52 @@ LdrpCreateDllSection(IN PUNICODE_STRING NtFullDllName, IN HANDLE DllFile, IN PUN
         *SectionHandle = NULL;
         ErrorParameters[0] = (ULONG_PTR)NtFullDllName;
 
-        NtRaiseHardError(STATUS_INVALID_IMAGE_FORMAT, 1, 1, ErrorParameters, OptionOk, &ErrorResponse);
+        NtRaiseHardError(
+          STATUS_INVALID_IMAGE_FORMAT,
+          1,
+          1,
+          ErrorParameters,
+          OptionOk,
+          &ErrorResponse);
 
-        if (LdrpInLdrInit)
+        if ( LdrpInLdrInit ) 
             LdrpFatalHardErrorCount++;
 
 
 #if DBG
-        if (st != STATUS_INVALID_IMAGE_NE_FORMAT && st != STATUS_INVALID_IMAGE_LE_FORMAT &&
-            st != STATUS_INVALID_IMAGE_WIN_16 && st != STATUS_INVALID_IMAGE_WIN_32 &&
-            st != STATUS_INVALID_IMAGE_WIN_64 && LdrpShouldDbgPrintStatus(st))
-        {
-            DbgPrint("LDR: " __FUNCTION__ " - NtCreateSection %wZ failed. Status == 0x%08lx\n", NtFullDllName, st);
+        if (st != STATUS_INVALID_IMAGE_NE_FORMAT &&
+            st != STATUS_INVALID_IMAGE_LE_FORMAT &&
+            st != STATUS_INVALID_IMAGE_WIN_16    &&
+            st != STATUS_INVALID_IMAGE_WIN_32    &&
+            st != STATUS_INVALID_IMAGE_WIN_64    &&
+            LdrpShouldDbgPrintStatus(st)
+           ) {
+            DbgPrint("LDR: " __FUNCTION__ " - NtCreateSection %wZ failed. Status == 0x%08lx\n",
+                     NtFullDllName,
+                     st
+                    );
         }
 #endif
     }
 
-    else
-    {
+    else {
 
-        if (ARGUMENT_PRESENT(DllCharacteristics) && (*DllCharacteristics & IMAGE_FILE_SYSTEM))
-        {
+        if (ARGUMENT_PRESENT(DllCharacteristics) &&
+            (*DllCharacteristics & IMAGE_FILE_SYSTEM)) {
 #if DBG
-            DbgPrint("LDR: WinSafer AuthzCheck on %wZ skipped by request\n", &NtFullDllName);
+            DbgPrint("LDR: WinSafer AuthzCheck on %wZ skipped by request\n",
+                     &NtFullDllName);
 #endif
-        }
-        else
-        {
+        } else {
 
             //
             //  WOW64 processes should not load 64-bit dlls (advapi32.dll)
-            //  but the dll's will get SAFERized when the
+            //  but the dll's will get SAFERized when the 
             //  32-bit load kicks in
             //
 
 #if defined(_WIN64)
-            if (UseWOW64 == FALSE)
-            {
+            if ( UseWOW64 == FALSE ) {
 #endif
 
                 //
@@ -3249,50 +3462,58 @@ LdrpCreateDllSection(IN PUNICODE_STRING NtFullDllName, IN HANDLE DllFile, IN PUN
                 // On failure to query, the error will be returned
                 //
 
-                st = NtQuerySection(*SectionHandle, SectionImageInformation, &ImageInformation,
-                                    sizeof(ImageInformation), NULL);
+                st = NtQuerySection(
+                                   *SectionHandle,
+                                   SectionImageInformation,
+                                   &ImageInformation,
+                                   sizeof( ImageInformation ),
+                                   NULL
+                                   );
 
-                if (!NT_SUCCESS(st))
-                {
+                if (!NT_SUCCESS( st )) {
                     NtClose(*SectionHandle);
                     *SectionHandle = NULL;
-                    NtClose(File);
+                    NtClose( File );
                     return st;
                 }
 
-                if (((ImageInformation.LoaderFlags & IMAGE_LOADER_FLAGS_COMPLUS) == 0))
-                {
+                if (((ImageInformation.LoaderFlags & IMAGE_LOADER_FLAGS_COMPLUS) == 0)) {
 
                     st = LdrpCodeAuthzCheckDllAllowed(NtFullDllName, File);
-                    if (st != STATUS_NOT_FOUND && !NT_SUCCESS(st))
-                    {
+                    if (st != STATUS_NOT_FOUND && !NT_SUCCESS(st)) {
 #if !DBG
                         if (ShowSnaps)
 #endif
                         {
-                            DbgPrint("LDR: Loading of (%wZ) blocked by WinSafer\n", &NtFullDllName);
+                            DbgPrint("LDR: Loading of (%wZ) blocked by WinSafer\n",
+                                     &NtFullDllName
+                                    );
                         }
                         NtClose(*SectionHandle);
                         *SectionHandle = NULL;
-                        NtClose(File);
+                        NtClose( File );
                         return st;
                     }
                     st = STATUS_SUCCESS;
                 }
-#if defined(_WIN64)
+#if defined(_WIN64)        
             }
 #endif
         }
     }
 
-    NtClose(File);
-
+    NtClose( File );
+    
     return st;
 }
 
 NTSTATUS
-LdrpSnapIAT(IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry_Export, IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry_Import,
-            IN PIMAGE_IMPORT_DESCRIPTOR ImportDescriptor, IN BOOLEAN SnapForwardersOnly)
+LdrpSnapIAT (
+    IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry_Export,
+    IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry_Import,
+    IN PIMAGE_IMPORT_DESCRIPTOR ImportDescriptor,
+    IN BOOLEAN SnapForwardersOnly
+    )
 
 /*++
 
@@ -3335,14 +3556,17 @@ Return Value:
 
     Peb = NtCurrentPeb();
 
-    ExportDirectory = (PIMAGE_EXPORT_DIRECTORY)RtlImageDirectoryEntryToData(LdrDataTableEntry_Export->DllBase, TRUE,
-                                                                            IMAGE_DIRECTORY_ENTRY_EXPORT, &ExportSize);
+    ExportDirectory = (PIMAGE_EXPORT_DIRECTORY)RtlImageDirectoryEntryToData(
+                       LdrDataTableEntry_Export->DllBase,
+                       TRUE,
+                       IMAGE_DIRECTORY_ENTRY_EXPORT,
+                       &ExportSize
+                       );
 
-    if (!ExportDirectory)
-    {
+    if (!ExportDirectory) {
         KdPrint(("LDR: %wZ doesn't contain an EXPORT table\n", &LdrDataTableEntry_Export->BaseDllName));
         return STATUS_INVALID_IMAGE_FORMAT;
-    }
+        }
 
     //
     // Determine the location and size of the IAT.  If the linker did
@@ -3350,133 +3574,152 @@ Return Value:
     // image section that contains the import table.
     //
 
-    IATBase = RtlImageDirectoryEntryToData(LdrDataTableEntry_Import->DllBase, TRUE, IMAGE_DIRECTORY_ENTRY_IAT,
-                                           &LittleIATSize);
-    if (IATBase == NULL)
-    {
-        NtHeaders = RtlImageNtHeader(LdrDataTableEntry_Import->DllBase);
-        if (!NtHeaders)
-        {
+    IATBase = RtlImageDirectoryEntryToData( LdrDataTableEntry_Import->DllBase,
+                                            TRUE,
+                                            IMAGE_DIRECTORY_ENTRY_IAT,
+                                            &LittleIATSize
+                                          );
+    if (IATBase == NULL) {
+        NtHeaders = RtlImageNtHeader( LdrDataTableEntry_Import->DllBase );
+        if (! NtHeaders) {
             return STATUS_INVALID_IMAGE_FORMAT;
         }
-        NtSection = IMAGE_FIRST_SECTION(NtHeaders);
-        Rva = NtHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress;
-        if (Rva != 0)
-        {
-            for (i = 0; i < NtHeaders->FileHeader.NumberOfSections; i++)
-            {
-                if (Rva >= NtSection->VirtualAddress && Rva < (NtSection->VirtualAddress + NtSection->SizeOfRawData))
-                {
-                    IATBase = (PVOID)((ULONG_PTR)(LdrDataTableEntry_Import->DllBase) + NtSection->VirtualAddress);
+        NtSection = IMAGE_FIRST_SECTION( NtHeaders );
+        Rva = NtHeaders->OptionalHeader.DataDirectory[ IMAGE_DIRECTORY_ENTRY_IMPORT ].VirtualAddress;
+        if (Rva != 0) {
+            for (i=0; i<NtHeaders->FileHeader.NumberOfSections; i++) {
+                if (Rva >= NtSection->VirtualAddress &&
+                    Rva < (NtSection->VirtualAddress + NtSection->SizeOfRawData)
+                   ) {
+                    IATBase = (PVOID)
+                        ((ULONG_PTR)(LdrDataTableEntry_Import->DllBase) + NtSection->VirtualAddress);
 
                     LittleIATSize = NtSection->Misc.VirtualSize;
-                    if (LittleIATSize == 0)
-                    {
+                    if (LittleIATSize == 0) {
                         LittleIATSize = NtSection->SizeOfRawData;
-                    }
+                        }
                     break;
-                }
+                    }
 
                 ++NtSection;
+                }
+            }
+
+        if (IATBase == NULL) {
+            KdPrint(( "LDR: Unable to unprotect IAT for %wZ (Image Base %p)\n",
+                      &LdrDataTableEntry_Import->BaseDllName,
+                      LdrDataTableEntry_Import->DllBase
+                   ));
+            return STATUS_INVALID_IMAGE_FORMAT;
             }
         }
-
-        if (IATBase == NULL)
-        {
-            KdPrint(("LDR: Unable to unprotect IAT for %wZ (Image Base %p)\n", &LdrDataTableEntry_Import->BaseDllName,
-                     LdrDataTableEntry_Import->DllBase));
-            return STATUS_INVALID_IMAGE_FORMAT;
-        }
-    }
     IATSize = LittleIATSize;
 
-    st = NtProtectVirtualMemory(NtCurrentProcess(), &IATBase, &IATSize, PAGE_READWRITE, &OldProtect);
-    if (!NT_SUCCESS(st))
-    {
-        KdPrint(("LDR: Unable to unprotect IAT for %wZ (Status %x)\n", &LdrDataTableEntry_Import->BaseDllName, st));
+    st = NtProtectVirtualMemory( NtCurrentProcess(),
+                                 &IATBase,
+                                 &IATSize,
+                                 PAGE_READWRITE,
+                                 &OldProtect
+                               );
+    if (!NT_SUCCESS(st)) {
+        KdPrint(( "LDR: Unable to unprotect IAT for %wZ (Status %x)\n",
+                  &LdrDataTableEntry_Import->BaseDllName,
+                  st
+               ));
         return st;
-    }
+        }
 
     //
     // If just snapping forwarded entries, walk that list
     //
-    if (SnapForwardersOnly)
-    {
+    if (SnapForwardersOnly) {
         ImportName = (PSZ)((ULONG_PTR)LdrDataTableEntry_Import->DllBase + ImportDescriptor->Name);
         ForwarderChain = ImportDescriptor->ForwarderChain;
-        while (ForwarderChain != -1)
-        {
-            OriginalThunk =
-                (PIMAGE_THUNK_DATA)((ULONG_PTR)LdrDataTableEntry_Import->DllBase +
-                                    ImportDescriptor->OriginalFirstThunk + (ForwarderChain * sizeof(IMAGE_THUNK_DATA)));
-            Thunk = (PIMAGE_THUNK_DATA)((ULONG_PTR)LdrDataTableEntry_Import->DllBase + ImportDescriptor->FirstThunk +
-                                        (ForwarderChain * sizeof(IMAGE_THUNK_DATA)));
-            ForwarderChain = (ULONG)Thunk->u1.Ordinal;
-            try
-            {
-                st = LdrpSnapThunk(LdrDataTableEntry_Export->DllBase, LdrDataTableEntry_Import->DllBase, OriginalThunk,
-                                   Thunk, ExportDirectory, ExportSize, TRUE, ImportName);
+        while (ForwarderChain != -1) {
+            OriginalThunk = (PIMAGE_THUNK_DATA)((ULONG_PTR)LdrDataTableEntry_Import->DllBase +
+                            ImportDescriptor->OriginalFirstThunk +
+                            (ForwarderChain * sizeof(IMAGE_THUNK_DATA)));
+            Thunk = (PIMAGE_THUNK_DATA)((ULONG_PTR)LdrDataTableEntry_Import->DllBase +
+                            ImportDescriptor->FirstThunk +
+                            (ForwarderChain * sizeof(IMAGE_THUNK_DATA)));
+            ForwarderChain = (ULONG) Thunk->u1.Ordinal;
+            try {
+                st = LdrpSnapThunk(LdrDataTableEntry_Export->DllBase,
+                        LdrDataTableEntry_Import->DllBase,
+                        OriginalThunk,
+                        Thunk,
+                        ExportDirectory,
+                        ExportSize,
+                        TRUE,
+                        ImportName
+                        );
                 Thunk++;
-            }
-            except(LdrpGenericExceptionFilter(GetExceptionInformation(), __FUNCTION__))
-            {
+                }
+            except (LdrpGenericExceptionFilter(GetExceptionInformation(), __FUNCTION__)) {
                 st = GetExceptionCode();
-                DbgPrintEx(DPFLTR_LDR_ID, LDR_ERROR_DPFLTR, "LDR: %s - caught exception %08lx snapping thunks (#1)\n",
-                           __FUNCTION__, st);
-            }
-            if (!NT_SUCCESS(st))
-            {
+                DbgPrintEx(
+                    DPFLTR_LDR_ID,
+                    LDR_ERROR_DPFLTR,
+                    "LDR: %s - caught exception %08lx snapping thunks (#1)\n",
+                    __FUNCTION__,
+                    st);
+                }
+            if (!NT_SUCCESS(st) ) {
                 break;
+                }
             }
         }
-    }
     else
 
+    //
+    // Otherwise, walk through the IAT and snap all the thunks.
+    //
+
+    if ( ImportDescriptor->FirstThunk ) {
+        Thunk = (PIMAGE_THUNK_DATA)((ULONG_PTR)LdrDataTableEntry_Import->DllBase + ImportDescriptor->FirstThunk);
+
+        NtHeaders = RtlImageNtHeader( LdrDataTableEntry_Import->DllBase );
         //
-        // Otherwise, walk through the IAT and snap all the thunks.
+        // If the OriginalFirstThunk field does not point inside the image, then ignore
+        // it.  This is will detect bogus Borland Linker 2.25 images that did not fill
+        // this field in.
         //
 
-        if (ImportDescriptor->FirstThunk)
-        {
-            Thunk = (PIMAGE_THUNK_DATA)((ULONG_PTR)LdrDataTableEntry_Import->DllBase + ImportDescriptor->FirstThunk);
-
-            NtHeaders = RtlImageNtHeader(LdrDataTableEntry_Import->DllBase);
-            //
-            // If the OriginalFirstThunk field does not point inside the image, then ignore
-            // it.  This is will detect bogus Borland Linker 2.25 images that did not fill
-            // this field in.
-            //
-
-            if (ImportDescriptor->Characteristics < NtHeaders->OptionalHeader.SizeOfHeaders ||
-                ImportDescriptor->Characteristics >= NtHeaders->OptionalHeader.SizeOfImage)
-            {
-                OriginalThunk = Thunk;
-            }
-            else
-            {
-                OriginalThunk = (PIMAGE_THUNK_DATA)((ULONG_PTR)LdrDataTableEntry_Import->DllBase +
-                                                    ImportDescriptor->OriginalFirstThunk);
-            }
-            ImportName = (PSZ)((ULONG_PTR)LdrDataTableEntry_Import->DllBase + ImportDescriptor->Name);
-            while (OriginalThunk->u1.AddressOfData)
-            {
-                try
-                {
-                    st = LdrpSnapThunk(LdrDataTableEntry_Export->DllBase, LdrDataTableEntry_Import->DllBase,
-                                       OriginalThunk, Thunk, ExportDirectory, ExportSize, TRUE, ImportName);
-                    OriginalThunk++;
-                    Thunk++;
+        if (ImportDescriptor->Characteristics < NtHeaders->OptionalHeader.SizeOfHeaders ||
+            ImportDescriptor->Characteristics >= NtHeaders->OptionalHeader.SizeOfImage
+           ) {
+            OriginalThunk = Thunk;
+        } else {
+            OriginalThunk = (PIMAGE_THUNK_DATA)((ULONG_PTR)LdrDataTableEntry_Import->DllBase +
+                            ImportDescriptor->OriginalFirstThunk);
+        }
+        ImportName = (PSZ)((ULONG_PTR)LdrDataTableEntry_Import->DllBase + ImportDescriptor->Name);
+        while (OriginalThunk->u1.AddressOfData) {
+            try {
+                st = LdrpSnapThunk(LdrDataTableEntry_Export->DllBase,
+                        LdrDataTableEntry_Import->DllBase,
+                        OriginalThunk,
+                        Thunk,
+                        ExportDirectory,
+                        ExportSize,
+                        TRUE,
+                        ImportName
+                        );
+                OriginalThunk++;
+                Thunk++;
                 }
-                except(LdrpGenericExceptionFilter(GetExceptionInformation(), __FUNCTION__))
-                {
-                    st = GetExceptionCode();
-                    DbgPrintEx(DPFLTR_LDR_ID, LDR_ERROR_DPFLTR,
-                               "LDR: %s - caught exception %08lx snapping thunks (#2)\n", __FUNCTION__, st);
+            except (LdrpGenericExceptionFilter(GetExceptionInformation(), __FUNCTION__)) {
+                st = GetExceptionCode();
+                DbgPrintEx(
+                    DPFLTR_LDR_ID,
+                    LDR_ERROR_DPFLTR,
+                    "LDR: %s - caught exception %08lx snapping thunks (#2)\n",
+                    __FUNCTION__,
+                    st);
                 }
 
-                if (!NT_SUCCESS(st))
-                {
-                    break;
+            if (!NT_SUCCESS(st) ) {
+                break;
                 }
             }
         }
@@ -3485,15 +3728,28 @@ Return Value:
     // Restore protection for IAT and flush instruction cache.
     //
 
-    NtProtectVirtualMemory(NtCurrentProcess(), &IATBase, &IATSize, OldProtect, &OldProtect);
-    NtFlushInstructionCache(NtCurrentProcess(), IATBase, LittleIATSize);
+    NtProtectVirtualMemory( NtCurrentProcess(),
+                            &IATBase,
+                            &IATSize,
+                            OldProtect,
+                            &OldProtect
+                          );
+    NtFlushInstructionCache( NtCurrentProcess(), IATBase, LittleIATSize );
 
     return st;
 }
 
 NTSTATUS
-LdrpSnapThunk(IN PVOID DllBase, IN PVOID ImageBase, IN PIMAGE_THUNK_DATA OriginalThunk, IN OUT PIMAGE_THUNK_DATA Thunk,
-              IN PIMAGE_EXPORT_DIRECTORY ExportDirectory, IN ULONG ExportSize, IN BOOLEAN StaticSnap, IN PSZ DllName)
+LdrpSnapThunk (
+    IN PVOID DllBase,
+    IN PVOID ImageBase,
+    IN PIMAGE_THUNK_DATA OriginalThunk,
+    IN OUT PIMAGE_THUNK_DATA Thunk,
+    IN PIMAGE_EXPORT_DIRECTORY ExportDirectory,
+    IN ULONG ExportSize,
+    IN BOOLEAN StaticSnap,
+    IN PSZ DllName
+    )
 
 /*++
 
@@ -3543,97 +3799,90 @@ Return Value:
 
     Ordinal = (BOOLEAN)IMAGE_SNAP_BY_ORDINAL(OriginalThunk->u1.Ordinal);
 
-    if (Ordinal)
-    {
+    if (Ordinal) {
         OriginalOrdinalNumber = (ULONG)IMAGE_ORDINAL(OriginalThunk->u1.Ordinal);
         OrdinalNumber = (USHORT)(OriginalOrdinalNumber - ExportDirectory->Base);
-    }
-    else
-    {
+    } else {
 
-        //
-        // This should never happen, because we will only be called if either
-        // Ordinal is set or ImageBase is not NULL.  But to satisfy prefix...
-        //
-        if (ImageBase == NULL)
-        {
+             //
+             // This should never happen, because we will only be called if either
+             // Ordinal is set or ImageBase is not NULL.  But to satisfy prefix...
+             //
+             if (ImageBase == NULL) {
 #if LDRDBG
-            DbgPrint("LDR: ImageBase=NULL and !Ordinal\n");
+                DbgPrint("LDR: ImageBase=NULL and !Ordinal\n");
 #endif
-            return STATUS_PROCEDURE_NOT_FOUND;
-        }
+                return STATUS_PROCEDURE_NOT_FOUND;
+             }
 
-        //
-        // Change AddressOfData from an RVA to a VA.
-        //
+             //
+             // Change AddressOfData from an RVA to a VA.
+             //
 
-        AddressOfData =
-            (PIMAGE_IMPORT_BY_NAME)((ULONG_PTR)ImageBase + ((ULONG_PTR)OriginalThunk->u1.AddressOfData & 0xffffffff));
-        ImportString = (PSZ)AddressOfData->Name;
+             AddressOfData = (PIMAGE_IMPORT_BY_NAME)((ULONG_PTR)ImageBase + ((ULONG_PTR)OriginalThunk->u1.AddressOfData & 0xffffffff));
+             ImportString = (PSZ)AddressOfData->Name;
 
-        //
-        // Lookup Name in NameTable
-        //
+             //
+             // Lookup Name in NameTable
+             //
 
-        NameTableBase = (PULONG)((ULONG_PTR)DllBase + (ULONG)ExportDirectory->AddressOfNames);
-        NameOrdinalTableBase = (PUSHORT)((ULONG_PTR)DllBase + (ULONG)ExportDirectory->AddressOfNameOrdinals);
+             NameTableBase = (PULONG)((ULONG_PTR)DllBase + (ULONG)ExportDirectory->AddressOfNames);
+             NameOrdinalTableBase = (PUSHORT)((ULONG_PTR)DllBase + (ULONG)ExportDirectory->AddressOfNameOrdinals);
 
-        //
-        // Before dropping into binary search, see if
-        // the hint index results in a successful
-        // match. If the hint index is zero, then
-        // drop into binary search.
-        //
+             //
+             // Before dropping into binary search, see if
+             // the hint index results in a successful
+             // match. If the hint index is zero, then
+             // drop into binary search.
+             //
 
-        HintIndex = AddressOfData->Hint;
-        if ((ULONG)HintIndex < ExportDirectory->NumberOfNames &&
-            !strcmp(ImportString, (PSZ)((ULONG_PTR)DllBase + NameTableBase[HintIndex])))
-        {
-            OrdinalNumber = NameOrdinalTableBase[HintIndex];
+             HintIndex = AddressOfData->Hint;
+             if ((ULONG)HintIndex < ExportDirectory->NumberOfNames &&
+                 !strcmp(ImportString, (PSZ)((ULONG_PTR)DllBase + NameTableBase[HintIndex]))) {
+                 OrdinalNumber = NameOrdinalTableBase[HintIndex];
 #if LDRDBG
-            if (ShowSnaps)
-            {
-                DbgPrint("LDR: Snapping %s\n", ImportString);
-            }
+                 if (ShowSnaps) {
+                     DbgPrint("LDR: Snapping %s\n", ImportString);
+                 }
 #endif
-        }
-        else
-        {
+             } else {
 #if LDRDBG
-            if (HintIndex)
-            {
-                DbgPrint("LDR: Warning HintIndex Failure. Name %s (%lx) Hint 0x%lx\n", ImportString,
-                         (ULONG)ImportString, (ULONG)HintIndex);
-            }
+                      if (HintIndex) {
+                          DbgPrint("LDR: Warning HintIndex Failure. Name %s (%lx) Hint 0x%lx\n",
+                              ImportString,
+                              (ULONG)ImportString,
+                              (ULONG)HintIndex
+                              );
+                      }
 #endif
-            OrdinalNumber = LdrpNameToOrdinal(ImportString, ExportDirectory->NumberOfNames, DllBase, NameTableBase,
-                                              NameOrdinalTableBase);
-        }
-    }
+                      OrdinalNumber = LdrpNameToOrdinal(
+                                        ImportString,
+                                        ExportDirectory->NumberOfNames,
+                                        DllBase,
+                                        NameTableBase,
+                                        NameOrdinalTableBase
+                                        );
+                    }
+           }
 
     //
     // If OrdinalNumber is not within the Export Address Table,
     // then DLL does not implement function. Snap to LDRP_BAD_DLL.
     //
 
-    if ((ULONG)OrdinalNumber >= ExportDirectory->NumberOfFunctions)
-    {
-    baddllref:
+    if ((ULONG)OrdinalNumber >= ExportDirectory->NumberOfFunctions) {
+baddllref:
 #if DBG
-        if (StaticSnap)
-        {
-            if (Ordinal)
-            {
+        if (StaticSnap) {
+            if (Ordinal) {
                 DbgPrint("LDR: Can't locate ordinal 0x%lx\n", OriginalOrdinalNumber);
-            }
-            else
-            {
+                }
+            else {
                 DbgPrint("LDR: Can't locate %s\n", ImportString);
-            }
+                }
         }
 #endif
-        if (StaticSnap)
-        {
+        if ( StaticSnap ) {
             //
             // Hard Error Time
             //
@@ -3644,154 +3893,162 @@ Return Value:
             ULONG ParameterStringMask;
             ULONG ErrorResponse;
 
-            RtlInitAnsiString(&AnsiScratch, DllName ? DllName : "Unknown");
-            RtlAnsiStringToUnicodeString(&ErrorDllName, &AnsiScratch, TRUE);
+            RtlInitAnsiString(&AnsiScratch,DllName ? DllName : "Unknown");
+            RtlAnsiStringToUnicodeString(&ErrorDllName,&AnsiScratch,TRUE);
             ErrorParameters[1] = (ULONG_PTR)&ErrorDllName;
             ParameterStringMask = 2;
 
-            if (Ordinal)
-            {
+            if ( Ordinal ) {
                 ErrorParameters[0] = OriginalOrdinalNumber;
-            }
-            else
-            {
-                RtlInitAnsiString(&AnsiScratch, ImportString);
-                RtlAnsiStringToUnicodeString(&ErrorEntryPointName, &AnsiScratch, TRUE);
+                }
+            else {
+                RtlInitAnsiString(&AnsiScratch,ImportString);
+                RtlAnsiStringToUnicodeString(&ErrorEntryPointName,&AnsiScratch,TRUE);
                 ErrorParameters[0] = (ULONG_PTR)&ErrorEntryPointName;
                 ParameterStringMask = 3;
-            }
+                }
 
 
-            NtRaiseHardError(Ordinal ? STATUS_ORDINAL_NOT_FOUND : STATUS_ENTRYPOINT_NOT_FOUND, 2, ParameterStringMask,
-                             ErrorParameters, OptionOk, &ErrorResponse);
+            NtRaiseHardError(
+              Ordinal ? STATUS_ORDINAL_NOT_FOUND : STATUS_ENTRYPOINT_NOT_FOUND,
+              2,
+              ParameterStringMask,
+              ErrorParameters,
+              OptionOk,
+              &ErrorResponse
+              );
 
-            if (LdrpInLdrInit)
-            {
+            if ( LdrpInLdrInit ) {
                 LdrpFatalHardErrorCount++;
-            }
+                }
             RtlFreeUnicodeString(&ErrorDllName);
-            if (!Ordinal)
-            {
+            if ( !Ordinal ) {
                 RtlFreeUnicodeString(&ErrorEntryPointName);
                 RtlRaiseStatus(STATUS_ENTRYPOINT_NOT_FOUND);
-            }
+                }
             RtlRaiseStatus(STATUS_ORDINAL_NOT_FOUND);
-        }
+            }
         Thunk->u1.Function = (ULONG_PTR)LDRP_BAD_DLL;
         st = Ordinal ? STATUS_ORDINAL_NOT_FOUND : STATUS_ENTRYPOINT_NOT_FOUND;
-    }
-    else
-    {
-        Addr = (PULONG)((ULONG_PTR)DllBase + (ULONG)ExportDirectory->AddressOfFunctions);
-        Thunk->u1.Function = ((ULONG_PTR)DllBase + Addr[OrdinalNumber]);
-        if (Thunk->u1.Function > (ULONG_PTR)ExportDirectory &&
-            Thunk->u1.Function < ((ULONG_PTR)ExportDirectory + ExportSize))
-        {
-            UNICODE_STRING UnicodeString;
-            ANSI_STRING ForwardDllName;
-            PVOID ForwardDllHandle;
-            PANSI_STRING ForwardProcName;
-            ULONG ForwardProcOrdinal;
+    } else {
+             Addr = (PULONG)((ULONG_PTR)DllBase + (ULONG)ExportDirectory->AddressOfFunctions);
+             Thunk->u1.Function = ((ULONG_PTR)DllBase + Addr[OrdinalNumber]);
+             if (Thunk->u1.Function > (ULONG_PTR)ExportDirectory &&
+                 Thunk->u1.Function < ((ULONG_PTR)ExportDirectory + ExportSize)) {
+                UNICODE_STRING UnicodeString;
+                ANSI_STRING ForwardDllName;
+                PVOID ForwardDllHandle;
+                PANSI_STRING ForwardProcName;
+                ULONG ForwardProcOrdinal;
 
-            ImportString = (PSZ)Thunk->u1.Function;
-            ForwardDllName.Buffer = ImportString,
-            ForwardDllName.Length = (USHORT)(strchr(ImportString, '.') - ImportString);
-            ForwardDllName.MaximumLength = ForwardDllName.Length;
+                ImportString = (PSZ)Thunk->u1.Function;
+                ForwardDllName.Buffer = ImportString,
+                ForwardDllName.Length = (USHORT)(strchr(ImportString, '.') - ImportString);
+                ForwardDllName.MaximumLength = ForwardDllName.Length;
 
-            // Most forwarders seem to point to NTDLL and since we know that every
-            // process has ntdll already loaded and pinned let's optimize away all
-            // the calls to load it.  I was debugging the loader and there are just
-            // a rediculous number of loads of ntdll.  -mgrier 4/8/2001
-            if (ASCII_STRING_IS_NTDLL(&ForwardDllName))
-            {
-                ForwardDllHandle = LdrpNtDllDataTableEntry->DllBase;
-                st = STATUS_SUCCESS;
-            }
-            else
-            {
-                st = RtlAnsiStringToUnicodeString(&UnicodeString, &ForwardDllName, TRUE);
+                // Most forwarders seem to point to NTDLL and since we know that every
+                // process has ntdll already loaded and pinned let's optimize away all
+                // the calls to load it.  I was debugging the loader and there are just
+                // a rediculous number of loads of ntdll.  -mgrier 4/8/2001
+                if (ASCII_STRING_IS_NTDLL(&ForwardDllName)) {
+                    ForwardDllHandle = LdrpNtDllDataTableEntry->DllBase;
+                    st = STATUS_SUCCESS;
+                } else {
+                    st = RtlAnsiStringToUnicodeString(&UnicodeString, &ForwardDllName, TRUE);
 
-                if (NT_SUCCESS(st))
-                {
-                    UNICODE_STRING AnotherUnicodeString = { 0, 0, NULL };
-                    PUNICODE_STRING UnicodeStringToUse = &UnicodeString;
-                    ULONG LdrpLoadDllFlags = 0;
+                    if (NT_SUCCESS(st)) {
+                        UNICODE_STRING AnotherUnicodeString = {0, 0, NULL};
+                        PUNICODE_STRING UnicodeStringToUse = &UnicodeString;
+                        ULONG LdrpLoadDllFlags = 0;
 
-                    st = RtlDosApplyFileIsolationRedirection_Ustr(
-                        RTL_DOS_APPLY_FILE_REDIRECTION_USTR_FLAG_RESPECT_DOT_LOCAL, &UnicodeString, &DefaultExtension,
-                        NULL, &AnotherUnicodeString, &UnicodeStringToUse, NULL, NULL, NULL);
+                        st = RtlDosApplyFileIsolationRedirection_Ustr(
+                                RTL_DOS_APPLY_FILE_REDIRECTION_USTR_FLAG_RESPECT_DOT_LOCAL,
+                                &UnicodeString,
+                                &DefaultExtension,
+                                NULL,
+                                &AnotherUnicodeString,
+                                &UnicodeStringToUse,
+                                NULL,
+                                NULL,
+                                NULL);
 
-                    if (NT_SUCCESS(st))
-                    {
-                        LdrpLoadDllFlags |= LDRP_LOAD_DLL_FLAG_DLL_IS_REDIRECTED;
+                        if (NT_SUCCESS(st)) {
+                            LdrpLoadDllFlags |= LDRP_LOAD_DLL_FLAG_DLL_IS_REDIRECTED;
+                        }
+
+                        if (st == STATUS_SXS_KEY_NOT_FOUND) {
+                            st = STATUS_SUCCESS;
+                        }
+
+                        if (NT_SUCCESS(st)) {
+                            st = LdrpLoadDll(LdrpLoadDllFlags, NULL, NULL, UnicodeStringToUse, &ForwardDllHandle, FALSE);
+                        }
+
+                        if (AnotherUnicodeString.Buffer != NULL)
+                            RtlFreeUnicodeString(&AnotherUnicodeString);
+
+                        RtlFreeUnicodeString(&UnicodeString);
                     }
-
-                    if (st == STATUS_SXS_KEY_NOT_FOUND)
-                    {
-                        st = STATUS_SUCCESS;
-                    }
-
-                    if (NT_SUCCESS(st))
-                    {
-                        st = LdrpLoadDll(LdrpLoadDllFlags, NULL, NULL, UnicodeStringToUse, &ForwardDllHandle, FALSE);
-                    }
-
-                    if (AnotherUnicodeString.Buffer != NULL)
-                        RtlFreeUnicodeString(&AnotherUnicodeString);
-
-                    RtlFreeUnicodeString(&UnicodeString);
                 }
-            }
 
-            if (!NT_SUCCESS(st))
-            {
-                goto baddllref;
-            }
-
-            RtlInitAnsiString(&ForwardDllName, ImportString + ForwardDllName.Length + 1);
-            if (ForwardDllName.Length > 1 && *ForwardDllName.Buffer == '#')
-            {
-                ForwardProcName = NULL;
-                st = RtlCharToInteger(ForwardDllName.Buffer + 1, 0, &ForwardProcOrdinal);
-                if (!NT_SUCCESS(st))
-                {
+                if (!NT_SUCCESS(st)) {
                     goto baddllref;
                 }
-            }
-            else
-            {
-                ForwardProcName = &ForwardDllName;
 
-                //
-                // Following line is not needed since this is a by name lookup
-                //
-                //
-                //ForwardProcOrdinal = (ULONG)&ForwardDllName;
-                //
-            }
+                RtlInitAnsiString( &ForwardDllName,
+                                   ImportString + ForwardDllName.Length + 1
+                                 );
+                if (ForwardDllName.Length > 1 &&
+                    *ForwardDllName.Buffer == '#'
+                   ) {
+                    ForwardProcName = NULL;
+                    st = RtlCharToInteger( ForwardDllName.Buffer+1,
+                                           0,
+                                           &ForwardProcOrdinal
+                                         );
+                    if (!NT_SUCCESS(st)) {
+                        goto baddllref;
+                        }
+                    }
+                else {
+                    ForwardProcName = &ForwardDllName;
 
-            st = LdrpGetProcedureAddress(ForwardDllHandle, ForwardProcName, ForwardProcOrdinal,
-                                         (PVOID *)&Thunk->u1.Function, FALSE);
-            if (!NT_SUCCESS(st))
-            {
-                goto baddllref;
-            }
-        }
-        else
-        {
-            if (!Addr[OrdinalNumber])
-            {
-                goto baddllref;
-            }
-        }
-        st = STATUS_SUCCESS;
-    }
+                    //
+                    // Following line is not needed since this is a by name lookup
+                    //
+                    //
+                    //ForwardProcOrdinal = (ULONG)&ForwardDllName;
+                    //
+                    }
+
+                st = LdrpGetProcedureAddress( ForwardDllHandle,
+                                              ForwardProcName,
+                                              ForwardProcOrdinal,
+                                              (PVOID*)&Thunk->u1.Function,
+                                              FALSE
+                                            );
+                if (!NT_SUCCESS(st)) {
+                    goto baddllref;
+                    }
+                }
+             else {
+                if ( !Addr[OrdinalNumber] ) {
+                    goto baddllref;
+                    }
+             }
+             st = STATUS_SUCCESS;
+           }
     return st;
 }
 
 USHORT
-LdrpNameToOrdinal(IN PSZ Name, IN ULONG NumberOfNames, IN PVOID DllBase, IN PULONG NameTableBase,
-                  IN PUSHORT NameOrdinalTableBase)
+LdrpNameToOrdinal (
+    IN PSZ Name,
+    IN ULONG NumberOfNames,
+    IN PVOID DllBase,
+    IN PULONG NameTableBase,
+    IN PUSHORT NameOrdinalTableBase
+    )
 {
     LONG High;
     LONG Low;
@@ -3804,8 +4061,7 @@ LdrpNameToOrdinal(IN PSZ Name, IN ULONG NumberOfNames, IN PVOID DllBase, IN PULO
 
     Low = 0;
     High = NumberOfNames - 1;
-    while (High >= Low)
-    {
+    while (High >= Low) {
 
         //
         // Compute the next probe index and compare the import name
@@ -3815,16 +4071,13 @@ LdrpNameToOrdinal(IN PSZ Name, IN ULONG NumberOfNames, IN PVOID DllBase, IN PULO
         Middle = (Low + High) >> 1;
         Result = strcmp(Name, (PCHAR)((ULONG_PTR)DllBase + NameTableBase[Middle]));
 
-        if (Result < 0)
-        {
+        if (Result < 0) {
             High = Middle - 1;
-        }
-        else if (Result > 0)
-        {
+
+        } else if (Result > 0) {
             Low = Middle + 1;
-        }
-        else
-        {
+
+        } else {
             break;
         }
     }
@@ -3835,14 +4088,12 @@ LdrpNameToOrdinal(IN PSZ Name, IN ULONG NumberOfNames, IN PVOID DllBase, IN PULO
     // from the ordinal table.
     //
 
-    if (High < Low)
-    {
+    if (High < Low) {
         return (USHORT)-1;
-    }
-    else
-    {
+    } else {
         return NameOrdinalTableBase[Middle];
     }
+
 }
 
 #if 0
@@ -3882,16 +4133,24 @@ LdrpPinLoadedDll(
 
 #endif
 
-VOID LdrpUpdateLoadCount2(IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry, IN ULONG UpdateCountHow)
+VOID
+LdrpUpdateLoadCount2(
+    IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry,
+    IN ULONG UpdateCountHow
+    )
 {
     WCHAR PreAllocatedStringBuffer[DOS_MAX_PATH_LENGTH];
-    UNICODE_STRING PreAllocatedString = { 0, sizeof(PreAllocatedStringBuffer), PreAllocatedStringBuffer };
+    UNICODE_STRING PreAllocatedString = {0, sizeof(PreAllocatedStringBuffer), PreAllocatedStringBuffer};
 
     LdrpUpdateLoadCount3(LdrDataTableEntry, UpdateCountHow, &PreAllocatedString);
 }
 
-VOID LdrpUpdateLoadCount3(IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry, IN ULONG UpdateCountHow,
-                          IN OUT PUNICODE_STRING PreAllocatedRedirectionBuffer OPTIONAL)
+VOID
+LdrpUpdateLoadCount3(
+    IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry,
+    IN ULONG UpdateCountHow,
+    IN OUT PUNICODE_STRING PreAllocatedRedirectionBuffer OPTIONAL
+    )
 /*++
 
 Routine Description:
@@ -3926,63 +4185,55 @@ Return Value:
     ULONG i, ImportSize, NewImportSize;
     ANSI_STRING AnsiString;
     PUNICODE_STRING ImportDescriptorName_U;
-    PUNICODE_STRING
-        ImportDescriptorNameToUse; // overrides ImportDescriptorName_U when redirection is turned on for a DLL
+    PUNICODE_STRING ImportDescriptorNameToUse; // overrides ImportDescriptorName_U when redirection is turned on for a DLL
     PLDR_DATA_TABLE_ENTRY Entry;
     NTSTATUS st;
     PIMAGE_THUNK_DATA FirstThunk;
     UNICODE_STRING DynamicRedirectionString;
-    RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME ActivationFrame = {
-        sizeof(ActivationFrame), RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_FORMAT_WHISTLER
-    };
+    RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME ActivationFrame = { sizeof(ActivationFrame), RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_FORMAT_WHISTLER };
 
     RtlActivateActivationContextUnsafeFast(&ActivationFrame, LdrDataTableEntry->EntryPointActivationContext);
-    __try
-    {
-        switch (UpdateCountHow)
-        {
-        case LDRP_UPDATE_LOAD_COUNT_PIN:
-        case LDRP_UPDATE_LOAD_COUNT_INCREMENT:
-            if (LdrDataTableEntry->Flags & LDRP_LOAD_IN_PROGRESS)
-            {
-                return;
-            }
-            else
-            {
-                LdrDataTableEntry->Flags |= LDRP_LOAD_IN_PROGRESS;
-            }
-            break;
-        case LDRP_UPDATE_LOAD_COUNT_DECREMENT:
-            if (LdrDataTableEntry->Flags & LDRP_UNLOAD_IN_PROGRESS)
-            {
-                return;
-            }
-            else
-            {
-                LdrDataTableEntry->Flags |= LDRP_UNLOAD_IN_PROGRESS;
-            }
-            break;
+    __try {
+        switch (UpdateCountHow
+            ) {
+            case LDRP_UPDATE_LOAD_COUNT_PIN:
+            case LDRP_UPDATE_LOAD_COUNT_INCREMENT:
+                if (LdrDataTableEntry->Flags & LDRP_LOAD_IN_PROGRESS) {
+                    return;
+                } else {
+                    LdrDataTableEntry->Flags |= LDRP_LOAD_IN_PROGRESS;
+                }
+                break;
+            case LDRP_UPDATE_LOAD_COUNT_DECREMENT:
+                if (LdrDataTableEntry->Flags & LDRP_UNLOAD_IN_PROGRESS) {
+                    return;
+                } else {
+                    LdrDataTableEntry->Flags |= LDRP_UNLOAD_IN_PROGRESS;
+                }
+                break;
         }
 
         //
         // For each DLL used by this DLL, reference or dereference the DLL.
         //
 
-        if (LdrDataTableEntry->Flags & LDRP_COR_IMAGE)
-        {
+        if (LdrDataTableEntry->Flags & LDRP_COR_IMAGE) {
             //
             // The image is COR.  Ignore its import table and make it import
             // mscoree only.
             //
             UNICODE_STRING ImportName = RTL_CONSTANT_STRING(L"mscoree.dll");
 
-            if (LdrpCheckForLoadedDll(NULL, &ImportName, TRUE, FALSE, &Entry))
-            {
-                if (Entry->LoadCount != 0xffff)
-                {
+            if (LdrpCheckForLoadedDll( NULL,
+                                       &ImportName,
+                                       TRUE,
+                                       FALSE,
+                                       &Entry
+                                     )
+               ) {
+                if ( Entry->LoadCount != 0xffff ) {
                     PCSTR SnapString = NULL;
-                    switch (UpdateCountHow)
-                    {
+                    switch (UpdateCountHow) {
                     case LDRP_UPDATE_LOAD_COUNT_PIN:
                         Entry->LoadCount = 0xffff;
                         SnapString = "Pin";
@@ -3996,9 +4247,12 @@ Return Value:
                         SnapString = "Derefcount";
                         break;
                     }
-                    if (ShowSnaps)
-                    {
-                        DbgPrint("LDR: %s %wZ (%lx)\n", SnapString, &ImportName, (ULONG)Entry->LoadCount);
+                    if (ShowSnaps) {
+                        DbgPrint("LDR: %s %wZ (%lx)\n",
+                                SnapString,
+                                &ImportName,
+                                (ULONG)Entry->LoadCount
+                                );
                     }
                 }
                 LdrpUpdateLoadCount3(Entry, UpdateCountHow, PreAllocatedRedirectionBuffer);
@@ -4014,54 +4268,60 @@ Return Value:
         // the .idata section
         //
         NewImportDescriptor = (PIMAGE_BOUND_IMPORT_DESCRIPTOR)RtlImageDirectoryEntryToData(
-            LdrDataTableEntry->DllBase, TRUE, IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT, &NewImportSize);
-        if (NewImportDescriptor)
-        {
-            switch (UpdateCountHow)
-            {
-            case LDRP_UPDATE_LOAD_COUNT_INCREMENT:
-            case LDRP_UPDATE_LOAD_COUNT_PIN:
-                LdrDataTableEntry->Flags |= LDRP_LOAD_IN_PROGRESS;
-                break;
-            case LDRP_UPDATE_LOAD_COUNT_DECREMENT:
-                LdrDataTableEntry->Flags |= LDRP_UNLOAD_IN_PROGRESS;
-                break;
+                               LdrDataTableEntry->DllBase,
+                               TRUE,
+                               IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT,
+                               &NewImportSize
+                               );
+        if (NewImportDescriptor) {
+            switch (UpdateCountHow) {
+                case LDRP_UPDATE_LOAD_COUNT_INCREMENT:
+                case LDRP_UPDATE_LOAD_COUNT_PIN:
+                    LdrDataTableEntry->Flags |= LDRP_LOAD_IN_PROGRESS;
+                    break;
+                case LDRP_UPDATE_LOAD_COUNT_DECREMENT:
+                    LdrDataTableEntry->Flags |= LDRP_UNLOAD_IN_PROGRESS;
+                    break;
             }
             NewImportStringBase = (LPSTR)NewImportDescriptor;
-            while (NewImportDescriptor->OffsetModuleName)
-            {
-                ImportName = NewImportStringBase + NewImportDescriptor->OffsetModuleName;
+            while (NewImportDescriptor->OffsetModuleName) {
+                ImportName = NewImportStringBase +
+                             NewImportDescriptor->OffsetModuleName;
                 RtlInitAnsiString(&AnsiString, ImportName);
                 st = RtlAnsiStringToUnicodeString(ImportDescriptorName_U, &AnsiString, FALSE);
-                if (NT_SUCCESS(st))
-                {
+                if ( NT_SUCCESS(st) ) {
                     BOOLEAN Redirected = FALSE;
 
                     ImportDescriptorNameToUse = ImportDescriptorName_U;
                     DynamicRedirectionString.Buffer = NULL;
 
                     st = RtlDosApplyFileIsolationRedirection_Ustr(
-                        RTL_DOS_APPLY_FILE_REDIRECTION_USTR_FLAG_RESPECT_DOT_LOCAL, ImportDescriptorName_U,
-                        &DefaultExtension, PreAllocatedRedirectionBuffer, &DynamicRedirectionString,
-                        &ImportDescriptorNameToUse, NULL, NULL, NULL);
-                    if (NT_SUCCESS(st))
-                    {
+                            RTL_DOS_APPLY_FILE_REDIRECTION_USTR_FLAG_RESPECT_DOT_LOCAL,
+                            ImportDescriptorName_U,
+                            &DefaultExtension,
+                            PreAllocatedRedirectionBuffer,
+                            &DynamicRedirectionString,
+                            &ImportDescriptorNameToUse,
+                            NULL,
+                            NULL,
+                            NULL);
+                    if (NT_SUCCESS(st)) {
                         Redirected = TRUE;
-                    }
-                    else if (st == STATUS_SXS_KEY_NOT_FOUND)
-                    {
+                    } else if (st == STATUS_SXS_KEY_NOT_FOUND) {
                         st = STATUS_SUCCESS;
                     }
 
-                    if (NT_SUCCESS(st))
-                    {
-                        if (LdrpCheckForLoadedDll(NULL, ImportDescriptorNameToUse, TRUE, Redirected, &Entry))
-                        {
-                            if (Entry->LoadCount != 0xffff)
-                            {
+                    if (NT_SUCCESS(st)) {
+                        if (LdrpCheckForLoadedDll( NULL,
+                                                   ImportDescriptorNameToUse,
+                                                   TRUE,
+                                                   Redirected,
+                                                   &Entry
+                                                 )
+                           ) {
+                            if ( Entry->LoadCount != 0xffff ) {
                                 PCSTR SnapString = NULL;
-                                switch (UpdateCountHow)
-                                {
+                                switch (UpdateCountHow) {
                                 case LDRP_UPDATE_LOAD_COUNT_PIN:
                                     Entry->LoadCount = 0xffff;
                                     SnapString = "Pin";
@@ -4075,10 +4335,12 @@ Return Value:
                                     SnapString = "Derefcount";
                                     break;
                                 }
-                                if (ShowSnaps)
-                                {
-                                    DbgPrint("LDR: %s %wZ (%lx)\n", SnapString, ImportDescriptorNameToUse,
-                                             (ULONG)Entry->LoadCount);
+                                if (ShowSnaps) {
+                                    DbgPrint("LDR: %s %wZ (%lx)\n",
+                                            SnapString,
+                                            ImportDescriptorNameToUse,
+                                            (ULONG)Entry->LoadCount
+                                            );
                                 }
                             }
                             LdrpUpdateLoadCount3(Entry, UpdateCountHow, PreAllocatedRedirectionBuffer);
@@ -4089,42 +4351,46 @@ Return Value:
                     }
                 }
 
-                NewImportForwarder = (PIMAGE_BOUND_FORWARDER_REF)(NewImportDescriptor + 1);
-                for (i = 0; i < NewImportDescriptor->NumberOfModuleForwarderRefs; i++)
-                {
-                    ImportName = NewImportStringBase + NewImportForwarder->OffsetModuleName;
+                NewImportForwarder = (PIMAGE_BOUND_FORWARDER_REF)(NewImportDescriptor+1);
+                for (i=0; i<NewImportDescriptor->NumberOfModuleForwarderRefs; i++) {
+                    ImportName = NewImportStringBase +
+                                 NewImportForwarder->OffsetModuleName;
 
                     RtlInitAnsiString(&AnsiString, ImportName);
                     st = RtlAnsiStringToUnicodeString(ImportDescriptorName_U, &AnsiString, FALSE);
-                    if (NT_SUCCESS(st))
-                    {
+                    if ( NT_SUCCESS(st) ) {
                         BOOLEAN Redirected = FALSE;
 
                         ImportDescriptorNameToUse = ImportDescriptorName_U;
                         DynamicRedirectionString.Buffer = NULL;
 
                         st = RtlDosApplyFileIsolationRedirection_Ustr(
-                            RTL_DOS_APPLY_FILE_REDIRECTION_USTR_FLAG_RESPECT_DOT_LOCAL, ImportDescriptorName_U,
-                            &DefaultExtension, PreAllocatedRedirectionBuffer, &DynamicRedirectionString,
-                            &ImportDescriptorNameToUse, NULL, NULL, NULL);
-                        if (NT_SUCCESS(st))
-                        {
+                                RTL_DOS_APPLY_FILE_REDIRECTION_USTR_FLAG_RESPECT_DOT_LOCAL,
+                                ImportDescriptorName_U,
+                                &DefaultExtension,
+                                PreAllocatedRedirectionBuffer,
+                                &DynamicRedirectionString,
+                                &ImportDescriptorNameToUse,
+                                NULL,
+                                NULL,
+                                NULL);
+                        if (NT_SUCCESS(st)) {
                             Redirected = TRUE;
-                        }
-                        else if (st == STATUS_SXS_KEY_NOT_FOUND)
-                        {
+                        } else if (st == STATUS_SXS_KEY_NOT_FOUND) {
                             st = STATUS_SUCCESS;
                         }
 
-                        if (NT_SUCCESS(st))
-                        {
-                            if (LdrpCheckForLoadedDll(NULL, ImportDescriptorNameToUse, TRUE, Redirected, &Entry))
-                            {
-                                if (Entry->LoadCount != 0xffff)
-                                {
+                        if (NT_SUCCESS(st)) {
+                            if (LdrpCheckForLoadedDll( NULL,
+                                                       ImportDescriptorNameToUse,
+                                                       TRUE,
+                                                       Redirected,
+                                                       &Entry
+                                                     )
+                               ) {
+                                if ( Entry->LoadCount != 0xffff ) {
                                     PCSTR SnapString = NULL;
-                                    switch (UpdateCountHow)
-                                    {
+                                    switch (UpdateCountHow) {
                                     case LDRP_UPDATE_LOAD_COUNT_PIN:
                                         Entry->LoadCount = 0xffff;
                                         SnapString = "Pin";
@@ -4138,10 +4404,12 @@ Return Value:
                                         SnapString = "Derefcount";
                                         break;
                                     }
-                                    if (ShowSnaps)
-                                    {
-                                        DbgPrint("LDR: %s %wZ (%lx)\n", SnapString, ImportDescriptorNameToUse,
-                                                 (ULONG)Entry->LoadCount);
+                                    if (ShowSnaps) {
+                                        DbgPrint("LDR: %s %wZ (%lx)\n",
+                                                SnapString,
+                                                ImportDescriptorNameToUse,
+                                                (ULONG)Entry->LoadCount
+                                                );
                                     }
                                 }
                                 LdrpUpdateLoadCount3(Entry, UpdateCountHow, PreAllocatedRedirectionBuffer);
@@ -4162,12 +4430,14 @@ Return Value:
         }
 
         ImportDescriptor = (PIMAGE_IMPORT_DESCRIPTOR)RtlImageDirectoryEntryToData(
-            LdrDataTableEntry->DllBase, TRUE, IMAGE_DIRECTORY_ENTRY_IMPORT, &ImportSize);
-        if (ImportDescriptor)
-        {
+                            LdrDataTableEntry->DllBase,
+                            TRUE,
+                            IMAGE_DIRECTORY_ENTRY_IMPORT,
+                            &ImportSize
+                            );
+        if (ImportDescriptor) {
 
-            while (ImportDescriptor->Name && ImportDescriptor->FirstThunk)
-            {
+            while (ImportDescriptor->Name && ImportDescriptor->FirstThunk) {
 
                 //
                 // Match code in walk that skips references like this. IE3 had
@@ -4181,44 +4451,47 @@ Return Value:
                 // check for import that has no references
                 //
                 FirstThunk = (PIMAGE_THUNK_DATA)((ULONG_PTR)LdrDataTableEntry->DllBase + ImportDescriptor->FirstThunk);
-                if (!FirstThunk->u1.Function)
-                {
+                if ( !FirstThunk->u1.Function ) {
                     goto skipskippedimport;
-                }
+                    }
 
                 ImportName = (PSZ)((ULONG_PTR)LdrDataTableEntry->DllBase + ImportDescriptor->Name);
 
                 RtlInitAnsiString(&AnsiString, ImportName);
                 st = RtlAnsiStringToUnicodeString(ImportDescriptorName_U, &AnsiString, FALSE);
-                if (NT_SUCCESS(st))
-                {
-                    BOOLEAN Redirected = FALSE;
+                if ( NT_SUCCESS(st) ) {
+                    BOOLEAN Redirected = FALSE;                    
 
                     ImportDescriptorNameToUse = ImportDescriptorName_U;
                     DynamicRedirectionString.Buffer = NULL;
 
                     st = RtlDosApplyFileIsolationRedirection_Ustr(
-                        RTL_DOS_APPLY_FILE_REDIRECTION_USTR_FLAG_RESPECT_DOT_LOCAL, ImportDescriptorName_U,
-                        &DefaultExtension, PreAllocatedRedirectionBuffer, &DynamicRedirectionString,
-                        &ImportDescriptorNameToUse, NULL, NULL, NULL);
-                    if (NT_SUCCESS(st))
-                    {
+                            RTL_DOS_APPLY_FILE_REDIRECTION_USTR_FLAG_RESPECT_DOT_LOCAL,
+                            ImportDescriptorName_U,
+                            &DefaultExtension,
+                            PreAllocatedRedirectionBuffer,
+                            &DynamicRedirectionString,
+                            &ImportDescriptorNameToUse,
+                            NULL,
+                            NULL,
+                            NULL);
+                    if (NT_SUCCESS(st)) {
                         Redirected = TRUE;
-                    }
-                    else if (st == STATUS_SXS_KEY_NOT_FOUND)
-                    {
+                    } else if (st == STATUS_SXS_KEY_NOT_FOUND) {
                         st = STATUS_SUCCESS;
                     }
 
-                    if (NT_SUCCESS(st))
-                    {
-                        if (LdrpCheckForLoadedDll(NULL, ImportDescriptorNameToUse, TRUE, Redirected, &Entry))
-                        {
-                            if (Entry->LoadCount != 0xffff)
-                            {
+                    if (NT_SUCCESS(st)) {
+                        if (LdrpCheckForLoadedDll( NULL,
+                                                   ImportDescriptorNameToUse,
+                                                   TRUE,
+                                                   Redirected,
+                                                   &Entry
+                                                 )
+                           ) {
+                            if ( Entry->LoadCount != 0xffff ) {
                                 PCSTR SnapString = NULL;
-                                switch (UpdateCountHow)
-                                {
+                                switch (UpdateCountHow) {
                                 case LDRP_UPDATE_LOAD_COUNT_PIN:
                                     Entry->LoadCount = 0xffff;
                                     SnapString = "Pin";
@@ -4232,33 +4505,35 @@ Return Value:
                                     SnapString = "Derefcount";
                                     break;
                                 }
-                                if (ShowSnaps)
-                                {
-                                    DbgPrint("LDR: %s %wZ (%lx)\n", SnapString, ImportDescriptorNameToUse,
-                                             (ULONG)Entry->LoadCount);
+                                if (ShowSnaps) {
+                                    DbgPrint("LDR: %s %wZ (%lx)\n",
+                                            SnapString,
+                                            ImportDescriptorNameToUse,
+                                            (ULONG)Entry->LoadCount
+                                            );
                                 }
                             }
                             LdrpUpdateLoadCount3(Entry, UpdateCountHow, PreAllocatedRedirectionBuffer);
                         }
 
-                        if (DynamicRedirectionString.Buffer != NULL)
-                        {
+                        if (DynamicRedirectionString.Buffer != NULL) {
                             RtlFreeUnicodeString(&DynamicRedirectionString);
                         }
                     }
                 }
-            skipskippedimport:
+    skipskippedimport:
                 ++ImportDescriptor;
             }
         }
-    }
-    __finally
-    {
+    } __finally {
         RtlDeactivateActivationContextUnsafeFast(&ActivationFrame);
     }
 }
 
-VOID LdrpInsertMemoryTableEntry(IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry)
+VOID
+LdrpInsertMemoryTableEntry (
+    IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry
+    )
 
 /*++
 
@@ -4285,12 +4560,13 @@ Return Value:
     Ldr = NtCurrentPeb()->Ldr;
 
     i = LDRP_COMPUTE_HASH_INDEX(LdrDataTableEntry->BaseDllName.Buffer[0]);
-    InsertTailList(&LdrpHashTable[i], &LdrDataTableEntry->HashLinks);
+    InsertTailList(&LdrpHashTable[i],&LdrDataTableEntry->HashLinks);
     InsertTailList(&Ldr->InLoadOrderModuleList, &LdrDataTableEntry->InLoadOrderLinks);
 
 #if defined(_AMD64_) // || defined(_IA64_)
 
-    RtlInsertInvertedFunctionTable(&LdrpInvertedFunctionTable, LdrDataTableEntry->DllBase,
+    RtlInsertInvertedFunctionTable(&LdrpInvertedFunctionTable,
+                                   LdrDataTableEntry->DllBase,
                                    LdrDataTableEntry->SizeOfImage);
 
 #endif
@@ -4300,8 +4576,14 @@ Return Value:
 
 
 NTSTATUS
-LdrpResolveDllName(IN PWSTR DllPath OPTIONAL, IN PWSTR DllName, IN BOOLEAN Redirected,
-                   OUT PUNICODE_STRING FullDllNameOut, OUT PUNICODE_STRING BaseDllNameOut, OUT PHANDLE DllFile)
+LdrpResolveDllName (
+    IN PWSTR DllPath OPTIONAL,
+    IN PWSTR DllName,
+    IN BOOLEAN Redirected,
+    OUT PUNICODE_STRING FullDllNameOut,
+    OUT PUNICODE_STRING BaseDllNameOut,
+    OUT PHANDLE DllFile
+    )
 
 /*++
 
@@ -4348,28 +4630,26 @@ Return Value:
     UNICODE_STRING BaseDllName = { 0, 0, NULL };
     USHORT PrefixLength = 0;
     PCWSTR EffectiveDllPath = (DllPath != NULL) ? DllPath : LdrpDefaultPath.Buffer;
-    WCHAR TempBuffer
-        [40]; // Arbitrary short length so most d:\windows\system32\foobar.dll loads don't need to search the search path twice
+    WCHAR TempBuffer[40]; // Arbitrary short length so most d:\windows\system32\foobar.dll loads don't need to search the search path twice
 
     if (DllFile != NULL)
         *DllFile = NULL;
 
-    if (FullDllNameOut != NULL)
-    {
+    if (FullDllNameOut != NULL) {
         FullDllNameOut->Length = 0;
         FullDllNameOut->MaximumLength = 0;
         FullDllNameOut->Buffer = NULL;
     }
 
-    if (BaseDllNameOut != NULL)
-    {
+    if (BaseDllNameOut != NULL) {
         BaseDllNameOut->Length = 0;
         BaseDllNameOut->MaximumLength = 0;
         BaseDllNameOut->Buffer = NULL;
     }
 
-    if ((DllFile == NULL) || (FullDllNameOut == NULL) || (BaseDllNameOut == NULL))
-    {
+    if ((DllFile == NULL) ||
+        (FullDllNameOut == NULL) ||
+        (BaseDllNameOut == NULL)) {
         st = STATUS_INVALID_PARAMETER;
         goto Exit;
     }
@@ -4378,32 +4658,32 @@ Return Value:
 
     // Look for ".local" redirection for this DLL.
     st = LdrpResolveDllNameForAppPrivateRedirection(&DllNameString, &FullDllName);
-    if (!NT_SUCCESS(st))
-    {
-        DbgPrintEx(DPFLTR_LDR_ID, LDR_ERROR_DPFLTR,
-                   "LDR: %s failed calling LdrpResolveDllNameForAppPrivateRediretion with status %lx\n", __FUNCTION__,
-                   st);
+    if (!NT_SUCCESS(st)) {
+        DbgPrintEx(
+            DPFLTR_LDR_ID,
+            LDR_ERROR_DPFLTR,
+            "LDR: %s failed calling LdrpResolveDllNameForAppPrivateRediretion with status %lx\n",
+            __FUNCTION__,
+            st);
         goto Exit;
     }
 
     // .local always wins, so only search other solutions if that wasn't the answer.
-    if (FullDllName.Length == 0)
-    {
-        if (Redirected)
-        {
+    if (FullDllName.Length == 0) {
+        if (Redirected) {
             // If the path was redirected, we assume that DllNameString is an absolute path to
             // the DLL so there's nothing more to do.
             st = LdrpCopyUnicodeString(&FullDllName, &DllNameString);
-            if (!NT_SUCCESS(st))
-            {
-                DbgPrintEx(DPFLTR_LDR_ID, LDR_ERROR_DPFLTR,
-                           "LDR: %s failed call to LdrpCopyUnicodeString() in redirected case; status = %lx\n",
-                           __FUNCTION__, st);
+            if (!NT_SUCCESS(st)) {
+                DbgPrintEx(
+                    DPFLTR_LDR_ID,
+                    LDR_ERROR_DPFLTR,
+                    "LDR: %s failed call to LdrpCopyUnicodeString() in redirected case; status = %lx\n",
+                    __FUNCTION__,
+                    st);
                 goto Exit;
             }
-        }
-        else
-        {
+        } else {
             ULONG Length;
 
             // Having an excessively long buffer could break code later that assumes
@@ -4412,92 +4692,119 @@ Return Value:
             ASSERT(sizeof(TempBuffer) <= UNICODE_STRING_MAX_BYTES);
 
             // Not redirected; search the search path.
-            Length = RtlDosSearchPath_U(EffectiveDllPath, DllName, NULL, sizeof(TempBuffer), TempBuffer, NULL);
+            Length = RtlDosSearchPath_U(
+                        EffectiveDllPath,
+                        DllName,
+                        NULL,
+                        sizeof(TempBuffer),
+                        TempBuffer,
+                        NULL);
 
-            if (Length == 0)
-            {
-                if (ShowSnaps)
-                {
-                    DbgPrintEx(DPFLTR_LDR_ID, LDR_ERROR_DPFLTR, "LDR: %s - call to RtlDosSearchPath_U failed\n",
-                               __FUNCTION__);
+            if (Length == 0) {
+                if (ShowSnaps) {
+                    DbgPrintEx(
+                        DPFLTR_LDR_ID,
+                        LDR_ERROR_DPFLTR,
+                        "LDR: %s - call to RtlDosSearchPath_U failed\n",
+                        __FUNCTION__);
 
-                    DbgPrintEx(DPFLTR_LDR_ID, LDR_ERROR_DPFLTR, "   DllName: \"%ws\"\n", DllName);
+                    DbgPrintEx(
+                        DPFLTR_LDR_ID,
+                        LDR_ERROR_DPFLTR,
+                        "   DllName: \"%ws\"\n",
+                        DllName);
 
-                    DbgPrintEx(DPFLTR_LDR_ID, LDR_ERROR_DPFLTR, "   Path: \"%ws\"\n", EffectiveDllPath);
+                    DbgPrintEx(
+                        DPFLTR_LDR_ID,
+                        LDR_ERROR_DPFLTR,
+                        "   Path: \"%ws\"\n",
+                        EffectiveDllPath);
                 }
 
                 st = STATUS_DLL_NOT_FOUND;
                 goto Exit;
             }
 
-            if (Length > UNICODE_STRING_MAX_BYTES)
-            {
+            if (Length > UNICODE_STRING_MAX_BYTES) {
                 if (ShowSnaps)
-                    DbgPrint("LDR: LdrResolveDllName - Failing resolution because found path too long (%u bytes; max "
-                             "is %u bytes)\n",
-                             Length, UNICODE_STRING_MAX_BYTES);
+                    DbgPrint(
+                        "LDR: LdrResolveDllName - Failing resolution because found path too long (%u bytes; max is %u bytes)\n",
+                        Length,
+                        UNICODE_STRING_MAX_BYTES);
                 st = STATUS_NAME_TOO_LONG;
                 goto Exit;
             }
 
-            st = LdrpAllocateUnicodeString(&FullDllName, (USHORT)Length);
-            if (!NT_SUCCESS(st))
-            {
-                DbgPrintEx(DPFLTR_LDR_ID, LDR_ERROR_DPFLTR,
-                           "LDR: %s - failed to allocate string for full dll name; length requested: %u\n",
-                           __FUNCTION__, Length);
+            st = LdrpAllocateUnicodeString(&FullDllName, (USHORT) Length);
+            if (!NT_SUCCESS(st)) {
+                DbgPrintEx(
+                    DPFLTR_LDR_ID,
+                    LDR_ERROR_DPFLTR,
+                    "LDR: %s - failed to allocate string for full dll name; length requested: %u\n",
+                    __FUNCTION__,
+                    Length);
 
                 goto Exit;
             }
 
             // If the original stack buffer wasn't large enough, use the dynamically allocated one.
-            if (Length > sizeof(TempBuffer))
-            {
-                ULONG Length2 = RtlDosSearchPath_U(EffectiveDllPath, DllName, NULL, FullDllName.MaximumLength,
-                                                   FullDllName.Buffer, NULL);
+            if (Length > sizeof(TempBuffer)) {
+                ULONG Length2 = RtlDosSearchPath_U(
+                            EffectiveDllPath,
+                            DllName,
+                            NULL,
+                            FullDllName.MaximumLength,
+                            FullDllName.Buffer,
+                            NULL);
 
-                FullDllName.Length = (USHORT)Length2;
+                FullDllName.Length = (USHORT) Length2;
 
                 // It's entirely possible that in a race condition here, the size of the filename required is
                 // even longer.
-                if (Length2 == 0)
-                {
-                    if (ShowSnaps)
-                    {
-                        DbgPrintEx(DPFLTR_LDR_ID, LDR_ERROR_DPFLTR, "LDR: %s - call to RtlDosSearchPath_U failed\n",
-                                   __FUNCTION__);
+                if (Length2 == 0) {
+                    if (ShowSnaps) {
+                        DbgPrintEx(
+                            DPFLTR_LDR_ID,
+                            LDR_ERROR_DPFLTR,
+                            "LDR: %s - call to RtlDosSearchPath_U failed\n",
+                            __FUNCTION__);
 
-                        DbgPrintEx(DPFLTR_LDR_ID, LDR_ERROR_DPFLTR, "   DllName: \"%ws\"\n", DllName);
+                        DbgPrintEx(
+                            DPFLTR_LDR_ID,
+                            LDR_ERROR_DPFLTR,
+                            "   DllName: \"%ws\"\n",
+                            DllName);
 
-                        DbgPrintEx(DPFLTR_LDR_ID, LDR_ERROR_DPFLTR, "   Path: \"%ws\"\n", EffectiveDllPath);
+                        DbgPrintEx(
+                            DPFLTR_LDR_ID,
+                            LDR_ERROR_DPFLTR,
+                            "   Path: \"%ws\"\n",
+                            EffectiveDllPath);
                     }
 
                     LdrpFreeUnicodeString(&FullDllName);
                     st = STATUS_DLL_NOT_FOUND;
                     goto Exit;
-                }
-                else if (Length2 > FullDllName.MaximumLength)
-                {
+                } else if (Length2 > FullDllName.MaximumLength) {
                     if (ShowSnaps)
-                        DbgPrint("LDR: %s - Required path length required for %ws changed from %lu to %lu; try "
-                                 "launching the app again.\n",
-                                 __FUNCTION__, DllName, Length, Length2);
+                        DbgPrint(
+                            "LDR: %s - Required path length required for %ws changed from %lu to %lu; try launching the app again.\n",
+                            __FUNCTION__,
+                            DllName,
+                            Length,
+                            Length2);
 
                     LdrpFreeUnicodeString(&FullDllName);
                     st = STATUS_DLL_NOT_FOUND;
                     goto Exit;
-                }
-                else if (Length2 < Length)
-                {
+                } else if (Length2 < Length) {
                     // If the name shrunk, the trailing null character won't be there, so we put it
                     // in ourselves...
                     FullDllName.Buffer[Length2 / sizeof(WCHAR)] = L'\0';
                 }
-            }
-            else
-            {
+            } else {
                 // Note that LdrpAllocateUnicodeString() already put the null at the character after "Length".
-                FullDllName.Length = (USHORT)Length;
+                FullDllName.Length = (USHORT) Length;
                 RtlCopyMemory(FullDllName.Buffer, TempBuffer, Length);
             }
         }
@@ -4511,28 +4818,30 @@ Return Value:
     // Compute Length of base dll name
     //
 
-    st = RtlFindCharInUnicodeString(RTL_FIND_CHAR_IN_UNICODE_STRING_START_AT_END, FullDllNameOut,
-                                    &RtlDosPathSeperatorsString, &PrefixLength);
-    if (st == STATUS_NOT_FOUND)
-    {
+    st = RtlFindCharInUnicodeString(
+            RTL_FIND_CHAR_IN_UNICODE_STRING_START_AT_END,
+            FullDllNameOut,
+            &RtlDosPathSeperatorsString,
+            &PrefixLength);
+    if (st == STATUS_NOT_FOUND) {
         *BaseDllNameOut = *FullDllNameOut;
-    }
-    else if (!NT_SUCCESS(st))
-    {
-        DbgPrintEx(DPFLTR_LDR_ID, LDR_ERROR_DPFLTR,
-                   "LDR: %s - failing because RtlFindCharInUnicodeString failed with status %x\n", __FUNCTION__, st);
+    } else if (!NT_SUCCESS(st)) {
+        DbgPrintEx(
+            DPFLTR_LDR_ID,
+            LDR_ERROR_DPFLTR,
+            "LDR: %s - failing because RtlFindCharInUnicodeString failed with status %x\n",
+            __FUNCTION__,
+            st);
 
         goto Exit;
-    }
-    else
-    {
+    } else {
         // The prefixlength is the number of bytes prior to the path separator.  We also want to skip
         // the path separator.
         PrefixLength += sizeof(WCHAR);
 
         BaseDllNameOut->Length = FullDllNameOut->Length - PrefixLength;
         BaseDllNameOut->MaximumLength = FullDllNameOut->MaximumLength - PrefixLength;
-        BaseDllNameOut->Buffer = (PWSTR)(((ULONG_PTR)FullDllNameOut->Buffer) + PrefixLength);
+        BaseDllNameOut->Buffer = (PWSTR) (((ULONG_PTR) FullDllNameOut->Buffer) + PrefixLength);
     }
 
     st = STATUS_SUCCESS;
@@ -4545,7 +4854,9 @@ Exit:
 
 
 PVOID
-LdrpFetchAddressOfEntryPoint(IN PVOID Base)
+LdrpFetchAddressOfEntryPoint (
+    IN PVOID Base
+    )
 
 /*++
 
@@ -4573,14 +4884,18 @@ Return Value:
 
     ep = NtHeaders->OptionalHeader.AddressOfEntryPoint;
     if (ep != 0)
-        ep += (ULONG_PTR)Base;
+        ep += (ULONG_PTR) Base;
 
-    return (PVOID)ep;
+    return (PVOID) ep;
 }
 
 NTSTATUS
-LdrpCheckForKnownDll(IN PWSTR DllName, OUT PUNICODE_STRING FullDllNameOut, OUT PUNICODE_STRING BaseDllNameOut,
-                     OUT HANDLE *SectionOut)
+LdrpCheckForKnownDll(
+    IN PWSTR DllName,
+    OUT PUNICODE_STRING FullDllNameOut,
+    OUT PUNICODE_STRING BaseDllNameOut,
+    OUT HANDLE *SectionOut
+    )
 
 /*++
 
@@ -4625,22 +4940,21 @@ Return Value:
     if (SectionOut != NULL)
         *SectionOut = NULL;
 
-    if (FullDllNameOut != NULL)
-    {
+    if (FullDllNameOut != NULL) {
         FullDllNameOut->Length = 0;
         FullDllNameOut->MaximumLength = 0;
         FullDllNameOut->Buffer = NULL;
     }
 
-    if (BaseDllNameOut != NULL)
-    {
+    if (BaseDllNameOut != NULL) {
         BaseDllNameOut->Length = 0;
         BaseDllNameOut->MaximumLength = 0;
         BaseDllNameOut->Buffer = NULL;
     }
 
-    if ((SectionOut == NULL) || (FullDllNameOut == NULL) || (BaseDllNameOut == NULL))
-    {
+    if ((SectionOut == NULL) ||
+        (FullDllNameOut == NULL) ||
+        (BaseDllNameOut == NULL)) {
         Status = STATUS_INVALID_PARAMETER;
         goto Exit;
     }
@@ -4655,23 +4969,23 @@ Return Value:
 
     //check DLL_REDIRECTION by .local file
     if ((NtCurrentPeb()->ProcessParameters != NULL) &&
-        (NtCurrentPeb()->ProcessParameters->Flags & RTL_USER_PROC_DLL_REDIRECTION_LOCAL) && (Unicode.Length != 0))
-    { // dll redirection with .local
+        (NtCurrentPeb()->ProcessParameters->Flags & RTL_USER_PROC_DLL_REDIRECTION_LOCAL) &&
+        (Unicode.Length != 0)) { // dll redirection with .local
         UNICODE_STRING NewDllNameUnderImageDir, NewDllNameUnderLocalDir;
         static WCHAR DllNameUnderImageDirBuffer[DOS_MAX_PATH_LENGTH];
         static WCHAR DllNameUnderLocalDirBuffer[DOS_MAX_PATH_LENGTH];
-        BOOLEAN fIsKnownDll = TRUE; // not know yet,
+        BOOLEAN fIsKnownDll = TRUE;  // not know yet,
 
         NewDllNameUnderImageDir.Buffer = DllNameUnderImageDirBuffer;
-        NewDllNameUnderImageDir.Length = 0;
-        NewDllNameUnderImageDir.MaximumLength = sizeof(DllNameUnderImageDirBuffer);
+        NewDllNameUnderImageDir.Length = 0 ;
+        NewDllNameUnderImageDir.MaximumLength = sizeof(DllNameUnderImageDirBuffer) ;
 
         NewDllNameUnderLocalDir.Buffer = DllNameUnderLocalDirBuffer;
-        NewDllNameUnderLocalDir.Length = 0;
-        NewDllNameUnderLocalDir.MaximumLength = sizeof(DllNameUnderLocalDirBuffer);
+        NewDllNameUnderLocalDir.Length = 0 ;
+        NewDllNameUnderLocalDir.MaximumLength = sizeof(DllNameUnderLocalDirBuffer) ;
 
-        Status = RtlComputePrivatizedDllName_U(&Unicode, &NewDllNameUnderImageDir, &NewDllNameUnderLocalDir);
-        if (!NT_SUCCESS(Status))
+        Status = RtlComputePrivatizedDllName_U(&Unicode, &NewDllNameUnderImageDir, &NewDllNameUnderLocalDir) ;
+        if(!NT_SUCCESS(Status))
             goto Exit;
 
         if ((RtlDoesFileExists_U(NewDllNameUnderLocalDir.Buffer)) ||
@@ -4685,8 +4999,7 @@ Return Value:
         if (NewDllNameUnderImageDir.Buffer != DllNameUnderImageDirBuffer)
             (*RtlFreeStringRoutine)(NewDllNameUnderImageDir.Buffer);
 
-        if (!fIsKnownDll)
-        { // must not be a known dll
+        if (!fIsKnownDll) { // must not be a known dll
             Status = STATUS_SUCCESS;
             goto Exit;
         }
@@ -4694,13 +5007,15 @@ Return Value:
 
     // If the DLL is being redirected via Fusion/Side-by-Side support, don't bother with the
     // KnownDLL mechanism.
-    Status = RtlFindActivationContextSectionString(0,    // flags - none for now
-                                                   NULL, // default section group
-                                                   ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION,
-                                                   &Unicode, // string to look for
-                                                   NULL);    // we don't want any data back, just look for existence
+    Status = RtlFindActivationContextSectionString(
+            0,              // flags - none for now
+            NULL,           // default section group
+            ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION,
+            &Unicode,       // string to look for
+            NULL);          // we don't want any data back, just look for existence
 
-    if ((Status != STATUS_SXS_SECTION_NOT_FOUND) && (Status != STATUS_SXS_KEY_NOT_FOUND))
+    if ((Status != STATUS_SXS_SECTION_NOT_FOUND) &&
+        (Status != STATUS_SXS_KEY_NOT_FOUND))
     {
         if (!NT_SUCCESS(Status))
             goto Exit;
@@ -4713,16 +5028,16 @@ Return Value:
     // now compute the full name for the dll
     //
 
-    FullLength = LdrpKnownDllPath.Length +                                   // path prefix e.g. c:\windows\system32
-                 RtlCanonicalDosPathSeperatorString.Length + Unicode.Length; // base
+    FullLength = LdrpKnownDllPath.Length +  // path prefix e.g. c:\windows\system32
+                 RtlCanonicalDosPathSeperatorString.Length +
+                 Unicode.Length; // base
 
-    if (FullLength > UNICODE_STRING_MAX_BYTES)
-    {
+    if (FullLength > UNICODE_STRING_MAX_BYTES) {
         Status = STATUS_NAME_TOO_LONG;
         goto Exit;
     }
 
-    Status = LdrpAllocateUnicodeString(&FullDllName, (USHORT)FullLength);
+    Status = LdrpAllocateUnicodeString(&FullDllName, (USHORT) FullLength);
     if (!NT_SUCCESS(Status))
         goto Exit;
 
@@ -4736,12 +5051,20 @@ Return Value:
     // open the section object
     //
 
-    InitializeObjectAttributes(&Obja, &Unicode, OBJ_CASE_INSENSITIVE, LdrpKnownDllObjectDirectory, NULL);
+    InitializeObjectAttributes(
+        &Obja,
+        &Unicode,
+        OBJ_CASE_INSENSITIVE,
+        LdrpKnownDllObjectDirectory,
+        NULL
+        );
 
-    Status = NtOpenSection(&Section, SECTION_MAP_READ | SECTION_MAP_EXECUTE | SECTION_MAP_WRITE, &Obja);
+    Status = NtOpenSection(
+            &Section,
+            SECTION_MAP_READ | SECTION_MAP_EXECUTE | SECTION_MAP_WRITE,
+            &Obja);
 
-    if (!NT_SUCCESS(Status))
-    {
+    if (!NT_SUCCESS(Status)) {
         // STATUS_OBJECT_NAME_NOT_FOUND is the expected reason to fail, so it's OK
         if (Status == STATUS_OBJECT_NAME_NOT_FOUND)
             Status = STATUS_SUCCESS;
@@ -4755,7 +5078,7 @@ Return Value:
 
     BaseDllNameOut->Length = Unicode.Length;
     BaseDllNameOut->MaximumLength = Unicode.Length + sizeof(WCHAR);
-    BaseDllNameOut->Buffer = (PWSTR)(((ULONG_PTR)FullDllName.Buffer) + (FullDllName.Length - Unicode.Length));
+    BaseDllNameOut->Buffer = (PWSTR) (((ULONG_PTR) FullDllName.Buffer) + (FullDllName.Length - Unicode.Length));
 
     *FullDllNameOut = FullDllName;
     FullDllName.Length = 0;
@@ -4778,7 +5101,11 @@ Exit:
 }
 
 NTSTATUS
-LdrpSetProtection(IN PVOID Base, IN BOOLEAN Reset, IN BOOLEAN StaticLink)
+LdrpSetProtection (
+    IN PVOID Base,
+    IN BOOLEAN Reset,
+    IN BOOLEAN StaticLink
+    )
 
 /*++
 
@@ -4819,74 +5146,69 @@ Return Value:
 
     NtHeaders = RtlImageNtHeader(Base);
 
-    if (!NtHeaders)
-    {
+    if (! NtHeaders) {
         return STATUS_INVALID_IMAGE_FORMAT;
     }
 
 #if defined(BUILD_WOW6432)
-    if (NtHeaders->OptionalHeader.SectionAlignment < NATIVE_PAGE_SIZE)
-    {
+    if (NtHeaders->OptionalHeader.SectionAlignment < NATIVE_PAGE_SIZE) {
         //
         // if SectionAlignment < PAGE_SIZE the entire image is
         // exec-copy on write, so we have nothing to do.
         //
         return STATUS_SUCCESS;
-    }
+        }
 #endif
 
-    SectionHeader = (PIMAGE_SECTION_HEADER)((ULONG_PTR)NtHeaders + sizeof(ULONG) + sizeof(IMAGE_FILE_HEADER) +
-                                            NtHeaders->FileHeader.SizeOfOptionalHeader);
+    SectionHeader = (PIMAGE_SECTION_HEADER)((ULONG_PTR)NtHeaders + sizeof(ULONG) +
+                        sizeof(IMAGE_FILE_HEADER) +
+                        NtHeaders->FileHeader.SizeOfOptionalHeader
+                        );
 
-    for (i = 0; i < NtHeaders->FileHeader.NumberOfSections; i++)
-    {
-        if (!(SectionHeader->Characteristics & IMAGE_SCN_MEM_WRITE) && (SectionHeader->SizeOfRawData))
-        {
+    for (i=0; i<NtHeaders->FileHeader.NumberOfSections; i++) {
+        if (!(SectionHeader->Characteristics & IMAGE_SCN_MEM_WRITE) &&
+             (SectionHeader->SizeOfRawData))
+         {
             //
             // Object isn't writeable and has a non-zero on disk size, change it.
             //
-            if (Reset)
-            {
-                if (SectionHeader->Characteristics & IMAGE_SCN_MEM_EXECUTE)
-                {
+            if (Reset) {
+                if (SectionHeader->Characteristics & IMAGE_SCN_MEM_EXECUTE) {
                     NewProtect = PAGE_EXECUTE;
-                }
-                else
-                {
-                    NewProtect = PAGE_READONLY;
+                } else {
+                         NewProtect = PAGE_READONLY;
                 }
                 NewProtect |= (SectionHeader->Characteristics & IMAGE_SCN_MEM_NOT_CACHED) ? PAGE_NOCACHE : 0;
-            }
-            else
-            {
+            } else {
                 NewProtect = PAGE_READWRITE;
             }
             VirtualAddress = (PVOID)((ULONG_PTR)Base + SectionHeader->VirtualAddress);
             RegionSize = SectionHeader->SizeOfRawData;
 
-            if (RegionSize != 0)
-            {
-                st =
-                    NtProtectVirtualMemory(CurrentProcessHandle, &VirtualAddress, &RegionSize, NewProtect, &OldProtect);
+            if (RegionSize != 0) {
+                st = NtProtectVirtualMemory(CurrentProcessHandle, &VirtualAddress,
+                              &RegionSize, NewProtect, &OldProtect);
 
-                if (!NT_SUCCESS(st))
-                {
+                if (!NT_SUCCESS(st)) {
                     return st;
                 }
             }
+
         }
         ++SectionHeader;
     }
 
-    if (Reset)
-    {
+    if (Reset) {
         NtFlushInstructionCache(NtCurrentProcess(), NULL, 0);
     }
     return STATUS_SUCCESS;
 }
 
 NTSTATUS
-LdrpResolveDllNameForAppPrivateRedirection(PCUNICODE_STRING DllNameString, PUNICODE_STRING FullDllName)
+LdrpResolveDllNameForAppPrivateRedirection(
+    PCUNICODE_STRING DllNameString,
+    PUNICODE_STRING FullDllName
+    )
 /*++
 
 Routine Description:
@@ -4925,22 +5247,21 @@ Return Value:
     // they're not null and don't point to the static buffers and then free them.
 
     FullDllNameUnderImageDir.Buffer = DllNameUnderImageDirBuffer;
-    FullDllNameUnderImageDir.Length = 0;
+    FullDllNameUnderImageDir.Length = 0 ;
     FullDllNameUnderImageDir.MaximumLength = sizeof(DllNameUnderImageDirBuffer);
 
     FullDllNameUnderLocalDir.Buffer = DllNameUnderLocalDirBuffer;
-    FullDllNameUnderLocalDir.Length = 0;
+    FullDllNameUnderLocalDir.Length = 0 ;
     FullDllNameUnderLocalDir.MaximumLength = sizeof(DllNameUnderLocalDirBuffer);
 
-    if (FullDllName != NULL)
-    {
+    if (FullDllName != NULL) {
         FullDllName->Length = 0;
         FullDllName->MaximumLength = 0;
         FullDllName->Buffer = NULL;
     }
 
-    if ((FullDllName == NULL) || (DllNameString == NULL))
-    {
+    if ((FullDllName == NULL) ||
+        (DllNameString == NULL)) {
         st = STATUS_INVALID_PARAMETER;
         goto Exit;
     }
@@ -4951,38 +5272,41 @@ Return Value:
 
     if ((NtCurrentPeb()->ProcessParameters != NULL) &&
         (NtCurrentPeb()->ProcessParameters->Flags & RTL_USER_PROC_DLL_REDIRECTION_LOCAL) &&
-        (DllNameString->Length != 0))
-    { // dll redirection with .local
+        (DllNameString->Length != 0)) { // dll redirection with .local
         st = RtlComputePrivatizedDllName_U(DllNameString, &FullDllNameUnderImageDir, &FullDllNameUnderLocalDir);
-        if (!NT_SUCCESS(st))
-        {
-            DbgPrintEx(DPFLTR_LDR_ID, DPFLTR_ERROR_LEVEL,
-                       "LDR: %s call to RtlComputePrivatizedDllName_U() failed with status %lx\n", __FUNCTION__, st);
+        if(!NT_SUCCESS(st)) {
+            DbgPrintEx(
+                DPFLTR_LDR_ID,
+                DPFLTR_ERROR_LEVEL,
+                "LDR: %s call to RtlComputePrivatizedDllName_U() failed with status %lx\n",
+                __FUNCTION__,
+                st);
             goto Exit;
         }
 
-        if (RtlDoesFileExists_U(FullDllNameUnderLocalDir.Buffer))
-        { // there is a local dll, use it
+        if (RtlDoesFileExists_U(FullDllNameUnderLocalDir.Buffer)) {// there is a local dll, use it
             st = LdrpCopyUnicodeString(FullDllName, &FullDllNameUnderLocalDir);
-            if (!NT_SUCCESS(st))
-            {
+            if (!NT_SUCCESS(st)) {
                 if (ShowSnaps)
-                    DbgPrintEx(DPFLTR_LDR_ID, DPFLTR_ERROR_LEVEL,
-                               "LDR: %s calling LdrpCopyUnicodeString() failed; exiting with status %lx\n",
-                               __FUNCTION__, st);
+                    DbgPrintEx(
+                        DPFLTR_LDR_ID,
+                        DPFLTR_ERROR_LEVEL,
+                        "LDR: %s calling LdrpCopyUnicodeString() failed; exiting with status %lx\n",
+                        __FUNCTION__,
+                        st);
 
                 goto Exit;
             }
-        }
-        else if (RtlDoesFileExists_U(FullDllNameUnderImageDir.Buffer))
-        { // there is a local dll, use it
+        } else if (RtlDoesFileExists_U(FullDllNameUnderImageDir.Buffer)) { // there is a local dll, use it
             st = LdrpCopyUnicodeString(FullDllName, &FullDllNameUnderImageDir);
-            if (!NT_SUCCESS(st))
-            {
+            if (!NT_SUCCESS(st)) {
                 if (ShowSnaps)
-                    DbgPrintEx(DPFLTR_LDR_ID, DPFLTR_ERROR_LEVEL,
-                               "LDR: %s calling LdrpCopyUnicodeString() failed; exiting with status %lx\n",
-                               __FUNCTION__, st);
+                    DbgPrintEx(
+                        DPFLTR_LDR_ID,
+                        DPFLTR_ERROR_LEVEL,
+                        "LDR: %s calling LdrpCopyUnicodeString() failed; exiting with status %lx\n",
+                        __FUNCTION__,
+                        st);
 
                 goto Exit;
             }
@@ -4991,11 +5315,14 @@ Return Value:
 
     st = STATUS_SUCCESS;
 Exit:
-    if ((FullDllNameUnderImageDir.Buffer != NULL) && (FullDllNameUnderImageDir.Buffer != DllNameUnderImageDirBuffer))
+    if ((FullDllNameUnderImageDir.Buffer != NULL) &&
+        (FullDllNameUnderImageDir.Buffer != DllNameUnderImageDirBuffer))
         (*RtlFreeStringRoutine)(FullDllNameUnderImageDir.Buffer);
 
-    if ((FullDllNameUnderLocalDir.Buffer != NULL) && (FullDllNameUnderLocalDir.Buffer != DllNameUnderLocalDirBuffer))
+    if ((FullDllNameUnderLocalDir.Buffer != NULL) &&
+        (FullDllNameUnderLocalDir.Buffer != DllNameUnderLocalDirBuffer))
         (*RtlFreeStringRoutine)(FullDllNameUnderLocalDir.Buffer);
 
     return st;
 }
+

@@ -21,7 +21,9 @@ Revision History:
 #include "csrdll.h"
 
 NTSTATUS
-CsrNewThread(VOID)
+CsrNewThread(
+    VOID
+    )
 
 /*++
 
@@ -42,11 +44,11 @@ Return Value:
 --*/
 
 {
-    return NtRegisterThreadTerminatePort(CsrPortHandle);
+    return NtRegisterThreadTerminatePort( CsrPortHandle );
 }
 
 NTSTATUS
-CsrIdentifyAlertableThread(VOID)
+CsrIdentifyAlertableThread( VOID )
 {
     NTSTATUS Status;
     CSR_API_MSG m;
@@ -54,15 +56,24 @@ CsrIdentifyAlertableThread(VOID)
 
     a->ClientId = NtCurrentTeb()->ClientId;
 
-    Status =
-        CsrClientCallServer(&m, NULL, CSR_MAKE_API_NUMBER(CSRSRV_SERVERDLL_INDEX, CsrpIdentifyAlertable), sizeof(*a));
+    Status = CsrClientCallServer(
+                &m,
+                NULL,
+                CSR_MAKE_API_NUMBER( CSRSRV_SERVERDLL_INDEX,
+                                     CsrpIdentifyAlertable
+                                   ),
+                sizeof( *a )
+                );
 
     return Status;
 }
 
 
 NTSTATUS
-CsrSetPriorityClass(IN HANDLE ProcessHandle, IN OUT PULONG PriorityClass)
+CsrSetPriorityClass(
+    IN HANDLE ProcessHandle,
+    IN OUT PULONG PriorityClass
+    )
 {
     NTSTATUS Status;
     CSR_API_MSG m;
@@ -71,13 +82,19 @@ CsrSetPriorityClass(IN HANDLE ProcessHandle, IN OUT PULONG PriorityClass)
     a->ProcessHandle = ProcessHandle;
     a->PriorityClass = *PriorityClass;
 
-    Status =
-        CsrClientCallServer(&m, NULL, CSR_MAKE_API_NUMBER(CSRSRV_SERVERDLL_INDEX, CsrpSetPriorityClass), sizeof(*a));
+    Status = CsrClientCallServer(
+                &m,
+                NULL,
+                CSR_MAKE_API_NUMBER( CSRSRV_SERVERDLL_INDEX,
+                                     CsrpSetPriorityClass
+                                   ),
+                sizeof( *a )
+                );
 
-    if (*PriorityClass == 0)
-    {
+    if ( *PriorityClass == 0 ) {
         *PriorityClass = a->PriorityClass;
-    }
+        }
 
     return Status;
+
 }

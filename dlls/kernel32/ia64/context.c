@@ -20,8 +20,14 @@ Revision History:
 
 #include "kxia64.h"
 
-VOID BaseInitializeContext(OUT PCONTEXT Context, IN PVOID Parameter OPTIONAL, IN PVOID InitialPc OPTIONAL,
-                           IN PVOID InitialSp OPTIONAL, IN BASE_CONTEXT_TYPE ContextType)
+VOID
+BaseInitializeContext(
+    OUT PCONTEXT Context,
+    IN PVOID Parameter OPTIONAL,
+    IN PVOID InitialPc OPTIONAL,
+    IN PVOID InitialSp OPTIONAL,
+    IN BASE_CONTEXT_TYPE ContextType
+    )
 
 /*++
 
@@ -56,7 +62,7 @@ Return Value:
 {
     ULONG ArgumentsCount;
     //
-    // Initialize the Context
+    // Initialize the Context 
     //
     RtlZeroMemory((PVOID)Context, sizeof(CONTEXT));
 
@@ -71,18 +77,18 @@ Return Value:
     // Enable RSE engine
     //
 
-    Context->RsRSC = (RSC_MODE_EA << RSC_MODE) | (RSC_BE_LITTLE << RSC_BE) | (0x3 << RSC_PL);
+    Context->RsRSC = (RSC_MODE_EA<<RSC_MODE)
+                   | (RSC_BE_LITTLE<<RSC_BE)
+                   | (0x3<<RSC_PL);
 
-    if (ContextType == BaseContextTypeThread)
-    {
+    if ( ContextType == BaseContextTypeThread ) {
         Context->IntS0 = Context->StIIP = (ULONG_PTR)BaseThreadStartThunk;
-    }
-    else if (ContextType == BaseContextTypeFiber)
-    {
+        }
+    else if ( ContextType == BaseContextTypeFiber ) {
         Context->IntS0 = Context->StIIP = (ULONG_PTR)BaseFiberStart;
         //
         // set up the return pointer here..
-        // when SwitchToFiber restores context and calls return,
+        // when SwitchToFiber restores context and calls return, 
         // the contorl goes to this routine
         //
         Context->BrRp = *((ULONGLONG *)((PUCHAR)BaseFiberStart));
@@ -90,21 +96,24 @@ Return Value:
         //
         // set up sof = 96 in pfs. This will be used to set up CFM for above
         // routine
-        //
+        //  
         Context->RsPFS = 0x60;
-    }
-    else
-    {
+
+        }
+    else {
         Context->IntS0 = Context->StIIP = (ULONG_PTR)(LONG_PTR)BaseProcessStartThunk;
-    }
+        }
 
     Context->RsPFS |= MASK_IA64(PFS_PPL, 3i64);
-    Context->ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER;
+    Context->ContextFlags = CONTEXT_CONTROL| CONTEXT_INTEGER;
 
     Context->Eflag = 0x3000i64;
 }
 
-VOID BaseFiberStart(VOID)
+VOID
+BaseFiberStart(
+    VOID
+    )
 
 /*++
 
@@ -128,11 +137,16 @@ Return Value:
     PFIBER Fiber;
 
     Fiber = GetCurrentFiber();
-    BaseThreadStart((LPTHREAD_START_ROUTINE)Fiber->FiberContext.IntS1, (LPVOID)Fiber->FiberContext.IntS2);
+    BaseThreadStart( (LPTHREAD_START_ROUTINE)Fiber->FiberContext.IntS1,
+                     (LPVOID)Fiber->FiberContext.IntS2 );
 }
 
 
-VOID BaseProcessStartupIA64(IN PTHREAD_START_ROUTINE StartRoutine, IN PVOID ThreadParameter)
+VOID
+BaseProcessStartupIA64(
+   IN PTHREAD_START_ROUTINE StartRoutine,
+   IN PVOID ThreadParameter
+   )
 
 /*++
 
@@ -152,5 +166,5 @@ Return Value:
 
 --*/
 {
-    (StartRoutine)(ThreadParameter);
+   (StartRoutine)(ThreadParameter);
 }

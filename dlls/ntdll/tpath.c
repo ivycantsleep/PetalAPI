@@ -32,25 +32,31 @@ void __stdcall RtlpInitDeferedCriticalSection(void);
 void __stdcall RtlpDphInitializeDelayedFreeQueue(void);
 extern RTL_CRITICAL_SECTION RtlpDphHeapListCriticalSection;
 
-VOID __stdcall LdrpInitialize(IN PCONTEXT Context, IN PVOID SystemArgument1, IN PVOID SystemArgument2);
+VOID __stdcall LdrpInitialize (IN PCONTEXT Context, IN PVOID SystemArgument1, IN PVOID SystemArgument2);
 
 void NtdllMain()
 {
     PPEB PPeb = NtCurrentPeb();
     PTEB PTeb = NtCurrentTeb();
-    PEB Peb;
-    TEB Teb;
+    PEB  Peb;
+    TEB  Teb;
     HANDLE NtdllModuleHandle = GetModuleHandleW(L"ntdll.dll");
     HANDLE MyModuleHandle = GetModuleHandleW(NULL);
     PIMAGE_NT_HEADERS MyHeaders = RtlImageNtHeader(MyModuleHandle);
     /*const*/ static IMAGE_NT_HEADERS ZeroHeaders = { 0 };
     SIZE_T RegionSize = 0x10000;
-    PVOID Base = MyModuleHandle;
-    ULONG OldProtect = 0;
+    PVOID  Base = MyModuleHandle;
+    ULONG  OldProtect = 0;
     NTSTATUS Status;
 
-    Status = NtProtectVirtualMemory(NtCurrentProcess(), &Base, &RegionSize, PAGE_EXECUTE_READWRITE, &OldProtect);
-    /*
+    Status = NtProtectVirtualMemory(
+                NtCurrentProcess(),
+                &Base,
+                &RegionSize,
+                PAGE_EXECUTE_READWRITE,
+                &OldProtect
+                );
+/*
     WriteProcessMemory(
         NtCurrentProcess(),
         &MyHeaders->OptionalHeader.DataDirectory,
@@ -90,32 +96,32 @@ void NtdllMain()
     PPeb->OemCodePageData = Peb.OemCodePageData;
     PPeb->UnicodeCaseTableData = Peb.UnicodeCaseTableData;
     PPeb->NtGlobalFlag = Peb.NtGlobalFlag
-        /*
+                    /*
                    | FLG_HEAP_ENABLE_TAIL_CHECK |
                      FLG_HEAP_ENABLE_FREE_CHECK |
                      FLG_HEAP_VALIDATE_PARAMETERS |
                      FLG_HEAP_VALIDATE_ALL |
                      FLG_HEAP_ENABLE_TAGGING
                      */
-        ;
+                     ;
     __try
     {
         //LdrpInitialize(0, NtdllModuleHandle, 0);
     }
-    __except (EXCEPTION_EXECUTE_HANDLER)
+    __except(EXCEPTION_EXECUTE_HANDLER)
     {
     }
     PPeb->ProcessParameters = Peb.ProcessParameters;
     PPeb->BeingDebugged = Peb.BeingDebugged;
     PPeb->NtGlobalFlag = Peb.NtGlobalFlag
-        /*
+                    /*
                    | FLG_HEAP_ENABLE_TAIL_CHECK |
                      FLG_HEAP_ENABLE_FREE_CHECK |
                      FLG_HEAP_VALIDATE_PARAMETERS |
                      FLG_HEAP_VALIDATE_ALL |
                      FLG_HEAP_ENABLE_TAGGING
                      */
-        ;
+                     ;
     PPeb->FastPebLock = Peb.FastPebLock;
     PPeb->FastPebLockRoutine = Peb.FastPebLockRoutine;
     PPeb->ProcessHeap = Peb.ProcessHeap;
@@ -129,9 +135,7 @@ void NtdllMain()
 #endif
 }
 #else
-void NtdllMain()
-{
-}
+void NtdllMain() { }
 #include "curdir.c"
 #endif
 
@@ -139,47 +143,50 @@ void NtdllMain()
 
 static BOOLEAN InMain;
 
-int __cdecl main(int argc, char **argv)
+int __cdecl main(int argc, char** argv)
 {
     UCHAR Buffer[100];
-    RTL_UNICODE_STRING_BUFFER StringBuffer = { 0 };
-    UNICODE_STRING String = { 0 };
+    RTL_UNICODE_STRING_BUFFER StringBuffer = {0};
+    UNICODE_STRING String = {0};
     ULONG i = 0;
     PCWSTR x = 0;
     PCWSTR y = 0;
     NTSTATUS Status = 0;
 
-    const static WCHAR AppendPathElementTestData[] = {                // noslash
-                                                       L"a\0bar\0"    // =  a\b
-                                                                      // one slash
-                                                       L"/a\0bar\0"   // = /a/b
-                                                       L"a/\0bar\0"   // = /a/b/
-                                                       L"a\0/b\0"     // =  a/b
-                                                       L"a\0bar/\0"   // =  a/b/
-                                                                      // two slashes
-                                                       L"/a/\0bar\0"  // = /a/b/
-                                                       L"/a\0/b\0"    // = /a/b
-                                                       L"/a\0bar/\0"  // = /a/b/
-                                                       L"a/\0/b\0"    // =  a/b/
-                                                       L"a/\0bar/\0"  // =  a/b/
-                                                       L"a\0/b/\0"    // =  a/b/
-                                                                      // three slashes
-                                                       L"/a/\0/b\0"   // = /a/b/
-                                                       L"/a/\0bar/\0" // = /a/b/
-                                                       L"/a\0/b/\0"   // = /a/b/
-                                                       L"a/\0/b/\0"   // =  a/b
-                                                                      // four slashes
-                                                       L"/a/\0/b/\0"  // = /a/b/
-                                                                      //
-                                                                      // 1 + 4 + 6 + 4 + 1 = 4^2 = 16 posibilities
-                                                       L"\0"
+    const static WCHAR AppendPathElementTestData[] =
+    {
+// noslash
+        L"a\0bar\0" // =  a\b
+// one slash
+        L"/a\0bar\0" // = /a/b
+        L"a/\0bar\0" // = /a/b/
+        L"a\0/b\0" // =  a/b
+        L"a\0bar/\0" // =  a/b/
+// two slashes
+        L"/a/\0bar\0" // = /a/b/
+        L"/a\0/b\0" // = /a/b
+        L"/a\0bar/\0" // = /a/b/
+        L"a/\0/b\0" // =  a/b/
+        L"a/\0bar/\0" // =  a/b/
+        L"a\0/b/\0" // =  a/b/
+// three slashes
+        L"/a/\0/b\0" // = /a/b/
+        L"/a/\0bar/\0" // = /a/b/
+        L"/a\0/b/\0" // = /a/b/
+        L"a/\0/b/\0" // =  a/b
+// four slashes
+        L"/a/\0/b/\0" // = /a/b/
+//
+// 1 + 4 + 6 + 4 + 1 = 4^2 = 16 posibilities
+        L"\0"
     };
 
-    const static WCHAR RemoveLastPathElementTestData[] = {
+    const static WCHAR RemoveLastPathElementTestData[] =
+    {
 
-        //
-        // move/copy cases to the top to debug them
-        //
+    //
+    // move/copy cases to the top to debug them
+    //
         //L"c:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
         //L"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
         //L"\0"
@@ -493,8 +500,10 @@ int __cdecl main(int argc, char **argv)
     RTL_SOFT_ASSERT(NT_SUCCESS(Status));
 
 #if 1
-    for ((x = AppendPathElementTestData, y = x + wcslen(x) + 1); *x && *y;
-         (x = y + wcslen(y) + 1, y = x + wcslen(x) + 1))
+    for (   (x = AppendPathElementTestData, y = x + wcslen(x) + 1) ;
+            *x && *y ;
+            (x = y + wcslen(y) + 1, y = x + wcslen(x) + 1)
+        )
     {
         RtlInitUnicodeString(&String, x);
         RTL_SOFT_VERIFY(NT_SUCCESS(Status = RtlAssignUnicodeStringBuffer(&StringBuffer, &String)));
@@ -510,11 +519,11 @@ int __cdecl main(int argc, char **argv)
 #if 1
     printf("\n\nDosPath<->NtPath conversion\n\n");
 
-    for (x = RemoveLastPathElementTestData; *x || *(x + 1); x += +wcslen(x) + 1)
+    for (x = RemoveLastPathElementTestData ; *x || *(x + 1) ; x += + wcslen(x) + 1)
     {
-        UNICODE_STRING DosToNt = { 0 };
-        RTL_UNICODE_STRING_BUFFER NtToDos = { 0 };
-        BOOLEAN Success;
+        UNICODE_STRING DosToNt = {0};
+        RTL_UNICODE_STRING_BUFFER NtToDos = {0};
+        BOOLEAN  Success;
 
         RtlInitUnicodeStringBuffer(&NtToDos, 0, 0);
         //RtlInitUnicodeStringBuffer(&NtToDos, Buffer, sizeof(Buffer));

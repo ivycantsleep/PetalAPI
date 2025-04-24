@@ -49,36 +49,36 @@ Revision History:
 //      ExceptionInformation[3] == Framelist found to be corrupt
 
 
-typedef struct _RTL_HEAP_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME
-{
+typedef struct _RTL_HEAP_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME {
     RTL_ACTIVATION_CONTEXT_STACK_FRAME Frame;
     ULONG_PTR Cookie;
     PVOID ActivationStackBackTrace[8];
 } RTL_HEAP_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME, *PRTL_HEAP_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME;
 
 NTSYSAPI
-VOID NTAPI RtlpAssemblyStorageMapResolutionDefaultCallback(
-    IN ULONG CallbackReason, IN OUT ASSEMBLY_STORAGE_MAP_RESOLUTION_CALLBACK_DATA *CallbackData,
-    IN PVOID CallbackContext);
+VOID
+NTAPI
+RtlpAssemblyStorageMapResolutionDefaultCallback(
+    IN ULONG CallbackReason,
+    IN OUT ASSEMBLY_STORAGE_MAP_RESOLUTION_CALLBACK_DATA *CallbackData,
+    IN PVOID CallbackContext
+    );
 
-typedef struct _ASSEMBLY_STORAGE_MAP_ENTRY
-{
+typedef struct _ASSEMBLY_STORAGE_MAP_ENTRY {
     ULONG Flags;
-    UNICODE_STRING DosPath; // stored with a trailing unicode null
-    HANDLE Handle;          // open file handle on the directory to lock it down
+    UNICODE_STRING DosPath;         // stored with a trailing unicode null
+    HANDLE Handle;                  // open file handle on the directory to lock it down
 } ASSEMBLY_STORAGE_MAP_ENTRY, *PASSEMBLY_STORAGE_MAP_ENTRY;
 
 #define ASSEMBLY_STORAGE_MAP_ASSEMBLY_ARRAY_IS_HEAP_ALLOCATED (0x00000001)
 
-typedef struct _ASSEMBLY_STORAGE_MAP
-{
+typedef struct _ASSEMBLY_STORAGE_MAP {
     ULONG Flags;
     ULONG AssemblyCount;
     PASSEMBLY_STORAGE_MAP_ENTRY *AssemblyArray;
 } ASSEMBLY_STORAGE_MAP, *PASSEMBLY_STORAGE_MAP;
 
-typedef struct _ACTIVATION_CONTEXT
-{
+typedef struct _ACTIVATION_CONTEXT {
     LONG RefCount;
     ULONG Flags;
     PVOID ActivationContextData;
@@ -91,56 +91,45 @@ typedef struct _ACTIVATION_CONTEXT
 } ACTIVATION_CONTEXT;
 
 #define ACTIVATION_CONTEXT_NOTIFICATION_DESTROY_INDEX (ACTIVATION_CONTEXT_NOTIFICATION_DESTROY >> 5)
-#define ACTIVATION_CONTEXT_NOTIFICATION_DESTROY_MASK ((ULONG)(1 << (ACTIVATION_CONTEXT_NOTIFICATION_DESTROY & 0x1f)))
+#define ACTIVATION_CONTEXT_NOTIFICATION_DESTROY_MASK ((ULONG) (1 << (ACTIVATION_CONTEXT_NOTIFICATION_DESTROY & 0x1f)))
 
 #define ACTIVATION_CONTEXT_NOTIFICATION_ZOMBIFY_INDEX (ACTIVATION_CONTEXT_NOTIFICATION_ZOMBIFY >> 5)
-#define ACTIVATION_CONTEXT_NOTIFICATION_ZOMBIFY_MASK ((ULONG)(1 << (ACTIVATION_CONTEXT_NOTIFICATION_ZOMBIFY & 0x1f)))
+#define ACTIVATION_CONTEXT_NOTIFICATION_ZOMBIFY_MASK ((ULONG) (1 << (ACTIVATION_CONTEXT_NOTIFICATION_ZOMBIFY & 0x1f)))
 
 #define ACTIVATION_CONTEXT_NOTIFICATION_USED_INDEX (ACTIVATION_CONTEXT_NOTIFICATION_USED >> 5)
-#define ACTIVATION_CONTEXT_NOTIFICATION_USED_MASK ((ULONG)(1 << (ACTIVATION_CONTEXT_NOTIFICATION_USED & 0x1f)))
+#define ACTIVATION_CONTEXT_NOTIFICATION_USED_MASK ((ULONG) (1 << (ACTIVATION_CONTEXT_NOTIFICATION_USED & 0x1f)))
 
-#define HAS_ACTIVATION_CONTEXT_NOTIFICATION_BEEN_SENT(_pac, _nt)                 \
-    (((_pac)->SentNotifications[ACTIVATION_CONTEXT_NOTIFICATION_##_nt##_INDEX] & \
-      ACTIVATION_CONTEXT_NOTIFICATION_##_nt##_MASK) != 0)
-#define HAS_ACTIVATION_CONTEXT_NOTIFICATION_BEEN_DISABLED(_pac, _nt)                 \
-    (((_pac)->DisabledNotifications[ACTIVATION_CONTEXT_NOTIFICATION_##_nt##_INDEX] & \
-      ACTIVATION_CONTEXT_NOTIFICATION_##_nt##_MASK) != 0)
+#define HAS_ACTIVATION_CONTEXT_NOTIFICATION_BEEN_SENT(_pac, _nt) (((_pac)->SentNotifications[ACTIVATION_CONTEXT_NOTIFICATION_ ## _nt ## _INDEX] & ACTIVATION_CONTEXT_NOTIFICATION_ ## _nt ## _MASK) != 0)
+#define HAS_ACTIVATION_CONTEXT_NOTIFICATION_BEEN_DISABLED(_pac, _nt) (((_pac)->DisabledNotifications[ACTIVATION_CONTEXT_NOTIFICATION_ ## _nt ## _INDEX] & ACTIVATION_CONTEXT_NOTIFICATION_ ## _nt ## _MASK) != 0)
 
-#define ACTIVATION_CONTEXT_SHOULD_SEND_NOTIFICATION(_pac, _nt)              \
-    ((!IS_SPECIAL_ACTCTX(_pac)) && ((_pac)->NotificationRoutine != NULL) && \
-     ((!HAS_ACTIVATION_CONTEXT_NOTIFICATION_BEEN_SENT((_pac), _nt)) ||      \
-      (!HAS_ACTIVATION_CONTEXT_NOTIFICATION_BEEN_DISABLED((_pac), _nt))))
+#define ACTIVATION_CONTEXT_SHOULD_SEND_NOTIFICATION(_pac, _nt) \
+ ((!IS_SPECIAL_ACTCTX(_pac)) && ((_pac)->NotificationRoutine != NULL) && ((!HAS_ACTIVATION_CONTEXT_NOTIFICATION_BEEN_SENT((_pac), _nt)) || (!HAS_ACTIVATION_CONTEXT_NOTIFICATION_BEEN_DISABLED((_pac), _nt))))
 
-#define RECORD_ACTIVATION_CONTEXT_NOTIFICATION_SENT(_pac, _nt)                      \
-    {                                                                               \
-        (_pac)->SentNotifications[ACTIVATION_CONTEXT_NOTIFICATION_##_nt##_INDEX] |= \
-            ACTIVATION_CONTEXT_NOTIFICATION_##_nt##_MASK;                           \
-    }
-#define RECORD_ACTIVATION_CONTEXT_NOTIFICATION_DISABLED(_pac, _nt)                      \
-    {                                                                                   \
-        (_pac)->DisabledNotifications[ACTIVATION_CONTEXT_NOTIFICATION_##_nt##_INDEX] |= \
-            ACTIVATION_CONTEXT_NOTIFICATION_##_nt##_MASK;                               \
-    }
+#define RECORD_ACTIVATION_CONTEXT_NOTIFICATION_SENT(_pac, _nt) { (_pac)->SentNotifications[ACTIVATION_CONTEXT_NOTIFICATION_ ## _nt ## _INDEX] |= ACTIVATION_CONTEXT_NOTIFICATION_ ## _nt ## _MASK; }
+#define RECORD_ACTIVATION_CONTEXT_NOTIFICATION_DISABLED(_pac, _nt) { (_pac)->DisabledNotifications[ACTIVATION_CONTEXT_NOTIFICATION_ ## _nt ## _INDEX] |= ACTIVATION_CONTEXT_NOTIFICATION_ ## _nt ## _MASK; }
 
-#define SEND_ACTIVATION_CONTEXT_NOTIFICATION(_pac, _nt, _data)                                                    \
-    {                                                                                                             \
-        if (ACTIVATION_CONTEXT_SHOULD_SEND_NOTIFICATION((_pac), _nt))                                             \
-        {                                                                                                         \
-            BOOLEAN __DisableNotification = FALSE;                                                                \
-            (*((_pac)->NotificationRoutine))(ACTIVATION_CONTEXT_NOTIFICATION_##_nt, (_pac),                       \
-                                             (_pac)->ActivationContextData, (_pac)->NotificationContext, (_data), \
-                                             &__DisableNotification);                                             \
-            RECORD_ACTIVATION_CONTEXT_NOTIFICATION_SENT((_pac), _nt);                                             \
-            if (__DisableNotification)                                                                            \
-                RECORD_ACTIVATION_CONTEXT_NOTIFICATION_DISABLED((_pac), _nt);                                     \
-        }                                                                                                         \
-    }
+#define SEND_ACTIVATION_CONTEXT_NOTIFICATION(_pac, _nt, _data) \
+{ \
+    if (ACTIVATION_CONTEXT_SHOULD_SEND_NOTIFICATION((_pac), _nt)) { \
+        BOOLEAN __DisableNotification = FALSE; \
+        (*((_pac)->NotificationRoutine))( \
+            ACTIVATION_CONTEXT_NOTIFICATION_ ## _nt, \
+            (_pac), \
+            (_pac)->ActivationContextData, \
+            (_pac)->NotificationContext, \
+            (_data), \
+            &__DisableNotification); \
+        RECORD_ACTIVATION_CONTEXT_NOTIFICATION_SENT((_pac), _nt); \
+        if (__DisableNotification) \
+            RECORD_ACTIVATION_CONTEXT_NOTIFICATION_DISABLED((_pac), _nt); \
+    } \
+}
 
 //
 //  Flags for ACTIVATION_CONTEXT
 //
 
-#define ACTIVATION_CONTEXT_ZOMBIFIED (0x00000001)
+#define ACTIVATION_CONTEXT_ZOMBIFIED          (0x00000001)
 #define ACTIVATION_CONTEXT_NOT_HEAP_ALLOCATED (0x00000002)
 
 //
@@ -167,9 +156,8 @@ typedef struct _ACTIVATION_CONTEXT
 
 #define ACTIVATION_CONTEXT_STACK_FRAMELIST_MAGIC 'tslF'
 
-typedef struct _ACTIVATION_CONTEXT_STACK_FRAMELIST
-{
-    ULONG Magic; // Bit pattern to recognize a framelist
+typedef struct _ACTIVATION_CONTEXT_STACK_FRAMELIST {
+    ULONG Magic;    // Bit pattern to recognize a framelist
     ULONG FramesInUse;
     LIST_ENTRY Links;
     ULONG Flags;
@@ -177,135 +165,219 @@ typedef struct _ACTIVATION_CONTEXT_STACK_FRAMELIST
     RTL_HEAP_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME Frames[32];
 } ACTIVATION_CONTEXT_STACK_FRAMELIST, *PACTIVATION_CONTEXT_STACK_FRAMELIST;
 
-#define RTLP_VALIDATE_ACTIVATION_CONTEXT_DATA_FLAG_VALIDATE_SIZE (0x00000001)
-#define RTLP_VALIDATE_ACTIVATION_CONTEXT_DATA_FLAG_VALIDATE_OFFSETS (0x00000002)
-#define RTLP_VALIDATE_ACTIVATION_CONTEXT_DATA_FLAG_VALIDATE_READONLY (0x00000004)
+#define RTLP_VALIDATE_ACTIVATION_CONTEXT_DATA_FLAG_VALIDATE_SIZE        (0x00000001)
+#define RTLP_VALIDATE_ACTIVATION_CONTEXT_DATA_FLAG_VALIDATE_OFFSETS     (0x00000002)
+#define RTLP_VALIDATE_ACTIVATION_CONTEXT_DATA_FLAG_VALIDATE_READONLY    (0x00000004)
 
 NTSTATUS
-RtlpValidateActivationContextData(IN ULONG Flags OPTIONAL, IN PCACTIVATION_CONTEXT_DATA Data,
-                                  IN SIZE_T BufferSize OPTIONAL);
+RtlpValidateActivationContextData(
+    IN ULONG Flags OPTIONAL,
+    IN PCACTIVATION_CONTEXT_DATA Data,
+    IN SIZE_T BufferSize OPTIONAL
+    );
 
 NTSTATUS
-RtlpFindUnicodeStringInSection(IN const ACTIVATION_CONTEXT_STRING_SECTION_HEADER UNALIGNED *Header,
-                               IN SIZE_T SectionSize, IN PCUNICODE_STRING StringToFind,
-                               OUT PACTIVATION_CONTEXT_SECTION_KEYED_DATA DataOut OPTIONAL, IN OUT PULONG HashAlgorithm,
-                               IN OUT PULONG PseudoKey, OUT PULONG UserDataSize OPTIONAL,
-                               OUT VOID CONST **UserData OPTIONAL);
+RtlpFindUnicodeStringInSection(
+    IN const ACTIVATION_CONTEXT_STRING_SECTION_HEADER UNALIGNED * Header,
+    IN SIZE_T SectionSize,
+    IN PCUNICODE_STRING StringToFind,
+    OUT PACTIVATION_CONTEXT_SECTION_KEYED_DATA DataOut OPTIONAL,
+    IN OUT PULONG HashAlgorithm,
+    IN OUT PULONG PseudoKey,
+    OUT PULONG UserDataSize OPTIONAL,
+    OUT VOID CONST ** UserData OPTIONAL
+    );
 
 NTSTATUS
-RtlpFindGuidInSection(IN const ACTIVATION_CONTEXT_GUID_SECTION_HEADER UNALIGNED *Header, IN const GUID *GuidToFind,
-                      OUT PACTIVATION_CONTEXT_SECTION_KEYED_DATA DataOut OPTIONAL);
+RtlpFindGuidInSection(
+    IN const ACTIVATION_CONTEXT_GUID_SECTION_HEADER UNALIGNED * Header,
+    IN const GUID *GuidToFind,
+    OUT PACTIVATION_CONTEXT_SECTION_KEYED_DATA DataOut OPTIONAL
+    );
 
 NTSTATUS
-RtlpLocateActivationContextSection(IN PCACTIVATION_CONTEXT_DATA ActivationContextData, IN const GUID *ExtensionGuid,
-                                   IN ULONG Id, OUT VOID CONST **SectionData, OUT ULONG *SectionLength);
+RtlpLocateActivationContextSection(
+    IN PCACTIVATION_CONTEXT_DATA ActivationContextData,
+    IN const GUID *ExtensionGuid,
+    IN ULONG Id,
+    OUT VOID CONST **SectionData,
+    OUT ULONG *SectionLength
+    );
 
 NTSTATUS
-RtlpCrackActivationContextStringSectionHeader(IN CONST VOID *SectionBase, IN SIZE_T SectionLength,
-                                              OUT ULONG *FormatVersion OPTIONAL, OUT ULONG *DataFormatVersion OPTIONAL,
-                                              OUT ULONG *SectionFlags OPTIONAL, OUT ULONG *ElementCount OPTIONAL,
-                                              OUT PCACTIVATION_CONTEXT_STRING_SECTION_ENTRY *Elements OPTIONAL,
-                                              OUT ULONG *HashAlgorithm OPTIONAL,
-                                              OUT VOID CONST **SearchStructure OPTIONAL,
-                                              OUT ULONG *UserDataSize OPTIONAL, OUT VOID CONST **UserData OPTIONAL);
+RtlpCrackActivationContextStringSectionHeader(
+    IN CONST VOID *SectionBase,
+    IN SIZE_T SectionLength,
+    OUT ULONG *FormatVersion OPTIONAL,
+    OUT ULONG *DataFormatVersion OPTIONAL,
+    OUT ULONG *SectionFlags OPTIONAL,
+    OUT ULONG *ElementCount OPTIONAL,
+    OUT PCACTIVATION_CONTEXT_STRING_SECTION_ENTRY *Elements OPTIONAL,
+    OUT ULONG *HashAlgorithm OPTIONAL,
+    OUT VOID CONST **SearchStructure OPTIONAL,
+    OUT ULONG *UserDataSize OPTIONAL,
+    OUT VOID CONST **UserData OPTIONAL
+    );
 
 NTSTATUS
-RtlpGetActiveActivationContextApplicationDirectory(IN SIZE_T InLength, OUT PVOID OutBuffer, OUT SIZE_T *OutLength);
+RtlpGetActiveActivationContextApplicationDirectory(
+    IN SIZE_T InLength,
+    OUT PVOID OutBuffer,
+    OUT SIZE_T *OutLength
+    );
 
 NTSTATUS
-RtlpFindNextActivationContextSection(PFINDFIRSTACTIVATIONCONTEXTSECTION Context, VOID CONST **SectionData,
-                                     ULONG *SectionLength, PACTIVATION_CONTEXT *ActivationContextOut);
+RtlpFindNextActivationContextSection(
+    PFINDFIRSTACTIVATIONCONTEXTSECTION Context,
+    VOID CONST **SectionData,
+    ULONG *SectionLength,
+    PACTIVATION_CONTEXT *ActivationContextOut
+    );
 
 NTSTATUS
-RtlpAllocateActivationContextStackFrame(ULONG Flags, PTEB Teb,
-                                        PRTL_HEAP_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME *Frame);
+RtlpAllocateActivationContextStackFrame(
+    ULONG Flags,
+    PTEB Teb,
+    PRTL_HEAP_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME *Frame
+    );
 
-VOID RtlpFreeActivationContextStackFrame(PRTL_HEAP_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME Frame);
+VOID
+RtlpFreeActivationContextStackFrame(
+    PRTL_HEAP_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME Frame
+    );
 
-PSTR RtlpFormatGuidANSI(const GUID *Guid, PSTR Buffer, SIZE_T BufferLength);
+PSTR
+RtlpFormatGuidANSI(
+    const GUID *Guid,
+    PSTR Buffer,
+    SIZE_T BufferLength
+    );
 
 extern const ACTIVATION_CONTEXT_DATA RtlpTheEmptyActivationContextData;
-extern ACTIVATION_CONTEXT RtlpTheEmptyActivationContext;
+extern ACTIVATION_CONTEXT      RtlpTheEmptyActivationContext;
 
-#define RTLP_DISALLOW_THE_EMPTY_ACTIVATION_CONTEXT(ActCtx)                                                   \
-    {                                                                                                        \
-        ASSERT((ActCtx) != &RtlpTheEmptyActivationContext);                                                  \
-        if ((ActCtx) == &RtlpTheEmptyActivationContext)                                                      \
-        {                                                                                                    \
-            DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_ERROR_LEVEL, "SXS: %s() passed the empty activation context\n", \
-                       __FUNCTION__);                                                                        \
-            Status = STATUS_INVALID_PARAMETER;                                                               \
-            goto Exit;                                                                                       \
-        }                                                                                                    \
+#define RTLP_DISALLOW_THE_EMPTY_ACTIVATION_CONTEXT(ActCtx) \
+    {  \
+        ASSERT((ActCtx) != &RtlpTheEmptyActivationContext); \
+        if ((ActCtx) == &RtlpTheEmptyActivationContext) {   \
+            DbgPrintEx( \
+                DPFLTR_SXS_ID, \
+                DPFLTR_ERROR_LEVEL, \
+                "SXS: %s() passed the empty activation context\n", __FUNCTION__); \
+            Status = STATUS_INVALID_PARAMETER; \
+            goto Exit; \
+        } \
     }
 
-#define RTLP_DISALLOW_THE_EMPTY_ACTIVATION_CONTEXT_DATA(ActCtxData)                                               \
-    {                                                                                                             \
-        ASSERT((ActCtxData) != &RtlpTheEmptyActivationContextData);                                               \
-        if ((ActCtxData) == &RtlpTheEmptyActivationContextData)                                                   \
-        {                                                                                                         \
-            DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_ERROR_LEVEL, "SXS: %s() passed the empty activation context data\n", \
-                       __FUNCTION__);                                                                             \
-            Status = STATUS_INVALID_PARAMETER;                                                                    \
-            goto Exit;                                                                                            \
-        }                                                                                                         \
+#define RTLP_DISALLOW_THE_EMPTY_ACTIVATION_CONTEXT_DATA(ActCtxData) \
+    {  \
+        ASSERT((ActCtxData) != &RtlpTheEmptyActivationContextData); \
+        if ((ActCtxData) == &RtlpTheEmptyActivationContextData) {   \
+            DbgPrintEx( \
+                DPFLTR_SXS_ID, \
+                DPFLTR_ERROR_LEVEL, \
+                "SXS: %s() passed the empty activation context data\n", __FUNCTION__); \
+            Status = STATUS_INVALID_PARAMETER; \
+            goto Exit; \
+        } \
     }
 
 PACTIVATION_CONTEXT
-RtlpMapSpecialValuesToBuiltInActivationContexts(PACTIVATION_CONTEXT ActivationContext);
+RtlpMapSpecialValuesToBuiltInActivationContexts(
+    PACTIVATION_CONTEXT ActivationContext
+    );
 
 NTSTATUS
-RtlpThreadPoolGetActiveActivationContext(PACTIVATION_CONTEXT *ActivationContext);
+RtlpThreadPoolGetActiveActivationContext(
+    PACTIVATION_CONTEXT* ActivationContext
+    );
 
 NTSTATUS
-RtlpInitializeAssemblyStorageMap(PASSEMBLY_STORAGE_MAP Map, ULONG EntryCount, PASSEMBLY_STORAGE_MAP_ENTRY *EntryArray);
+RtlpInitializeAssemblyStorageMap(
+    PASSEMBLY_STORAGE_MAP Map,
+    ULONG EntryCount,
+    PASSEMBLY_STORAGE_MAP_ENTRY *EntryArray
+    );
 
-VOID RtlpUninitializeAssemblyStorageMap(PASSEMBLY_STORAGE_MAP Map);
-
-NTSTATUS
-RtlpResolveAssemblyStorageMapEntry(IN OUT PASSEMBLY_STORAGE_MAP Map, IN PCACTIVATION_CONTEXT_DATA Data,
-                                   IN ULONG AssemblyRosterIndex,
-                                   IN PASSEMBLY_STORAGE_MAP_RESOLUTION_CALLBACK_ROUTINE Callback,
-                                   IN PVOID CallbackContext);
-
-NTSTATUS
-RtlpInsertAssemblyStorageMapEntry(IN PASSEMBLY_STORAGE_MAP Map, IN ULONG AssemblyRosterIndex,
-                                  IN PCUNICODE_STRING StorageLocation, IN HANDLE OpenDirectoryHandle);
+VOID
+RtlpUninitializeAssemblyStorageMap(
+    PASSEMBLY_STORAGE_MAP Map
+    );
 
 NTSTATUS
-RtlpProbeAssemblyStorageRootForAssembly(IN ULONG Flags, IN PCUNICODE_STRING Root, IN PCUNICODE_STRING AssemblyDirectory,
-                                        OUT PUNICODE_STRING PreAllocatedString, OUT PUNICODE_STRING DynamicString,
-                                        OUT PUNICODE_STRING *StringUsed, OUT HANDLE OpenDirectoryHandle);
+RtlpResolveAssemblyStorageMapEntry(
+    IN OUT PASSEMBLY_STORAGE_MAP Map,
+    IN PCACTIVATION_CONTEXT_DATA Data,
+    IN ULONG AssemblyRosterIndex,
+    IN PASSEMBLY_STORAGE_MAP_RESOLUTION_CALLBACK_ROUTINE Callback,
+    IN PVOID CallbackContext
+    );
 
 NTSTATUS
-RtlpGetAssemblyStorageMapRootLocation(IN HANDLE KeyHandle, IN PCUNICODE_STRING SubKeyName, OUT PUNICODE_STRING Root);
+RtlpInsertAssemblyStorageMapEntry(
+    IN PASSEMBLY_STORAGE_MAP Map,
+    IN ULONG AssemblyRosterIndex,
+    IN PCUNICODE_STRING StorageLocation,
+    IN HANDLE OpenDirectoryHandle
+    );
+
+NTSTATUS
+RtlpProbeAssemblyStorageRootForAssembly(
+    IN ULONG Flags,
+    IN PCUNICODE_STRING Root,
+    IN PCUNICODE_STRING AssemblyDirectory,
+    OUT PUNICODE_STRING PreAllocatedString,
+    OUT PUNICODE_STRING DynamicString,
+    OUT PUNICODE_STRING *StringUsed,
+    OUT HANDLE OpenDirectoryHandle
+    );
+
+NTSTATUS
+RtlpGetAssemblyStorageMapRootLocation(
+    IN HANDLE KeyHandle,
+    IN PCUNICODE_STRING SubKeyName,
+    OUT PUNICODE_STRING Root
+    );
 
 #define RTLP_GET_ACTIVATION_CONTEXT_DATA_STORAGE_MAP_AND_ROSTER_HEADER_USE_PROCESS_DEFAULT (0x00000001)
-#define RTLP_GET_ACTIVATION_CONTEXT_DATA_STORAGE_MAP_AND_ROSTER_HEADER_USE_SYSTEM_DEFAULT (0x00000002)
+#define RTLP_GET_ACTIVATION_CONTEXT_DATA_STORAGE_MAP_AND_ROSTER_HEADER_USE_SYSTEM_DEFAULT  (0x00000002)
 
 NTSTATUS
-RtlpGetActivationContextDataRosterHeader(IN ULONG Flags, IN PCACTIVATION_CONTEXT_DATA ActivationContextData,
-                                         OUT PCACTIVATION_CONTEXT_DATA_ASSEMBLY_ROSTER_HEADER *AssemblyRosterHeader);
+RtlpGetActivationContextDataRosterHeader(
+    IN ULONG Flags,
+    IN PCACTIVATION_CONTEXT_DATA ActivationContextData,
+    OUT PCACTIVATION_CONTEXT_DATA_ASSEMBLY_ROSTER_HEADER *AssemblyRosterHeader
+    );
 
 NTSTATUS
 RtlpGetActivationContextDataStorageMapAndRosterHeader(
-    IN ULONG Flags, IN PPEB Peb, IN PACTIVATION_CONTEXT ActivationContext,
-    OUT PCACTIVATION_CONTEXT_DATA *ActivationContextData, OUT PASSEMBLY_STORAGE_MAP *AssemblyStorageMap,
-    OUT PCACTIVATION_CONTEXT_DATA_ASSEMBLY_ROSTER_HEADER *AssemblyRosterHeader);
+    IN ULONG Flags,
+    IN PPEB Peb,
+    IN PACTIVATION_CONTEXT ActivationContext,
+    OUT PCACTIVATION_CONTEXT_DATA *ActivationContextData,
+    OUT PASSEMBLY_STORAGE_MAP *AssemblyStorageMap,
+    OUT PCACTIVATION_CONTEXT_DATA_ASSEMBLY_ROSTER_HEADER *AssemblyRosterHeader
+    );
 
 #define RTLP_GET_ACTIVATION_CONTEXT_DATA_MAP_NULL_TO_EMPTY (0x00000001)
 NTSTATUS
-RtlpGetActivationContextData(IN ULONG Flags, IN PCACTIVATION_CONTEXT ActivationContext,
-                             IN PCFINDFIRSTACTIVATIONCONTEXTSECTION FindContext,
-                             OPTIONAL /* This is used for its flags. */
-                                 OUT PCACTIVATION_CONTEXT_DATA *ActivationContextData);
+RtlpGetActivationContextData(
+    IN ULONG                                Flags,
+    IN PCACTIVATION_CONTEXT                 ActivationContext,
+    IN PCFINDFIRSTACTIVATIONCONTEXTSECTION  FindContext, OPTIONAL /* This is used for its flags. */
+    OUT PCACTIVATION_CONTEXT_DATA *         ActivationContextData
+    );
 
 NTSTATUS
-RtlpFindActivationContextSection_FillOutReturnedData(IN ULONG Flags,
-                                                     OUT PACTIVATION_CONTEXT_SECTION_KEYED_DATA ReturnedData,
-                                                     IN OUT PACTIVATION_CONTEXT ActivationContext,
-                                                     IN PCFINDFIRSTACTIVATIONCONTEXTSECTION FindContext,
-                                                     IN const VOID *UNALIGNED Header, IN ULONG Header_UserDataOffset,
-                                                     IN ULONG Header_UserDataSize, IN ULONG SectionLength);
+RtlpFindActivationContextSection_FillOutReturnedData(
+    IN ULONG                                    Flags,
+    OUT PACTIVATION_CONTEXT_SECTION_KEYED_DATA  ReturnedData,
+    IN OUT PACTIVATION_CONTEXT                  ActivationContext,
+    IN PCFINDFIRSTACTIVATIONCONTEXTSECTION      FindContext,
+    IN const VOID * UNALIGNED                   Header,
+    IN ULONG                                    Header_UserDataOffset,
+    IN ULONG                                    Header_UserDataSize,
+    IN ULONG                                    SectionLength
+    );
 
 #endif // !defined(_NTDLL_SXSP_H_INCLUDED_)

@@ -25,104 +25,123 @@ Revision History:
 #include <windows.h>
 
 
-void DumpProfile(LPTSTR ProfileFileName)
+void
+DumpProfile(
+    LPTSTR ProfileFileName
+    )
 {
     LPTSTR Sections, Section;
     LPTSTR Keywords, Keyword;
     LPTSTR KeyValue;
 
-    Sections = LocalAlloc(0, 4096 * sizeof(*Sections));
-    Keywords = LocalAlloc(0, 4096 * sizeof(*Keywords));
-    KeyValue = LocalAlloc(0, 1024 * sizeof(*KeyValue));
+    Sections = LocalAlloc( 0, 4096 * sizeof( *Sections ) );
+    Keywords = LocalAlloc( 0, 4096 * sizeof( *Keywords ) );
+    KeyValue = LocalAlloc( 0, 1024 * sizeof( *KeyValue ) );
 
 #ifdef UNICODE
-    printf("\nDump of %ws\n",
+    printf( "\nDump of %ws\n",
 #else
-    printf("\nDump of %s\n",
+    printf( "\nDump of %s\n",
 #endif
-           ProfileFileName ? ProfileFileName : TEXT("win.ini"));
+            ProfileFileName ? ProfileFileName : TEXT("win.ini")
+          );
     *Sections = TEXT('\0');
-    if (!GetPrivateProfileString(NULL, NULL, NULL, Sections, 4096 * sizeof(*Sections), ProfileFileName))
-    {
-        printf("*** Unable to read - rc == %d\n", GetLastError());
-    }
+    if (!GetPrivateProfileString( NULL, NULL, NULL,
+                                  Sections, 4096 * sizeof( *Sections ),
+                                  ProfileFileName
+                                )
+       ) {
+        printf( "*** Unable to read - rc == %d\n", GetLastError() );
+        }
 
     Section = Sections;
-    while (*Section)
-    {
+    while (*Section) {
 #ifdef UNICODE
-        printf("[%ws]\n",
+        printf( "[%ws]\n",
 #else
-        printf("[%s]\n",
+        printf( "[%s]\n",
 #endif
-               Section);
+                Section
+              );
         *Keywords = TEXT('\0');
-        GetPrivateProfileString(Section, NULL, NULL, Keywords, 4096 * sizeof(*Keywords), ProfileFileName);
+        GetPrivateProfileString( Section, NULL, NULL,
+                                 Keywords, 4096 * sizeof( *Keywords ),
+                                 ProfileFileName
+                               );
         Keyword = Keywords;
-        while (*Keyword)
-        {
-            GetPrivateProfileString(Section, Keyword, NULL, KeyValue, 1024 * sizeof(*KeyValue), ProfileFileName);
+        while (*Keyword) {
+            GetPrivateProfileString( Section, Keyword, NULL,
+                                     KeyValue, 1024 * sizeof( *KeyValue ),
+                                     ProfileFileName
+                                   );
 #ifdef UNICODE
-            printf("    %ws=%ws\n",
+            printf( "    %ws=%ws\n",
 #else
-            printf("    %s=%s\n",
+            printf( "    %s=%s\n",
 #endif
-                   Keyword, KeyValue);
+                    Keyword, KeyValue
+                  );
 
-            while (*Keyword++)
-            {
+            while (*Keyword++) {
+                }
+            }
+
+        while (*Section++) {
             }
         }
 
-        while (*Section++)
-        {
-        }
-    }
-
-    LocalFree(Sections);
-    LocalFree(Keywords);
-    LocalFree(KeyValue);
+    LocalFree( Sections );
+    LocalFree( Keywords );
+    LocalFree( KeyValue );
 
     return;
 }
 
-void DumpSection(LPTSTR ProfileFileName, LPTSTR SectionName)
+void
+DumpSection(
+    LPTSTR ProfileFileName,
+    LPTSTR SectionName
+    )
 {
     LPTSTR SectionValue;
     LPTSTR s;
 
-    SectionValue = LocalAlloc(0, 4096 * sizeof(TCHAR));
+    SectionValue = LocalAlloc( 0, 4096 * sizeof( TCHAR ) );
 
 #ifdef UNICODE
-    printf("\nDump of Section %ws in %ws\n",
+    printf( "\nDump of Section %ws in %ws\n",
 #else
-    printf("\nDump of Section %s in %s\n",
+    printf( "\nDump of Section %s in %s\n",
 #endif
-           SectionName, ProfileFileName ? ProfileFileName : TEXT("win.ini"));
+              SectionName,
+              ProfileFileName ? ProfileFileName : TEXT("win.ini")
+            );
 
     *SectionValue = TEXT('\0');
-    GetPrivateProfileSection(SectionName, SectionValue, 4096 * sizeof(TCHAR), ProfileFileName);
+    GetPrivateProfileSection( SectionName,
+                              SectionValue, 4096 * sizeof( TCHAR ),
+                              ProfileFileName
+                            );
 #ifdef UNICODE
-    printf("[%ws]\n",
+    printf( "[%ws]\n",
 #else
-    printf("[%s]\n",
+    printf( "[%s]\n",
 #endif
-           SectionName);
+            SectionName
+          );
     s = SectionValue;
-    while (*s)
-    {
+    while (*s) {
 #ifdef UNICODE
-        printf("    %ws\n", s);
+        printf( "    %ws\n", s );
 #else
-        printf("    %s\n", s);
+        printf( "    %s\n", s );
 #endif
 
-        while (*s++)
-        {
+        while (*s++) {
+            }
         }
-    }
 
-    LocalFree(SectionValue);
+    LocalFree( SectionValue );
     return;
 }
 
@@ -130,18 +149,22 @@ void DumpSection(LPTSTR ProfileFileName, LPTSTR SectionName)
 #define MAX_KEYWORDS 32
 
 DWORD
-main(int argc, char *argv[], char *envp[])
+main(
+    int argc,
+    char *argv[],
+    char *envp[]
+    )
 {
     ULONG n;
     int SectionNumber, KeyNumber;
     LPTSTR SectionValue, KeyValue, Keyword;
-    TCHAR SectionName[32], KeyName[32], KeyValueBuffer[32], Buffer[32];
+    TCHAR SectionName[ 32 ], KeyName[ 32 ], KeyValueBuffer[ 32 ], Buffer[ 32 ];
     FILE *fh;
 
-    printf("TPROF: Entering Test Program\n");
+    printf( "TPROF: Entering Test Program\n" );
 
-    SectionValue = LocalAlloc(0, 4096 * sizeof(TCHAR));
-    KeyValue = LocalAlloc(0, 1024 * sizeof(TCHAR));
+    SectionValue = LocalAlloc( 0, 4096 * sizeof( TCHAR ) );
+    KeyValue = LocalAlloc( 0, 1024 * sizeof( TCHAR ) );
 
 #if 0
     for (SectionNumber=0; SectionNumber<MAX_SECTIONS; SectionNumber++) {
@@ -200,134 +223,175 @@ main(int argc, char *argv[], char *envp[])
     exit( 0 );
 #endif
 
-    WriteProfileString(TEXT("TESTINI"), TEXT("Key1"), TEXT("100abc"));
-    n = GetProfileString(TEXT("ports"), NULL, TEXT(""), SectionValue, 4096 * sizeof(TCHAR));
+    WriteProfileString( TEXT("TESTINI"), TEXT("Key1"), TEXT("100abc") );
+    n = GetProfileString( TEXT("ports"), NULL, TEXT(""), SectionValue, 4096 * sizeof( TCHAR ) );
     Keyword = SectionValue;
-    printf("Keywords in win.ini[ports]\n");
-    while (*Keyword)
-    {
+    printf( "Keywords in win.ini[ports]\n" );
+    while (*Keyword) {
 #ifdef UNICODE
-        printf("    %ws\n", Keyword);
+        printf( "    %ws\n", Keyword );
 #else
-        printf("    %s\n", Keyword);
+        printf( "    %s\n", Keyword );
 #endif
-        while (*Keyword++)
-        {
+        while (*Keyword++) {
+            }
         }
-    }
 
-    n = GetProfileString(TEXT("ports"), NULL, NULL, SectionValue, 4096);
+    n = GetProfileString( TEXT("ports"), NULL, NULL, SectionValue, 4096 );
     Keyword = SectionValue;
-    printf("Keywords in win.ini[ports]\n");
-    while (*Keyword)
-    {
+    printf( "Keywords in win.ini[ports]\n" );
+    while (*Keyword) {
 #ifdef UNICODE
-        printf("    %ws\n", Keyword);
+        printf( "    %ws\n", Keyword );
 #else
-        printf("    %s\n", Keyword);
+        printf( "    %s\n", Keyword );
 #endif
-        while (*Keyword++)
-        {
+        while (*Keyword++) {
+            }
         }
-    }
 
-    DeleteFile(TEXT("\\nt\\windows\\test.ini"));
-    fh = fopen("\\nt\\windows\\test.ini", "w");
-    fclose(fh);
+    DeleteFile( TEXT("\\nt\\windows\\test.ini") );
+    fh = fopen( "\\nt\\windows\\test.ini", "w" );
+    fclose( fh );
 
-    DumpProfile(TEXT("test.ini"));
+    DumpProfile( TEXT("test.ini") );
 
-    WritePrivateProfileString(TEXT("StrApp"), TEXT("StrKey"), TEXT("StrVal"), TEXT("test.ini"));
-    DumpProfile(TEXT("test.ini"));
+    WritePrivateProfileString( TEXT("StrApp"), TEXT("StrKey"), TEXT("StrVal"), TEXT("test.ini"));
+    DumpProfile( TEXT("test.ini") );
 
 
-    DeleteFile(TEXT("test.ini"));
-    fh = fopen("\\nt\\test.ini", "w");
-    fprintf(fh, "[IncompleteSectionWithoutTrailingBracket\n\n");
-    fprintf(fh, "[StrApp]\n");
-    fprintf(fh, "StrKey=xxxxxx\n");
-    fclose(fh);
+    DeleteFile( TEXT("test.ini") );
+    fh = fopen( "\\nt\\test.ini", "w" );
+    fprintf( fh, "[IncompleteSectionWithoutTrailingBracket\n\n" );
+    fprintf( fh, "[StrApp]\n" );
+    fprintf( fh, "StrKey=xxxxxx\n" );
+    fclose( fh );
 
-    DumpProfile(TEXT("test.ini"));
+    DumpProfile( TEXT("test.ini") );
 
-    if (!WritePrivateProfileString(TEXT("StrApp"), TEXT("StrKey"), TEXT("StrVal"), TEXT("test.ini")))
-    {
-        printf("*** Write failed - rc == %d\n", GetLastError());
-    }
-    else
-    {
-        DumpProfile(TEXT("test.ini"));
-    }
+    if (!WritePrivateProfileString( TEXT("StrApp"), TEXT("StrKey"), TEXT("StrVal"), TEXT("test.ini"))) {
+        printf( "*** Write failed - rc == %d\n", GetLastError() );
+        }
+    else {
+        DumpProfile( TEXT("test.ini") );
+        }
 
-    DeleteFile("test.ini");
+    DeleteFile( "test.ini" );
 
-    fh = fopen("\\nt\\windows\\test.ini", "w");
-    fprintf(fh, "[a]\n");
-    fprintf(fh, "a1=b1\n");
-    fprintf(fh, "[b]\n");
-    fprintf(fh, "a2=b2\n");
-    fclose(fh);
-    DumpProfile(TEXT("test.ini"));
+    fh = fopen( "\\nt\\windows\\test.ini", "w" );
+    fprintf( fh, "[a]\n" );
+    fprintf( fh, "a1=b1\n" );
+    fprintf( fh, "[b]\n" );
+    fprintf( fh, "a2=b2\n" );
+    fclose( fh );
+    DumpProfile( TEXT("test.ini") );
 
-    WritePrivateProfileSection(TEXT("Section2"),
-                               TEXT("Keyword21=Value21\0Keyword22=Value22\0Keyword23=Value23\0Keyword24=\0"),
-                               TEXT("test.ini"));
-    DumpProfile(TEXT("test.ini"));
+    WritePrivateProfileSection( TEXT("Section2"),
+        TEXT("Keyword21=Value21\0Keyword22=Value22\0Keyword23=Value23\0Keyword24=\0"),
+        TEXT("test.ini")
+        );
+    DumpProfile( TEXT("test.ini") );
 
-    n = GetPrivateProfileString(TEXT("a"), TEXT("\0"), TEXT("Default"), KeyValue, 1024 * sizeof(TCHAR),
-                                TEXT("test.ini"));
+    n = GetPrivateProfileString( TEXT("a"), TEXT("\0"), TEXT("Default"),
+                                 KeyValue, 1024 * sizeof( TCHAR ),
+                                 TEXT("test.ini")
+                               );
 #ifdef UNICODE
-    printf("GetPrivateProfileString( a, \\0, Default ) == %ld '%ws'\n", n, KeyValue);
+    printf( "GetPrivateProfileString( a, \\0, Default ) == %ld '%ws'\n", n, KeyValue );
 #else
-    printf("GetPrivateProfileString( a, \\0, Default ) == %ld '%s'\n", n, KeyValue);
+    printf( "GetPrivateProfileString( a, \\0, Default ) == %ld '%s'\n", n, KeyValue );
 #endif
 
-    n = GetPrivateProfileInt(TEXT("a"), TEXT("\0"), 123, TEXT("test.ini"));
-    printf("GetPrivateProfileString( a, \\0, 123 ) == %ld\n", n);
+    n = GetPrivateProfileInt( TEXT("a"), TEXT("\0"), 123, TEXT("test.ini") );
+    printf( "GetPrivateProfileString( a, \\0, 123 ) == %ld\n", n );
 
-    WritePrivateProfileString(TEXT("a"), NULL, NULL, TEXT("test.ini"));
+    WritePrivateProfileString( TEXT("a"), NULL, NULL, TEXT("test.ini") );
 
-    DumpProfile(TEXT("test.ini"));
+    DumpProfile( TEXT("test.ini") );
 
-    WritePrivateProfileString(TEXT("TESTINI"), TEXT("Key1"), TEXT("100abc"), TEXT("test.ini"));
+    WritePrivateProfileString( TEXT("TESTINI"), TEXT("Key1"), TEXT("100abc"), TEXT("test.ini") );
 
-    WritePrivateProfileString(TEXT("    TESTINI    "), TEXT("    Key1    "), TEXT("  Val1   "), TEXT("test.ini"));
-    DumpProfile(TEXT("test.ini"));
+    WritePrivateProfileString( TEXT("    TESTINI    "),
+        TEXT("    Key1    "),
+        TEXT("  Val1   "),
+        TEXT("test.ini")
+        );
+    DumpProfile( TEXT("test.ini") );
 
-    printf("GetProfileInt( 123 ) == %ld\n", GetProfileInt(TEXT("AAAAA"), TEXT("XXXXX"), 123));
+    printf( "GetProfileInt( 123 ) == %ld\n",
+            GetProfileInt( TEXT("AAAAA"), TEXT("XXXXX"), 123 )
+          );
 
-    printf("GetProfileInt( -123 ) == %ld\n", GetProfileInt(TEXT("AAAAA"), TEXT("XXXXX"), -123));
+    printf( "GetProfileInt( -123 ) == %ld\n",
+            GetProfileInt( TEXT("AAAAA"), TEXT("XXXXX"), -123 )
+          );
 
-    WritePrivateProfileString(TEXT("TESTINI"), TEXT("Key1"), NULL, TEXT("test.ini"));
-    DumpProfile(TEXT("test.ini"));
+    WritePrivateProfileString( TEXT("TESTINI"),
+        TEXT("Key1"),
+        NULL,
+        TEXT("test.ini")
+        );
+    DumpProfile( TEXT("test.ini") );
 
-    WritePrivateProfileString(TEXT("TESTINI"), TEXT("Key2"), TEXT("Val2"), TEXT("test.ini"));
-    DumpProfile(TEXT("test.ini"));
+    WritePrivateProfileString( TEXT("TESTINI"),
+        TEXT("Key2"),
+        TEXT("Val2"),
+        TEXT("test.ini")
+        );
+    DumpProfile( TEXT("test.ini") );
 
-    WritePrivateProfileString(TEXT("TESTINI"), TEXT("Key2"), TEXT(""), TEXT("test.ini"));
-    DumpProfile(TEXT("test.ini"));
+    WritePrivateProfileString( TEXT("TESTINI"),
+        TEXT("Key2"),
+        TEXT(""),
+        TEXT("test.ini")
+        );
+    DumpProfile( TEXT("test.ini") );
 
-    WritePrivateProfileString(TEXT("TESTINI"), TEXT("Key2"), NULL, TEXT("test.ini"));
-    DumpProfile(TEXT("test.ini"));
+    WritePrivateProfileString( TEXT("TESTINI"),
+        TEXT("Key2"),
+        NULL,
+        TEXT("test.ini")
+        );
+    DumpProfile( TEXT("test.ini") );
 
-    WritePrivateProfileString(TEXT("TESTINI"), TEXT("Key3"), TEXT("Val3"), TEXT("test.ini"));
-    DumpProfile(TEXT("test.ini"));
+    WritePrivateProfileString( TEXT("TESTINI"),
+        TEXT("Key3"),
+        TEXT("Val3"),
+        TEXT("test.ini")
+        );
+    DumpProfile( TEXT("test.ini") );
 
-    WritePrivateProfileString(TEXT("TESTINI"), NULL, TEXT("Something"), TEXT("test.ini"));
-    DumpProfile(TEXT("test.ini"));
+    WritePrivateProfileString( TEXT("TESTINI"),
+        NULL,
+        TEXT("Something"),
+        TEXT("test.ini")
+        );
+    DumpProfile( TEXT("test.ini") );
 
-    WritePrivateProfileString(TEXT("Section1"), TEXT("Keyword11"), TEXT("Value11"), TEXT("test.ini"));
-    DumpProfile(TEXT("test.ini"));
+    WritePrivateProfileString( TEXT("Section1"),
+        TEXT("Keyword11"),
+        TEXT("Value11"),
+        TEXT("test.ini")
+        );
+    DumpProfile( TEXT("test.ini") );
 
-    WritePrivateProfileSection(TEXT("Section2"),
-                               TEXT("Keyword21=Value21\0Keyword22=Value22\0Keyword23=Value23\0Keyword24=\0"),
-                               TEXT("test.ini"));
-    DumpProfile(TEXT("test.ini"));
+    WritePrivateProfileSection( TEXT("Section2"),
+        TEXT("Keyword21=Value21\0Keyword22=Value22\0Keyword23=Value23\0Keyword24=\0"),
+        TEXT("test.ini")
+        );
+    DumpProfile( TEXT("test.ini") );
 
-    WritePrivateProfileString(TEXT("Section1"), TEXT("Keyword12"), TEXT("Value12"), TEXT("test.ini"));
-    DumpProfile(TEXT("test.ini"));
+    WritePrivateProfileString( TEXT("Section1"),
+        TEXT("Keyword12"),
+        TEXT("Value12"),
+        TEXT("test.ini")
+        );
+    DumpProfile( TEXT("test.ini") );
 
-    n = GetPrivateProfileSection(TEXT("Section1"), SectionValue, 4096 * sizeof(TCHAR), TEXT("test.ini"));
+    n = GetPrivateProfileSection( TEXT("Section1"),
+                                  SectionValue, 4096 * sizeof( TCHAR ),
+                                  TEXT("test.ini")
+                                );
 #if 0
     if (n != 36 ||
         strcmp( SectionValue, "Keyword11=Value11" ) ||
@@ -414,11 +478,11 @@ main(int argc, char *argv[], char *envp[])
         "test.ini"
         );
 #endif
-    DumpProfile(TEXT("test.ini"));
-    DumpProfile(NULL);
-    DumpSection(NULL, TEXT("Extensions"));
+    DumpProfile( TEXT("test.ini") );
+    DumpProfile( NULL );
+    DumpSection( NULL, TEXT("Extensions")  );
 
-    printf("TPROF: Exiting Test Program\n");
+    printf( "TPROF: Exiting Test Program\n" );
 
     return 0;
 }

@@ -2,8 +2,7 @@
 #define RTL_DECLARE_MEMORY_STREAM 1
 #define RTL_DECLARE_FILE_STREAM 1
 
-extern "C"
-{
+extern "C" {
 #include <nt.h>
 #include <ntioapi.h>
 #include <ntrtl.h>
@@ -11,7 +10,7 @@ extern "C"
 }
 
 #include <windows.h>
-#include <ddeml.h> // for CP_WINUNICODE
+#include <ddeml.h>      // for CP_WINUNICODE
 
 #include <objidl.h>
 #include <propidl.h>

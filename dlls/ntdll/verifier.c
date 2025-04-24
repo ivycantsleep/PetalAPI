@@ -30,12 +30,12 @@ Revision History:
 
 ULONG AVrfpDebug = 0x0000;
 
-#define AVRF_DBG_SHOW_SNAPS 0x0001
-#define AVRF_DBG_SHOW_VERIFIED_EXPORTS 0x0002
+#define AVRF_DBG_SHOW_SNAPS             0x0001
+#define AVRF_DBG_SHOW_VERIFIED_EXPORTS  0x0002
 #define AVRF_DBG_SHOW_DLLS_WITH_EXPORTS 0x0004
-#define AVRF_DBG_SHOW_PROVIDER_LOADS 0x0008
-#define AVRF_DBG_SHOW_CHAIN_ACTIVITY 0x0010
-#define AVRF_DBG_SHOW_CHAIN_DETAILS 0x0020
+#define AVRF_DBG_SHOW_PROVIDER_LOADS    0x0008
+#define AVRF_DBG_SHOW_CHAIN_ACTIVITY    0x0010
+#define AVRF_DBG_SHOW_CHAIN_DETAILS     0x0020
 
 BOOLEAN AVrfpEnabled;
 
@@ -43,27 +43,29 @@ BOOLEAN AVrfpEnabled;
 // Default system-wide settings
 //
 
-#define RTL_VRF_FLG_SYSTEM_WIDE_SETTINGS (RTL_VRF_FLG_LOCK_CHECKS | RTL_VRF_FLG_HANDLE_CHECKS)
+#define RTL_VRF_FLG_SYSTEM_WIDE_SETTINGS              \
+    ( RTL_VRF_FLG_LOCK_CHECKS                         \
+    | RTL_VRF_FLG_HANDLE_CHECKS                       \
+    )
 
 //
 // Local vars
 //
 
 ULONG AVrfpVerifierFlags;
-WCHAR AVrfpVerifierDllsString[512];
+WCHAR AVrfpVerifierDllsString [512];
 LIST_ENTRY AVrfpVerifierProvidersList;
 
 RTL_CRITICAL_SECTION AVrfpVerifierLock;
 
-#define VERIFIER_LOCK() RtlEnterCriticalSection(&AVrfpVerifierLock)
-#define VERIFIER_UNLOCK() RtlLeaveCriticalSection(&AVrfpVerifierLock)
+#define VERIFIER_LOCK()  RtlEnterCriticalSection(&AVrfpVerifierLock)
+#define VERIFIER_UNLOCK()  RtlLeaveCriticalSection(&AVrfpVerifierLock)
 
 //
 // Local types
 //
 
-typedef struct _AVRF_VERIFIER_DESCRIPTOR
-{
+typedef struct _AVRF_VERIFIER_DESCRIPTOR {
 
     LIST_ENTRY List;
     UNICODE_STRING VerifierName;
@@ -80,44 +82,78 @@ typedef struct _AVRF_VERIFIER_DESCRIPTOR
 //
 
 BOOLEAN
-AVrfpSnapDllImports(PLDR_DATA_TABLE_ENTRY LdrDataTableEntry);
+AVrfpSnapDllImports (
+    PLDR_DATA_TABLE_ENTRY LdrDataTableEntry
+    );
 
 BOOLEAN
-AVrfpDetectVerifiedExports(PRTL_VERIFIER_DLL_DESCRIPTOR Dll, PRTL_VERIFIER_THUNK_DESCRIPTOR Thunks);
+AVrfpDetectVerifiedExports (
+    PRTL_VERIFIER_DLL_DESCRIPTOR Dll,
+    PRTL_VERIFIER_THUNK_DESCRIPTOR Thunks
+    );
 
 BOOLEAN
-AVrfpParseVerifierDllsString(PWSTR Dlls);
+AVrfpParseVerifierDllsString (
+    PWSTR Dlls
+    );
 
-VOID AVrfpSnapAlreadyLoadedDlls();
+VOID
+AVrfpSnapAlreadyLoadedDlls (
+    );
 
-VOID AVrfpMoveProviderToEndOfInitializationList(PWSTR ProviderName);
+VOID
+AVrfpMoveProviderToEndOfInitializationList (
+    PWSTR ProviderName
+    );
 
 BOOLEAN
-AVrfpLoadAndInitializeProvider(PAVRF_VERIFIER_DESCRIPTOR Provider);
+AVrfpLoadAndInitializeProvider (
+    PAVRF_VERIFIER_DESCRIPTOR Provider
+    );
 
 BOOLEAN
-AVrfpIsVerifierProviderDll(PVOID Handle);
+AVrfpIsVerifierProviderDll (
+    PVOID Handle
+    );
 
-VOID AVrfpDumpProviderList();
+VOID
+AVrfpDumpProviderList (
+    );
 
 PVOID
-AVrfpFindClosestThunkDuplicate(PAVRF_VERIFIER_DESCRIPTOR Verifier, PWCHAR DllName, PCHAR ThunkName);
+AVrfpFindClosestThunkDuplicate (
+    PAVRF_VERIFIER_DESCRIPTOR Verifier,
+    PWCHAR DllName,
+    PCHAR ThunkName
+    );
 
-VOID AVrfpChainDuplicateVerificationLayers();
+VOID
+AVrfpChainDuplicateVerificationLayers (
+    );
 
-VOID AVrfpDllLoadNotificationInternal(PLDR_DATA_TABLE_ENTRY LoadedDllData);
+VOID
+AVrfpDllLoadNotificationInternal (
+    PLDR_DATA_TABLE_ENTRY LoadedDllData
+    );
 
 PWSTR
-AVrfpGetProcessName();
+AVrfpGetProcessName (
+    );
 
 BOOLEAN
-AVrfpEnableVerifierOptions();
+AVrfpEnableVerifierOptions (
+    );
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-VOID AVrfInitializeVerifier(BOOLEAN EnabledSystemWide, PUNICODE_STRING ImageName, ULONG Phase)
+VOID
+AVrfInitializeVerifier (
+    BOOLEAN EnabledSystemWide,
+    PUNICODE_STRING ImageName,
+    ULONG Phase
+    )
 /*++
 
 Routine description:
@@ -150,120 +186,135 @@ Return value:
     NTSTATUS Status;
     BOOLEAN LoadSuccess;
 
-    switch (Phase)
-    {
+    switch (Phase) {
+        
+        case 0: // Phase 0
 
-    case 0: // Phase 0
-
-        AVrfpVerifierFlags = RTL_VRF_FLG_SYSTEM_WIDE_SETTINGS;
-        AVrfpVerifierDllsString[0] = L'\0';
-
-        //
-        // Attempt to read verifier registry settings even if verifier
-        // is enabled system wide. In the worst case no values are there
-        // and nothing will be read. If we have some options per process
-        // this will override system wide settings.
-        //
-
-        LdrQueryImageFileExecutionOptions(ImageName, L"VerifierFlags", REG_DWORD, &AVrfpVerifierFlags,
-                                          sizeof(AVrfpVerifierFlags), NULL);
-
-        LdrQueryImageFileExecutionOptions(ImageName, L"VerifierDebug", REG_DWORD, &AVrfpDebug, sizeof(AVrfpDebug),
-                                          NULL);
-
-        LdrQueryImageFileExecutionOptions(ImageName, L"VerifierDlls", REG_SZ, AVrfpVerifierDllsString, 512, NULL);
-
-        AVrfpEnableVerifierOptions();
-
-        break;
-
-    case 1: // Phase 1
-
-        InitializeListHead(&AVrfpVerifierProvidersList);
-        RtlInitializeCriticalSection(&AVrfpVerifierLock);
-
-        DbgPrint("AVRF: %ws: pid 0x%X: flags 0x%X: application verifier enabled\n", AVrfpGetProcessName(),
-                 HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess), AVrfpVerifierFlags);
-
-        Result = AVrfpParseVerifierDllsString(AVrfpVerifierDllsString);
-
-        if (Result == FALSE)
-        {
-
-            DbgPrint("AVRF: %ws: pid 0x%X: application verifier will be disabled due to an initialization error.\n",
-                     AVrfpGetProcessName(), HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess));
-
-            NtCurrentPeb()->NtGlobalFlag &= ~FLG_APPLICATION_VERIFIER;
-        }
-
-        Entry = AVrfpVerifierProvidersList.Flink;
-
-        while (Entry != &AVrfpVerifierProvidersList)
-        {
-
-            Provider = CONTAINING_RECORD(Entry, AVRF_VERIFIER_DESCRIPTOR, List);
+            AVrfpVerifierFlags = RTL_VRF_FLG_SYSTEM_WIDE_SETTINGS;
+            AVrfpVerifierDllsString[0] = L'\0';
 
             //
-            // Load provider, probe it to make sure it is really a
-            // provider, call initialize routine with PROCESS_VERIFIER, etc.
+            // Attempt to read verifier registry settings even if verifier
+            // is enabled system wide. In the worst case no values are there 
+            // and nothing will be read. If we have some options per process
+            // this will override system wide settings.
             //
 
-            LoadSuccess = AVrfpLoadAndInitializeProvider(Provider);
+            LdrQueryImageFileExecutionOptions (ImageName,
+                                               L"VerifierFlags",
+                                               REG_DWORD,
+                                               &AVrfpVerifierFlags,
+                                               sizeof(AVrfpVerifierFlags),
+                                               NULL);
 
-            //
-            // Move to next provider
-            //
+            LdrQueryImageFileExecutionOptions (ImageName,
+                                               L"VerifierDebug",
+                                               REG_DWORD,
+                                               &AVrfpDebug,
+                                               sizeof(AVrfpDebug),
+                                               NULL);
 
-            Entry = Provider->List.Flink;
+            LdrQueryImageFileExecutionOptions (ImageName,
+                                               L"VerifierDlls",
+                                               REG_SZ,
+                                               AVrfpVerifierDllsString,
+                                               512,
+                                               NULL);
 
-            //
-            // Get this provider out of the providers list if we
-            // encountered an error while loading
-            //
+            AVrfpEnableVerifierOptions ();
 
-            if (!LoadSuccess)
-            {
+            break;
 
-                RemoveEntryList(&(Provider->List));
+        case 1: // Phase 1
 
-                RtlFreeHeap(RtlProcessHeap(), 0, Provider);
+            InitializeListHead (&AVrfpVerifierProvidersList);
+            RtlInitializeCriticalSection (&AVrfpVerifierLock);
+
+            DbgPrint ("AVRF: %ws: pid 0x%X: flags 0x%X: application verifier enabled\n",
+                      AVrfpGetProcessName(),
+                      HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess),
+                      AVrfpVerifierFlags);
+
+            Result = AVrfpParseVerifierDllsString (AVrfpVerifierDllsString);
+
+            if (Result == FALSE) {
+                
+                DbgPrint ("AVRF: %ws: pid 0x%X: application verifier will be disabled due to an initialization error.\n",
+                      AVrfpGetProcessName(),
+                      HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess));
+
+                NtCurrentPeb()->NtGlobalFlag &= ~FLG_APPLICATION_VERIFIER;
             }
-        }
 
-        //
-        // Chain duplicate verification functions.
-        //
+            Entry = AVrfpVerifierProvidersList.Flink;
 
-        AVrfpChainDuplicateVerificationLayers();
+            while  (Entry != &AVrfpVerifierProvidersList) {
 
-        //
-        // Enable verifier. Resnap already loaded dlls.
-        // Now we will start processing dll load
-        // notifications coming from loader.
-        //
+                Provider = CONTAINING_RECORD (Entry,
+                                              AVRF_VERIFIER_DESCRIPTOR,
+                                              List);
 
-        AVrfpEnabled = TRUE;
+                //
+                // Load provider, probe it to make sure it is really a
+                // provider, call initialize routine with PROCESS_VERIFIER, etc.
+                //
 
-        AVrfpSnapAlreadyLoadedDlls();
+                LoadSuccess = AVrfpLoadAndInitializeProvider (Provider);
 
-        if ((AVrfpDebug & AVRF_DBG_SHOW_PROVIDER_LOADS))
-        {
+                //
+                // Move to next provider
+                //
 
-            DbgPrint("AVRF: -*- final list of providers -*- \n");
-            AVrfpDumpProviderList();
-        }
+                Entry = Provider->List.Flink;
 
-        break;
+                //
+                // Get this provider out of the providers list if we
+                // encountered an error while loading
+                //
 
-    default:
+                if (! LoadSuccess) {
 
-        break;
+                    RemoveEntryList (&(Provider->List));
+
+                    RtlFreeHeap (RtlProcessHeap(), 0, Provider);
+                }
+            }
+
+            //
+            // Chain duplicate verification functions.
+            //
+
+            AVrfpChainDuplicateVerificationLayers ();
+
+            //
+            // Enable verifier. Resnap already loaded dlls.
+            // Now we will start processing dll load
+            // notifications coming from loader.
+            //
+
+            AVrfpEnabled = TRUE; 
+
+            AVrfpSnapAlreadyLoadedDlls ();
+
+            if ((AVrfpDebug & AVRF_DBG_SHOW_PROVIDER_LOADS)) {
+
+                DbgPrint ("AVRF: -*- final list of providers -*- \n");
+                AVrfpDumpProviderList ();
+            }
+
+            break;
+
+        default:
+
+            break;
     }
 }
 
 
 BOOLEAN
-AVrfpParseVerifierDllsString(PWSTR Dlls)
+AVrfpParseVerifierDllsString (
+    PWSTR Dlls
+    )
 {
     PWSTR Current;
     PWSTR Start;
@@ -274,18 +325,17 @@ AVrfpParseVerifierDllsString(PWSTR Dlls)
     // Create by default an entry for the standard provider "verifier.dll"
     //
 
-    Entry = RtlAllocateHeap(RtlProcessHeap(), 0, sizeof *Entry);
+    Entry = RtlAllocateHeap (RtlProcessHeap (), 0, sizeof *Entry);
 
-    if (Entry == NULL)
-    {
+    if (Entry == NULL) {
         return FALSE;
     }
 
-    RtlZeroMemory(Entry, sizeof *Entry);
+    RtlZeroMemory (Entry, sizeof *Entry);
 
-    RtlInitUnicodeString(&(Entry->VerifierName), L"verifier.dll");
+    RtlInitUnicodeString (&(Entry->VerifierName), L"verifier.dll");
 
-    InsertTailList(&AVrfpVerifierProvidersList, &(Entry->List));
+    InsertTailList (&AVrfpVerifierProvidersList, &(Entry->List));
 
     //
     // Parse the string
@@ -293,23 +343,19 @@ AVrfpParseVerifierDllsString(PWSTR Dlls)
 
     Current = Dlls;
 
-    while (*Current != L'\0')
-    {
-
-        while (*Current == L' ' || *Current == L'\t')
-        {
+    while (*Current != L'\0') {
+        
+        while (*Current == L' ' || *Current == L'\t') {
             Current += 1;
         }
 
         Start = Current;
 
-        while (*Current && *Current != L' ' && *Current != L'\t')
-        {
+        while (*Current && *Current != L' ' && *Current != L'\t') {
             Current += 1;
         }
 
-        if (Start == Current)
-        {
+        if (Start == Current) {
             break;
         }
 
@@ -318,36 +364,36 @@ AVrfpParseVerifierDllsString(PWSTR Dlls)
 
         //
         // Check if standard provider was specified explicitely.
-        // In this case we ignore it because we already have it
+        // In this case we ignore it because we already have it 
         // in the list.
         //
 
-        if (_wcsicmp(Start, L"verifier.dll") != 0)
-        {
+        if (_wcsicmp (Start, L"verifier.dll") != 0) {
+            
+            Entry = RtlAllocateHeap (RtlProcessHeap (), 0, sizeof *Entry);
 
-            Entry = RtlAllocateHeap(RtlProcessHeap(), 0, sizeof *Entry);
-
-            if (Entry == NULL)
-            {
+            if (Entry == NULL) {
                 return FALSE;
             }
 
-            RtlZeroMemory(Entry, sizeof *Entry);
+            RtlZeroMemory (Entry, sizeof *Entry);
 
-            RtlInitUnicodeString(&(Entry->VerifierName), Start);
+            RtlInitUnicodeString (&(Entry->VerifierName), Start);
 
-            InsertTailList(&AVrfpVerifierProvidersList, &(Entry->List));
+            InsertTailList (&AVrfpVerifierProvidersList, &(Entry->List));
         }
 
         // *Current = Save;
         Current += 1;
-    }
+    }   
 
     return TRUE;
 }
 
 
-VOID AVrfpSnapAlreadyLoadedDlls()
+VOID
+AVrfpSnapAlreadyLoadedDlls (
+    )
 {
     PPEB_LDR_DATA Ldr;
     PLIST_ENTRY Head;
@@ -358,35 +404,35 @@ VOID AVrfpSnapAlreadyLoadedDlls()
     Head = &(Ldr->InLoadOrderModuleList);
     Next = Head->Flink;
 
-    while (Next != Head)
-    {
+    while (Next != Head) {
 
-        Entry = CONTAINING_RECORD(Next, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
+        Entry = CONTAINING_RECORD (Next, 
+                                   LDR_DATA_TABLE_ENTRY, 
+                                   InLoadOrderLinks);
         Next = Next->Flink;
 
-        if (!AVrfpIsVerifierProviderDll(Entry->DllBase))
-        {
+        if (! AVrfpIsVerifierProviderDll (Entry->DllBase)) {
 
-            if ((AVrfpDebug & AVRF_DBG_SHOW_SNAPS))
-            {
-                DbgPrint("AVRF: resnapping %ws ... \n", Entry->BaseDllName.Buffer);
+            if ((AVrfpDebug & AVRF_DBG_SHOW_SNAPS)) {
+                DbgPrint ("AVRF: resnapping %ws ... \n", Entry->BaseDllName.Buffer);
             }
 
-            AVrfpDllLoadNotificationInternal(Entry);
+            AVrfpDllLoadNotificationInternal (Entry);
         }
-        else
-        {
+        else {
 
-            if ((AVrfpDebug & AVRF_DBG_SHOW_SNAPS))
-            {
-                DbgPrint("AVRF: skipped resnapping provider %ws ... \n", Entry->BaseDllName.Buffer);
+            if ((AVrfpDebug & AVRF_DBG_SHOW_SNAPS)) {
+                DbgPrint ("AVRF: skipped resnapping provider %ws ... \n", Entry->BaseDllName.Buffer);
             }
         }
     }
 }
 
 
-VOID AVrfpMoveProviderToEndOfInitializationList(PWSTR ProviderName)
+VOID
+AVrfpMoveProviderToEndOfInitializationList (
+    PWSTR ProviderName
+    )
 {
     PPEB_LDR_DATA Ldr;
     PLIST_ENTRY Head;
@@ -398,16 +444,16 @@ VOID AVrfpMoveProviderToEndOfInitializationList(PWSTR ProviderName)
     Head = &(Ldr->InInitializationOrderModuleList);
     Next = Head->Flink;
 
-    while (Next != Head)
-    {
+    while (Next != Head) {
 
-        Entry = CONTAINING_RECORD(Next, LDR_DATA_TABLE_ENTRY, InInitializationOrderLinks);
+        Entry = CONTAINING_RECORD (Next, 
+                                   LDR_DATA_TABLE_ENTRY, 
+                                   InInitializationOrderLinks);
+        
+        if (_wcsicmp (Entry->BaseDllName.Buffer, ProviderName) == 0) {
 
-        if (_wcsicmp(Entry->BaseDllName.Buffer, ProviderName) == 0)
-        {
-
-            RemoveEntryList(Next);
-            InsertTailList(Head, Next);
+            RemoveEntryList (Next);
+            InsertTailList (Head, Next);
             Done = TRUE;
             break;
         }
@@ -415,17 +461,19 @@ VOID AVrfpMoveProviderToEndOfInitializationList(PWSTR ProviderName)
         Next = Next->Flink;
     }
 
-    if (!Done)
-    {
-        DbgPrint("AVRF: provider %ws was not found in the initialization list \n", ProviderName);
+    if (! Done) {
+        DbgPrint ("AVRF: provider %ws was not found in the initialization list \n",
+                  ProviderName);
 
-        DbgBreakPoint();
+        DbgBreakPoint ();
     }
 }
 
 
 BOOLEAN
-AVrfpLoadAndInitializeProvider(PAVRF_VERIFIER_DESCRIPTOR Provider)
+AVrfpLoadAndInitializeProvider (
+    PAVRF_VERIFIER_DESCRIPTOR Provider
+    )
 {
     PIMAGE_NT_HEADERS NtHeaders;
     BOOLEAN LoadError = FALSE;
@@ -436,9 +484,9 @@ AVrfpLoadAndInitializeProvider(PAVRF_VERIFIER_DESCRIPTOR Provider)
     static WCHAR SystemDllPathBuffer[DOS_MAX_PATH_LENGTH];
     UNICODE_STRING SystemDllPath;
 
-    if ((AVrfpDebug & AVRF_DBG_SHOW_SNAPS))
-    {
-        DbgPrint("AVRF: verifier dll `%ws' \n", Provider->VerifierName.Buffer);
+    if ((AVrfpDebug & AVRF_DBG_SHOW_SNAPS)) {
+        DbgPrint ("AVRF: verifier dll `%ws' \n", 
+                  Provider->VerifierName.Buffer);
     }
 
     //
@@ -450,54 +498,57 @@ AVrfpLoadAndInitializeProvider(PAVRF_VERIFIER_DESCRIPTOR Provider)
     SystemDllPath.Length = 0;
     SystemDllPath.MaximumLength = sizeof(SystemDllPathBuffer);
 
-    RtlAppendUnicodeToString(&SystemDllPath, USER_SHARED_DATA->NtSystemRoot);
-    RtlAppendUnicodeToString(&SystemDllPath, L"\\System32\\");
+    RtlAppendUnicodeToString (&SystemDllPath, USER_SHARED_DATA->NtSystemRoot);
+    RtlAppendUnicodeToString (&SystemDllPath, L"\\System32\\");
 
     //
     // Load provider dll
     //
 
-    Status = LdrLoadDll(SystemDllPath.Buffer, NULL, &(Provider->VerifierName), &(Provider->VerifierHandle));
+    Status = LdrLoadDll (SystemDllPath.Buffer,
+                         NULL,
+                         &(Provider->VerifierName),
+                         &(Provider->VerifierHandle));
 
-    if (!NT_SUCCESS(Status))
-    {
+    if (! NT_SUCCESS(Status)) {
 
-        DbgPrint("AVRF: %ws: failed to load provider `%ws' (status %08X) from %ws\n", AVrfpGetProcessName(),
-                 Provider->VerifierName.Buffer, Status, SystemDllPath.Buffer);
+        DbgPrint ("AVRF: %ws: failed to load provider `%ws' (status %08X) from %ws\n", 
+                  AVrfpGetProcessName(),
+                  Provider->VerifierName.Buffer,
+                  Status,
+                  SystemDllPath.Buffer);
 
         LoadError = TRUE;
         goto Error;
     }
-
+    
     //
     // Make sure we have a dll.
     //
 
-    try
-    {
+    try {
+        
+        NtHeaders = RtlImageNtHeader (Provider->VerifierHandle);
 
-        NtHeaders = RtlImageNtHeader(Provider->VerifierHandle);
-
-        if (!NtHeaders)
-        {
+        if (! NtHeaders) {
 
             LoadError = TRUE;
             goto Error;
         }
 
-        if ((NtHeaders->FileHeader.Characteristics & IMAGE_FILE_DLL) == 0)
-        {
+        if ((NtHeaders->FileHeader.Characteristics & IMAGE_FILE_DLL) == 0) {
 
-            DbgPrint("AVRF: provider %ws is not a DLL image \n", Provider->VerifierName.Buffer);
+            DbgPrint ("AVRF: provider %ws is not a DLL image \n",
+                      Provider->VerifierName.Buffer);
 
             LoadError = TRUE;
             goto Error;
         }
     }
-    except(EXCEPTION_EXECUTE_HANDLER)
-    {
+    except (EXCEPTION_EXECUTE_HANDLER) {
 
-        DbgPrint("AVRF: exception raised while probing provider %ws \n", Provider->VerifierName.Buffer);
+        DbgPrint ("AVRF: exception raised while probing provider %ws \n",
+                  Provider->VerifierName.Buffer);
 
         LoadError = TRUE;
         goto Error;
@@ -511,7 +562,7 @@ AVrfpLoadAndInitializeProvider(PAVRF_VERIFIER_DESCRIPTOR Provider)
     // before any normal DLL no matter what dependencies has.
     //
 
-    AVrfpMoveProviderToEndOfInitializationList(Provider->VerifierName.Buffer);
+    AVrfpMoveProviderToEndOfInitializationList (Provider->VerifierName.Buffer);
 
     //
     // Now call the initialization routine with the special
@@ -520,25 +571,25 @@ AVrfpLoadAndInitializeProvider(PAVRF_VERIFIER_DESCRIPTOR Provider)
 
     Provider->VerifierEntryPoint = LdrpFetchAddressOfEntryPoint(Provider->VerifierHandle);
 
-    if (Provider->VerifierEntryPoint == NULL)
-    {
+    if (Provider->VerifierEntryPoint == NULL) {
 
-        DbgPrint("AVRF: cannot find an entry point for provider %ws \n", Provider->VerifierName.Buffer);
-
+        DbgPrint ("AVRF: cannot find an entry point for provider %ws \n",
+                  Provider->VerifierName.Buffer);
+        
         LoadError = TRUE;
         goto Error;
     }
-
-    try
-    {
+    
+    try {
 
         Descriptor = 0;
 
-        InitStatus = LdrpCallInitRoutine((PDLL_INIT_ROUTINE)(Provider->VerifierEntryPoint), Provider->VerifierHandle,
-                                         DLL_PROCESS_VERIFIER, (PCONTEXT)(&Descriptor));
+        InitStatus = LdrpCallInitRoutine ((PDLL_INIT_ROUTINE)(Provider->VerifierEntryPoint),
+                                          Provider->VerifierHandle,
+                                          DLL_PROCESS_VERIFIER,
+                                          (PCONTEXT)(&Descriptor));
 
-        if (InitStatus && Descriptor)
-        {
+        if (InitStatus && Descriptor) {
 
             Dscr = (PRTL_VERIFIER_PROVIDER_DESCRIPTOR)Descriptor;
 
@@ -546,22 +597,21 @@ AVrfpLoadAndInitializeProvider(PAVRF_VERIFIER_DESCRIPTOR Provider)
             // Check if this is really a provider descriptor.
             //
 
-            if (Dscr->Length != sizeof(*Dscr))
-            {
+            if (Dscr->Length != sizeof (*Dscr)) {
 
                 LoadError = TRUE;
 
-                DbgPrint("AVRF: provider %ws passed an invalid descriptor @ %p \n", Provider->VerifierName.Buffer,
-                         Descriptor);
+                DbgPrint ("AVRF: provider %ws passed an invalid descriptor @ %p \n",
+                          Provider->VerifierName.Buffer,
+                          Descriptor);
             }
-            else
-            {
+            else {
 
-                if ((AVrfpDebug & AVRF_DBG_SHOW_PROVIDER_LOADS))
-                {
+                if ((AVrfpDebug & AVRF_DBG_SHOW_PROVIDER_LOADS)) {
 
-                    DbgPrint("AVRF: initialized provider %ws (descriptor @ %p) \n", Provider->VerifierName.Buffer,
-                             Descriptor);
+                    DbgPrint ("AVRF: initialized provider %ws (descriptor @ %p) \n",
+                          Provider->VerifierName.Buffer,
+                          Descriptor);
                 }
 
                 Provider->VerifierDlls = Dscr->ProviderDlls;
@@ -577,47 +627,48 @@ AVrfpLoadAndInitializeProvider(PAVRF_VERIFIER_DESCRIPTOR Provider)
                 Dscr->VerifierDebug = AVrfpDebug;
             }
         }
-        else
-        {
+        else {
 
             LoadError = TRUE;
 
-            DbgPrint("AVRF: provider %ws did not initialize correctly \n", Provider->VerifierName.Buffer);
+            DbgPrint ("AVRF: provider %ws did not initialize correctly \n",
+                      Provider->VerifierName.Buffer);
         }
     }
-    except(EXCEPTION_EXECUTE_HANDLER)
-    {
+    except (EXCEPTION_EXECUTE_HANDLER) {
 
-        DbgPrint("AVRF: exception raised in provider %ws initialization routine \n", Provider->VerifierName.Buffer);
-
+        DbgPrint ("AVRF: exception raised in provider %ws initialization routine \n",
+                  Provider->VerifierName.Buffer);
+        
         LoadError = TRUE;
         goto Error;
     }
 
-Error:
+    Error:
 
     return !LoadError;
 }
 
 
 BOOLEAN
-AVrfpIsVerifierProviderDll(PVOID Handle)
+AVrfpIsVerifierProviderDll (
+    PVOID Handle
+    )
 {
     PLIST_ENTRY Current;
-    PAVRF_VERIFIER_DESCRIPTOR Entry;
-    ;
+    PAVRF_VERIFIER_DESCRIPTOR Entry;;
 
     Current = AVrfpVerifierProvidersList.Flink;
 
-    while (Current != &AVrfpVerifierProvidersList)
-    {
+    while (Current != &AVrfpVerifierProvidersList) {
 
-        Entry = CONTAINING_RECORD(Current, AVRF_VERIFIER_DESCRIPTOR, List);
+        Entry = CONTAINING_RECORD (Current,
+                                   AVRF_VERIFIER_DESCRIPTOR,
+                                   List);
 
         Current = Current->Flink;
 
-        if (Entry->VerifierHandle == Handle)
-        {
+        if (Entry->VerifierHandle == Handle) {
             return TRUE;
         }
     }
@@ -626,27 +677,35 @@ AVrfpIsVerifierProviderDll(PVOID Handle)
 }
 
 
-VOID AVrfpDumpProviderList()
+VOID
+AVrfpDumpProviderList (
+    )
 {
     PLIST_ENTRY Current;
     PAVRF_VERIFIER_DESCRIPTOR Entry;
 
     Current = AVrfpVerifierProvidersList.Flink;
 
-    while (Current != &AVrfpVerifierProvidersList)
-    {
+    while (Current != &AVrfpVerifierProvidersList) {
 
-        Entry = CONTAINING_RECORD(Current, AVRF_VERIFIER_DESCRIPTOR, List);
+        Entry = CONTAINING_RECORD (Current,
+                                   AVRF_VERIFIER_DESCRIPTOR,
+                                   List);
 
         Current = Current->Flink;
 
-        DbgPrint("AVRF: provider %ws \n", Entry->VerifierName.Buffer);
+        DbgPrint ("AVRF: provider %ws \n",
+                  Entry->VerifierName.Buffer);
     }
 }
 
 
 PVOID
-AVrfpFindClosestThunkDuplicate(PAVRF_VERIFIER_DESCRIPTOR Verifier, PWCHAR DllName, PCHAR ThunkName)
+AVrfpFindClosestThunkDuplicate (
+    PAVRF_VERIFIER_DESCRIPTOR Verifier,
+    PWCHAR DllName,
+    PCHAR ThunkName
+    )
 /*++
 
 Routine description:
@@ -680,10 +739,11 @@ Return value:
 
     Current = Verifier->List.Blink;
 
-    while (Current != &AVrfpVerifierProvidersList)
-    {
+    while (Current != &AVrfpVerifierProvidersList) {
 
-        Entry = CONTAINING_RECORD(Current, AVRF_VERIFIER_DESCRIPTOR, List);
+        Entry = CONTAINING_RECORD (Current,
+                                   AVRF_VERIFIER_DESCRIPTOR,
+                                   List);
 
         Current = Current->Blink;
 
@@ -691,42 +751,38 @@ Return value:
         // Search in this provider for the thunk.
         //
 
-        if ((AVrfpDebug & AVRF_DBG_SHOW_CHAIN_DETAILS))
-        {
-            DbgPrint("AVRF: chain: searching in %ws\n", Entry->VerifierName.Buffer);
+        if ((AVrfpDebug & AVRF_DBG_SHOW_CHAIN_DETAILS)) {
+            DbgPrint ("AVRF: chain: searching in %ws\n", Entry->VerifierName.Buffer);
         }
-
+        
         Dlls = Entry->VerifierDlls;
 
-        for (Di = 0; Dlls[Di].DllName; Di += 1)
-        {
+        for (Di = 0; Dlls[Di].DllName; Di += 1) {
 
-            if ((AVrfpDebug & AVRF_DBG_SHOW_CHAIN_DETAILS))
-            {
-                DbgPrint("AVRF: chain: dll: %ws\n", Dlls[Di].DllName);
+            if ((AVrfpDebug & AVRF_DBG_SHOW_CHAIN_DETAILS)) {
+                DbgPrint ("AVRF: chain: dll: %ws\n", Dlls[Di].DllName);
             }
-
-            if (_wcsicmp(Dlls[Di].DllName, DllName) == 0)
-            {
+            
+            if (_wcsicmp(Dlls[Di].DllName, DllName) == 0) {
 
                 Thunks = Dlls[Di].DllThunks;
 
-                for (Ti = 0; Thunks[Ti].ThunkName; Ti += 1)
-                {
+                for (Ti = 0; Thunks[Ti].ThunkName; Ti += 1) {
 
-                    if ((AVrfpDebug & AVRF_DBG_SHOW_CHAIN_DETAILS))
-                    {
-                        DbgPrint("AVRF: chain: thunk: %s == %s ?\n", Thunks[Ti].ThunkName, ThunkName);
+                    if ((AVrfpDebug & AVRF_DBG_SHOW_CHAIN_DETAILS)) {
+                        DbgPrint ("AVRF: chain: thunk: %s == %s ?\n", 
+                                  Thunks[Ti].ThunkName,
+                                  ThunkName);
                     }
 
-                    if (_stricmp(Thunks[Ti].ThunkName, ThunkName) == 0)
-                    {
+                    if (_stricmp(Thunks[Ti].ThunkName, ThunkName) == 0) {
+                        
+                        if ((AVrfpDebug & AVRF_DBG_SHOW_CHAIN_DETAILS)) {
 
-                        if ((AVrfpDebug & AVRF_DBG_SHOW_CHAIN_DETAILS))
-                        {
-
-                            DbgPrint("AVRF: Found duplicate for (%ws: %s) in %ws\n", DllName, ThunkName,
-                                     Dlls[Di].DllName);
+                            DbgPrint ("AVRF: Found duplicate for (%ws: %s) in %ws\n",
+                                      DllName,
+                                      ThunkName,
+                                      Dlls[Di].DllName);
                         }
 
                         return Thunks[Ti].ThunkNewAddress;
@@ -740,7 +796,9 @@ Return value:
 }
 
 
-VOID AVrfpChainDuplicateVerificationLayers()
+VOID
+AVrfpChainDuplicateVerificationLayers (
+    )
 /*++
 
 Routine description:
@@ -771,10 +829,11 @@ Return value:
 
     Current = AVrfpVerifierProvidersList.Flink;
 
-    while (Current != &AVrfpVerifierProvidersList)
-    {
+    while (Current != &AVrfpVerifierProvidersList) {
 
-        Entry = CONTAINING_RECORD(Current, AVRF_VERIFIER_DESCRIPTOR, List);
+        Entry = CONTAINING_RECORD (Current,
+                                   AVRF_VERIFIER_DESCRIPTOR,
+                                   List);
 
         Current = Current->Flink;
 
@@ -784,33 +843,34 @@ Return value:
 
         Dlls = Entry->VerifierDlls;
 
-        for (Di = 0; Dlls[Di].DllName; Di += 1)
-        {
+        for (Di = 0; Dlls[Di].DllName; Di += 1) {
 
             Thunks = Dlls[Di].DllThunks;
 
-            for (Ti = 0; Thunks[Ti].ThunkName; Ti += 1)
-            {
+            for (Ti = 0; Thunks[Ti].ThunkName; Ti += 1) {
 
-                if ((AVrfpDebug & AVRF_DBG_SHOW_CHAIN_DETAILS))
-                {
+                if ((AVrfpDebug & AVRF_DBG_SHOW_CHAIN_DETAILS)) {
 
-                    DbgPrint("AVRF: Checking %ws for duplicate (%ws: %s) \n", Entry->VerifierName.Buffer,
-                             Dlls[Di].DllName, Thunks[Ti].ThunkName);
+                    DbgPrint ("AVRF: Checking %ws for duplicate (%ws: %s) \n",
+                              Entry->VerifierName.Buffer,
+                              Dlls[Di].DllName,
+                              Thunks[Ti].ThunkName);
                 }
 
-                Duplicate = AVrfpFindClosestThunkDuplicate(Entry, Dlls[Di].DllName, Thunks[Ti].ThunkName);
+                Duplicate = AVrfpFindClosestThunkDuplicate (Entry,
+                                                            Dlls[Di].DllName,
+                                                            Thunks[Ti].ThunkName);
 
-                if (Duplicate)
-                {
+                if (Duplicate) {
 
-                    if ((AVrfpDebug & AVRF_DBG_SHOW_CHAIN_ACTIVITY))
-                    {
+                    if ((AVrfpDebug & AVRF_DBG_SHOW_CHAIN_ACTIVITY)) {
 
-                        DbgPrint("AVRF: Chaining (%ws: %s) to %ws\n", Dlls[Di].DllName, Thunks[Ti].ThunkName,
-                                 Entry->VerifierName.Buffer);
+                        DbgPrint ("AVRF: Chaining (%ws: %s) to %ws\n",
+                                  Dlls[Di].DllName,
+                                  Thunks[Ti].ThunkName,
+                                  Entry->VerifierName.Buffer);
                     }
-
+                    
                     Thunks[Ti].ThunkOldAddress = Duplicate;
                 }
             }
@@ -819,7 +879,10 @@ Return value:
 }
 
 
-VOID AVrfDllLoadNotification(PLDR_DATA_TABLE_ENTRY LoadedDllData)
+VOID
+AVrfDllLoadNotification (
+    PLDR_DATA_TABLE_ENTRY LoadedDllData
+    )
 /*++
 
 Routine description:
@@ -848,25 +911,23 @@ Return value:
     // double check just in case.
     //
 
-    if ((NtCurrentPeb()->NtGlobalFlag & FLG_APPLICATION_VERIFIER) == 0)
-    {
+    if ((NtCurrentPeb()->NtGlobalFlag & FLG_APPLICATION_VERIFIER) == 0) {
         return;
     }
-
+    
     //
     // Get verifier global lock.
     //
 
-    VERIFIER_LOCK();
+    VERIFIER_LOCK ();
 
     //
     // We skip verifier providers. Otherwise we get into infinite loops.
     //
 
-    if (AVrfpIsVerifierProviderDll(LoadedDllData->DllBase))
-    {
+    if (AVrfpIsVerifierProviderDll (LoadedDllData->DllBase)) {
 
-        VERIFIER_UNLOCK();
+        VERIFIER_UNLOCK ();
         return;
     }
 
@@ -874,7 +935,7 @@ Return value:
     // Call internal function.
     //
 
-    AVrfpDllLoadNotificationInternal(LoadedDllData);
+    AVrfpDllLoadNotificationInternal (LoadedDllData);
 
     //
     // Iterate the verifier provider list and notify each one of the
@@ -882,26 +943,31 @@ Return value:
 
     Current = AVrfpVerifierProvidersList.Flink;
 
-    while (Current != &AVrfpVerifierProvidersList)
-    {
+    while (Current != &AVrfpVerifierProvidersList) {
 
-        Entry = CONTAINING_RECORD(Current, AVRF_VERIFIER_DESCRIPTOR, List);
+        Entry = CONTAINING_RECORD (Current,
+                                   AVRF_VERIFIER_DESCRIPTOR,
+                                   List);
 
         Current = Current->Flink;
 
-        if (Entry->VerifierLoadHandler)
-        {
+        if (Entry->VerifierLoadHandler) {
 
-            Entry->VerifierLoadHandler(LoadedDllData->BaseDllName.Buffer, LoadedDllData->DllBase,
-                                       LoadedDllData->SizeOfImage, LoadedDllData);
+            Entry->VerifierLoadHandler (LoadedDllData->BaseDllName.Buffer,
+                                        LoadedDllData->DllBase,
+                                        LoadedDllData->SizeOfImage,
+                                        LoadedDllData);
         }
     }
-
-    VERIFIER_UNLOCK();
+    
+    VERIFIER_UNLOCK ();
 }
 
 
-VOID AVrfpDllLoadNotificationInternal(PLDR_DATA_TABLE_ENTRY LoadedDllData)
+VOID
+AVrfpDllLoadNotificationInternal (
+    PLDR_DATA_TABLE_ENTRY LoadedDllData
+    )
 /*++
 
 Routine description:
@@ -925,18 +991,16 @@ Return value:
 {
     ULONG Index;
     PLIST_ENTRY Current;
-    PAVRF_VERIFIER_DESCRIPTOR Entry;
-    ;
+    PAVRF_VERIFIER_DESCRIPTOR Entry;;
 
     //
     // If verifier is disabled skip.
     //
 
-    if (AVrfpEnabled == FALSE)
-    {
+    if (AVrfpEnabled == FALSE) {
         return;
     }
-
+    
     //
     // Iterate the verifier provider list and for each one determine
     // if one of the dlls that has exports to be verified is loaded.
@@ -946,39 +1010,38 @@ Return value:
 
     Current = AVrfpVerifierProvidersList.Flink;
 
-    while (Current != &AVrfpVerifierProvidersList)
-    {
+    while (Current != &AVrfpVerifierProvidersList) {
 
         PRTL_VERIFIER_DLL_DESCRIPTOR Dlls;
         PRTL_VERIFIER_THUNK_DESCRIPTOR Thunks;
 
-        Entry = CONTAINING_RECORD(Current, AVRF_VERIFIER_DESCRIPTOR, List);
+        Entry = CONTAINING_RECORD (Current,
+                                   AVRF_VERIFIER_DESCRIPTOR,
+                                   List);
 
         Current = Current->Flink;
 
         Dlls = Entry->VerifierDlls;
 
-        for (Index = 0; Dlls[Index].DllName; Index += 1)
-        {
+        for (Index = 0; Dlls[Index].DllName; Index += 1) {
 
-            if ((Dlls[Index].DllFlags & AVRF_FLG_EXPORT_DLL_LOADED) == 0)
-            {
+            if ((Dlls[Index].DllFlags & AVRF_FLG_EXPORT_DLL_LOADED) == 0) {
 
                 int CompareResult;
 
-                CompareResult = _wcsicmp(LoadedDllData->BaseDllName.Buffer, Dlls[Index].DllName);
+                CompareResult = _wcsicmp (LoadedDllData->BaseDllName.Buffer,
+                                          Dlls[Index].DllName);
 
-                if (CompareResult == 0)
-                {
+                if (CompareResult == 0) {
 
-                    if ((AVrfpDebug & AVRF_DBG_SHOW_DLLS_WITH_EXPORTS))
-                    {
-                        DbgPrint("AVRF: pid 0x%X: found dll descriptor for `%ws' with verified exports \n",
-                                 HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess),
-                                 LoadedDllData->BaseDllName.Buffer);
+                    if ((AVrfpDebug & AVRF_DBG_SHOW_DLLS_WITH_EXPORTS)) {
+                        DbgPrint ("AVRF: pid 0x%X: found dll descriptor for `%ws' with verified exports \n", 
+                                  HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess),
+                                  LoadedDllData->BaseDllName.Buffer);
                     }
 
-                    AVrfpDetectVerifiedExports(&(Dlls[Index]), Dlls[Index].DllThunks);
+                    AVrfpDetectVerifiedExports (&(Dlls[Index]),
+                                                Dlls[Index].DllThunks);
                 }
             }
         }
@@ -991,11 +1054,14 @@ Return value:
     // earlier (before the current one).
     //
 
-    AVrfpSnapDllImports(LoadedDllData);
+    AVrfpSnapDllImports (LoadedDllData);
 }
 
 
-VOID AVrfDllUnloadNotification(PLDR_DATA_TABLE_ENTRY DllData)
+VOID
+AVrfDllUnloadNotification (
+    PLDR_DATA_TABLE_ENTRY DllData
+    )
 /*++
 
 Routine description:
@@ -1021,8 +1087,7 @@ Return value:
 {
     ULONG Index;
     PLIST_ENTRY Current;
-    PAVRF_VERIFIER_DESCRIPTOR Entry;
-    ;
+    PAVRF_VERIFIER_DESCRIPTOR Entry;;
 
     //
     // Do nothing if application verifier is not enabled. The function
@@ -1030,8 +1095,7 @@ Return value:
     // double check just in case.
     //
 
-    if ((NtCurrentPeb()->NtGlobalFlag & FLG_APPLICATION_VERIFIER) == 0)
-    {
+    if ((NtCurrentPeb()->NtGlobalFlag & FLG_APPLICATION_VERIFIER) == 0) {
         return;
     }
 
@@ -1039,28 +1103,26 @@ Return value:
     // If verifier is disabled skip.
     //
 
-    if (AVrfpEnabled == FALSE)
-    {
+    if (AVrfpEnabled == FALSE) {
         return;
     }
-
+    
     //
     // Get verifier global lock.
     //
 
-    VERIFIER_LOCK();
+    VERIFIER_LOCK ();
 
     //
     // We should never get this call for a verifier provider DLL because
     // these are never unloaded.
     //
 
-    if (AVrfpIsVerifierProviderDll(DllData->DllBase))
-    {
+    if (AVrfpIsVerifierProviderDll (DllData->DllBase)) {
 
-        DbgPrint("AVrfDllUnloadNotification called for a provider (%p) \n", DllData);
-        DbgBreakPoint();
-        VERIFIER_UNLOCK();
+        DbgPrint ("AVrfDllUnloadNotification called for a provider (%p) \n", DllData);
+        DbgBreakPoint ();
+        VERIFIER_UNLOCK ();
         return;
     }
 
@@ -1070,26 +1132,31 @@ Return value:
 
     Current = AVrfpVerifierProvidersList.Flink;
 
-    while (Current != &AVrfpVerifierProvidersList)
-    {
+    while (Current != &AVrfpVerifierProvidersList) {
 
-        Entry = CONTAINING_RECORD(Current, AVRF_VERIFIER_DESCRIPTOR, List);
+        Entry = CONTAINING_RECORD (Current,
+                                   AVRF_VERIFIER_DESCRIPTOR,
+                                   List);
 
         Current = Current->Flink;
 
-        if (Entry->VerifierUnloadHandler)
-        {
+        if (Entry->VerifierUnloadHandler) {
 
-            Entry->VerifierUnloadHandler(DllData->BaseDllName.Buffer, DllData->DllBase, DllData->SizeOfImage, DllData);
+            Entry->VerifierUnloadHandler (DllData->BaseDllName.Buffer,
+                                          DllData->DllBase,
+                                          DllData->SizeOfImage,
+                                          DllData);
         }
     }
-
-    VERIFIER_UNLOCK();
+    
+    VERIFIER_UNLOCK ();
 }
 
 
 BOOLEAN
-AVrfpSnapDllImports(PLDR_DATA_TABLE_ENTRY LdrDataTableEntry)
+AVrfpSnapDllImports (
+    PLDR_DATA_TABLE_ENTRY LdrDataTableEntry
+    )
 /*++
 
 Routine description:
@@ -1113,7 +1180,7 @@ Return value:
 {
     PVOID IATBase;
     SIZE_T BigIATSize;
-    ULONG LittleIATSize;
+    ULONG  LittleIATSize;
     PVOID *ProcAddresses;
     ULONG NumberOfProcAddresses;
     ULONG OldProtect;
@@ -1133,84 +1200,85 @@ Return value:
     // verified and replace those thunks.
     //
 
-    IATBase = RtlImageDirectoryEntryToData(LdrDataTableEntry->DllBase, TRUE, IMAGE_DIRECTORY_ENTRY_IAT, &LittleIATSize);
+    IATBase = RtlImageDirectoryEntryToData (LdrDataTableEntry->DllBase,
+                                            TRUE,
+                                            IMAGE_DIRECTORY_ENTRY_IAT,
+                                            &LittleIATSize);
 
-    if (IATBase == NULL)
-    {
+    if (IATBase == NULL) {
         return FALSE;
     }
-
+    
     BigIATSize = LittleIATSize;
 
     //
     // Make table read/write.
     //
 
-    st = NtProtectVirtualMemory(NtCurrentProcess(), &IATBase, &BigIATSize, PAGE_READWRITE, &OldProtect);
+    st = NtProtectVirtualMemory (NtCurrentProcess(),
+                                 &IATBase,
+                                 &BigIATSize,
+                                 PAGE_READWRITE,
+                                 &OldProtect);
 
-    if (!NT_SUCCESS(st))
-    {
+    if (!NT_SUCCESS (st)) {
 
-        DbgPrint("AVRF: Unable to unprotect IAT to modify thunks (status %08X).\n", st);
+        DbgPrint( "AVRF: Unable to unprotect IAT to modify thunks (status %08X).\n", st);
         return FALSE;
     }
 
     ProcAddresses = (PVOID *)IATBase;
     NumberOfProcAddresses = (ULONG)(BigIATSize / sizeof(PVOID));
 
-    for (Pi = 0; Pi < NumberOfProcAddresses; Pi += 1)
-    {
-
+    for (Pi = 0; Pi < NumberOfProcAddresses; Pi += 1) {
+        
         //
         // If we find a null in the import table we skip over it.
         //
 
-        if (*ProcAddresses == NULL)
-        {
+        if (*ProcAddresses == NULL) {
             ProcAddresses += 1;
             continue;
         }
 
         Current = AVrfpVerifierProvidersList.Flink;
 
-        while (Current != &AVrfpVerifierProvidersList)
-        {
+        while (Current != &AVrfpVerifierProvidersList) {
 
-            Entry = CONTAINING_RECORD(Current, AVRF_VERIFIER_DESCRIPTOR, List);
+            Entry = CONTAINING_RECORD (Current,
+                                       AVRF_VERIFIER_DESCRIPTOR,
+                                       List);
 
             Current = Current->Flink;
 
             Dlls = Entry->VerifierDlls;
-
-            for (Di = 0; Dlls[Di].DllName; Di += 1)
-            {
+            
+            for (Di = 0; Dlls[Di].DllName; Di += 1) {
 
                 Thunks = Dlls[Di].DllThunks;
 
-                for (Ti = 0; Thunks[Ti].ThunkName; Ti += 1)
-                {
+                for (Ti = 0; Thunks[Ti].ThunkName; Ti += 1) {
 
-                    if (*ProcAddresses == Thunks[Ti].ThunkOldAddress)
-                    {
+                    if (*ProcAddresses == Thunks[Ti].ThunkOldAddress) {
 
-                        if (Thunks[Ti].ThunkNewAddress)
-                        {
+                        if (Thunks[Ti].ThunkNewAddress) {
 
                             *ProcAddresses = Thunks[Ti].ThunkNewAddress;
                         }
-                        else
-                        {
+                        else {
 
-                            DbgPrint("AVRF:SilviuC: New thunk for %s is null. \n", Thunks[Ti].ThunkName);
-                            DbgBreakPoint();
+                            DbgPrint ("AVRF:SilviuC: New thunk for %s is null. \n",
+                                      Thunks[Ti].ThunkName);
+                            DbgBreakPoint ();
                         }
 
-                        if ((AVrfpDebug & AVRF_DBG_SHOW_SNAPS))
-                        {
+                        if ((AVrfpDebug & AVRF_DBG_SHOW_SNAPS)) {
 
-                            DbgPrint("AVRF: Snapped (%ws: %s) with (%ws: %p). \n",
-                                     LdrDataTableEntry->BaseDllName.Buffer, Thunks[Ti].ThunkName,
-                                     Entry->VerifierName.Buffer, Thunks[Ti].ThunkNewAddress);
+                            DbgPrint ("AVRF: Snapped (%ws: %s) with (%ws: %p). \n",
+                                      LdrDataTableEntry->BaseDllName.Buffer,
+                                      Thunks[Ti].ThunkName,
+                                      Entry->VerifierName.Buffer,
+                                      Thunks[Ti].ThunkNewAddress);
                         }
                     }
                 }
@@ -1224,14 +1292,21 @@ Return value:
     // Restore old protection for the table.
     //
 
-    NtProtectVirtualMemory(NtCurrentProcess(), &IATBase, &BigIATSize, OldProtect, &OldProtect);
+    NtProtectVirtualMemory (NtCurrentProcess(),
+                            &IATBase,
+                            &BigIATSize,
+                            OldProtect,
+                            &OldProtect);
 
     return TRUE;
 }
 
 
 BOOLEAN
-AVrfpDetectVerifiedExports(PRTL_VERIFIER_DLL_DESCRIPTOR Dll, PRTL_VERIFIER_THUNK_DESCRIPTOR Thunks)
+AVrfpDetectVerifiedExports (
+    PRTL_VERIFIER_DLL_DESCRIPTOR Dll,
+    PRTL_VERIFIER_THUNK_DESCRIPTOR Thunks
+    )
 /*++
 
 Routine description:
@@ -1274,10 +1349,11 @@ Return value:
     ULONG Fi, Ti;
 
     //
-    // "Fusion-ize" the dll name.
+    // "Fusion-ize" the dll name. 
     //
 
-    RtlInitUnicodeString(&DllName, Dll->DllName);
+    RtlInitUnicodeString (&DllName,
+                          Dll->DllName);
 
     DynamicRedirectionString.Buffer = NULL;
 
@@ -1287,16 +1363,20 @@ Return value:
 
     DllNameToUse = &DllName;
 
-    Status = RtlDosApplyFileIsolationRedirection_Ustr(RTL_DOS_APPLY_FILE_REDIRECTION_USTR_FLAG_RESPECT_DOT_LOCAL,
-                                                      &DllName, &DefaultExtension, &StaticRedirectionString,
-                                                      &DynamicRedirectionString, &DllNameToUse, NULL, NULL, NULL);
+    Status = RtlDosApplyFileIsolationRedirection_Ustr(
+            RTL_DOS_APPLY_FILE_REDIRECTION_USTR_FLAG_RESPECT_DOT_LOCAL,
+            &DllName,
+            &DefaultExtension,
+            &StaticRedirectionString,
+            &DynamicRedirectionString,
+            &DllNameToUse,
+            NULL,
+            NULL,
+            NULL);
 
-    if (NT_SUCCESS(Status))
-    {
+    if (NT_SUCCESS(Status)) {
         Redirected = TRUE;
-    }
-    else if (Status == STATUS_SXS_KEY_NOT_FOUND)
-    {
+    } else if (Status == STATUS_SXS_KEY_NOT_FOUND) {
         Status = STATUS_SUCCESS;
     }
 
@@ -1304,17 +1384,19 @@ Return value:
     // Get the loader descriptor for this dll.
     //
 
-    if (NT_SUCCESS(Status))
-    {
+    if (NT_SUCCESS(Status)) {
 
-        Result = LdrpCheckForLoadedDll(NULL, DllNameToUse, TRUE, Redirected, &DllData);
+        Result = LdrpCheckForLoadedDll (NULL,
+                                        DllNameToUse,
+                                        TRUE,
+                                        Redirected,
+                                        &DllData);
 
         if (DynamicRedirectionString.Buffer != NULL)
             RtlFreeUnicodeString(&DynamicRedirectionString);
     }
 
-    if (Result == FALSE)
-    {
+    if (Result == FALSE) {
 
         //
         // We exit of we failed to fusionize name or did not find
@@ -1330,10 +1412,12 @@ Return value:
 
     Base = DllData->DllBase;
 
-    Directory = RtlImageDirectoryEntryToData(DllData->DllBase, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &Size);
+    Directory = RtlImageDirectoryEntryToData (DllData->DllBase,
+                                              TRUE,
+                                              IMAGE_DIRECTORY_ENTRY_EXPORT,
+                                              &Size);
 
-    if (Directory == NULL)
-    {
+    if (Directory == NULL) {
         return FALSE;
     }
 
@@ -1342,39 +1426,35 @@ Return value:
     // need to be verified.
     //
 
-    for (Ti = 0; Thunks[Ti].ThunkName; Ti += 1)
-    {
-
+    for (Ti = 0; Thunks[Ti].ThunkName; Ti += 1) {
+        
         //
         // If old thunk already filled (can happen due to chaining)
         // then skip search for the original address.
         //
 
-        if (Thunks[Ti].ThunkOldAddress)
-        {
+        if (Thunks[Ti].ThunkOldAddress) {
             continue;
         }
 
-        for (Fi = 0; Fi < Directory->NumberOfFunctions; Fi += 1)
-        {
-
+        for (Fi = 0; Fi < Directory->NumberOfFunctions; Fi += 1) {
+            
             NameAddress = Base + Directory->AddressOfNames;
             NameAddress = Base + ((ULONG *)NameAddress)[Fi];
 
             IndexAddress = Base + Directory->AddressOfNameOrdinals;
             RealIndex = (ULONG)(((USHORT *)IndexAddress)[Fi]);
 
-            if (_stricmp(NameAddress, Thunks[Ti].ThunkName) == 0)
-            {
+            if (_stricmp (NameAddress, Thunks[Ti].ThunkName) == 0) {
 
                 FunctionAddress = Base + Directory->AddressOfFunctions;
                 FunctionAddress = Base + ((ULONG *)FunctionAddress)[RealIndex];
 
                 Thunks[Ti].ThunkOldAddress = FunctionAddress;
 
-                if ((AVrfpDebug & AVRF_DBG_SHOW_VERIFIED_EXPORTS))
-                {
-                    DbgPrint("AVRF: found verified export %s @ %p \n", NameAddress, FunctionAddress);
+                if ((AVrfpDebug & AVRF_DBG_SHOW_VERIFIED_EXPORTS)) {
+                    DbgPrint ("AVRF: found verified export %s @ %p \n", 
+                              NameAddress, FunctionAddress);
                 }
             }
         }
@@ -1387,7 +1467,8 @@ Return value:
 
 
 PWSTR
-AVrfpGetProcessName()
+AVrfpGetProcessName (
+    )
 {
     PPEB_LDR_DATA Ldr;
     PLIST_ENTRY Head;
@@ -1398,7 +1479,9 @@ AVrfpGetProcessName()
     Head = &(Ldr->InLoadOrderModuleList);
     Next = Head->Flink;
 
-    Entry = CONTAINING_RECORD(Next, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
+    Entry = CONTAINING_RECORD (Next, 
+                               LDR_DATA_TABLE_ENTRY, 
+                               InLoadOrderLinks);
 
     return Entry->BaseDllName.Buffer;
 }
@@ -1409,20 +1492,23 @@ AVrfpGetProcessName()
 /////////////////////////////////////////////////////////////////////
 
 BOOLEAN
-AVrfpEnableHandleVerifier()
+AVrfpEnableHandleVerifier (
+    )
 {
     PROCESS_HANDLE_TRACING_ENABLE HandleCheckEnable;
     NTSTATUS Status;
 
-    RtlZeroMemory(&HandleCheckEnable, sizeof HandleCheckEnable);
+    RtlZeroMemory (&HandleCheckEnable, sizeof HandleCheckEnable);
 
-    Status =
-        NtSetInformationProcess(NtCurrentProcess(), ProcessHandleTracing, &HandleCheckEnable, sizeof HandleCheckEnable);
+    Status = NtSetInformationProcess (NtCurrentProcess(),
+                                      ProcessHandleTracing,
+                                      &HandleCheckEnable,
+                                      sizeof HandleCheckEnable);
 
-    if (!NT_SUCCESS(Status))
-    {
+    if (!NT_SUCCESS (Status)) {
 
-        DbgPrint("AVRF: failed to enable handle checking (status %X) \n", Status);
+        DbgPrint ("AVRF: failed to enable handle checking (status %X) \n", 
+                  Status);
 
         return FALSE;
     }
@@ -1431,33 +1517,34 @@ AVrfpEnableHandleVerifier()
 }
 
 BOOLEAN
-AVrfpEnableStackVerifier()
+AVrfpEnableStackVerifier (
+    )
 {
     NtCurrentPeb()->NtGlobalFlag |= FLG_DISABLE_STACK_EXTENSION;
     return TRUE;
 }
 
 BOOLEAN
-AVrfpEnableLockVerifier()
+AVrfpEnableLockVerifier (
+    )
 {
     RtlpCriticalSectionVerifier = TRUE;
     return TRUE;
 }
 
 BOOLEAN
-AVrfpEnableHeapVerifier()
+AVrfpEnableHeapVerifier (
+    )
 {
     extern ULONG RtlpDphGlobalFlags;
 
     NtCurrentPeb()->NtGlobalFlag |= FLG_HEAP_PAGE_ALLOCS;
 
-    if (AVrfpVerifierFlags & RTL_VRF_FLG_FULL_PAGE_HEAP)
-    {
-
+    if (AVrfpVerifierFlags & RTL_VRF_FLG_FULL_PAGE_HEAP) {
+    
         RtlpDphGlobalFlags |= PAGE_HEAP_ENABLE_PAGE_HEAP;
     }
-    else
-    {
+    else {
 
         //
         // Nothing. Light heap is the default.
@@ -1468,7 +1555,8 @@ AVrfpEnableHeapVerifier()
 }
 
 BOOLEAN
-AVrfpEnableVerifierOptions()
+AVrfpEnableVerifierOptions (
+    )
 {
     BOOLEAN Result;
     BOOLEAN Failures = FALSE;
@@ -1477,10 +1565,9 @@ AVrfpEnableVerifierOptions()
     // Heap verifier in some form is enabled always.
     //
 
-    Result = AVrfpEnableHeapVerifier();
+    Result = AVrfpEnableHeapVerifier ();
 
-    if (Result == FALSE)
-    {
+    if (Result == FALSE) {
         Failures = TRUE;
     }
 
@@ -1488,13 +1575,11 @@ AVrfpEnableVerifierOptions()
     // Handle checks
     //
 
-    if (AVrfpVerifierFlags & RTL_VRF_FLG_HANDLE_CHECKS)
-    {
+    if (AVrfpVerifierFlags & RTL_VRF_FLG_HANDLE_CHECKS) {
 
-        Result = AVrfpEnableHandleVerifier();
+        Result = AVrfpEnableHandleVerifier ();
 
-        if (Result == FALSE)
-        {
+        if (Result == FALSE) {
             Failures = TRUE;
         }
     }
@@ -1503,13 +1588,11 @@ AVrfpEnableVerifierOptions()
     // Stack overflow checks
     //
 
-    if (AVrfpVerifierFlags & RTL_VRF_FLG_STACK_CHECKS)
-    {
+    if (AVrfpVerifierFlags & RTL_VRF_FLG_STACK_CHECKS) {
 
-        Result = AVrfpEnableStackVerifier();
+        Result = AVrfpEnableStackVerifier ();
 
-        if (Result == FALSE)
-        {
+        if (Result == FALSE) {
             Failures = TRUE;
         }
     }
@@ -1518,13 +1601,11 @@ AVrfpEnableVerifierOptions()
     // Lock checks
     //
 
-    if (AVrfpVerifierFlags & RTL_VRF_FLG_LOCK_CHECKS)
-    {
+    if (AVrfpVerifierFlags & RTL_VRF_FLG_LOCK_CHECKS) {
 
-        Result = AVrfpEnableLockVerifier();
+        Result = AVrfpEnableLockVerifier ();
 
-        if (Result == FALSE)
-        {
+        if (Result == FALSE) {
             Failures = TRUE;
         }
     }
@@ -1539,24 +1620,31 @@ AVrfpEnableVerifierOptions()
 ULONG_PTR AVrfpPreviousStopData[5];
 ULONG_PTR AVrfpStopData[5];
 
-VOID RtlApplicationVerifierStop(ULONG_PTR Code, PCHAR Message, ULONG_PTR Param1, PCHAR Description1, ULONG_PTR Param2,
-                                PCHAR Description2, ULONG_PTR Param3, PCHAR Description3, ULONG_PTR Param4,
-                                PCHAR Description4)
+VOID
+RtlApplicationVerifierStop (
+    ULONG_PTR Code,
+    PCHAR Message,
+    ULONG_PTR Param1, PCHAR Description1,
+    ULONG_PTR Param2, PCHAR Description2,
+    ULONG_PTR Param3, PCHAR Description3,
+    ULONG_PTR Param4, PCHAR Description4
+    )
 {
     BOOLEAN DoNotBreak = FALSE;
 
-    if ((Code & APPLICATION_VERIFIER_NO_BREAK))
-    {
+    if ((Code & APPLICATION_VERIFIER_NO_BREAK)) {
 
         DoNotBreak = TRUE;
         Code &= ~APPLICATION_VERIFIER_NO_BREAK;
     }
-
+    
     //
     // Make it easy for a debugger to pick up the failure info.
     //
 
-    RtlMoveMemory(AVrfpPreviousStopData, AVrfpStopData, sizeof AVrfpStopData);
+    RtlMoveMemory (AVrfpPreviousStopData, 
+                   AVrfpStopData, 
+                   sizeof AVrfpStopData);
 
     AVrfpStopData[0] = Code;
     AVrfpStopData[1] = Param1;
@@ -1569,49 +1657,52 @@ VOID RtlApplicationVerifierStop(ULONG_PTR Code, PCHAR Message, ULONG_PTR Param1,
     // SilviuC: should make sure we really need this.
     //
 
-    if ((Code & APPLICATION_VERIFIER_INTERNAL_ERROR))
-    {
+    if ((Code & APPLICATION_VERIFIER_INTERNAL_ERROR)) {
+        
+        if (! (NtCurrentPeb()->NtGlobalFlag & FLG_APPLICATION_VERIFIER)) {
 
-        if (!(NtCurrentPeb()->NtGlobalFlag & FLG_APPLICATION_VERIFIER))
-        {
-
-            DbgPrint("\n\n===========================================================\n");
-            DbgPrint("VERIFIER INTERNAL ERROR %p: pid 0x%X: %s \n"
-                     "\n\t%p : %s\n\t%p : %s\n\t%p : %s\n\t%p : %s\n",
-                     Code, HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess), Message, Param1, Description1, Param2,
-                     Description2, Param3, Description3, Param4, Description4);
-            DbgPrint("===========================================================\n\n");
-            DbgBreakPoint();
+            DbgPrint ("\n\n===========================================================\n");
+            DbgPrint ("VERIFIER INTERNAL ERROR %p: pid 0x%X: %s \n"
+                      "\n\t%p : %s\n\t%p : %s\n\t%p : %s\n\t%p : %s\n",
+                      Code, HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess), Message,
+                      Param1, Description1, 
+                      Param2, Description2, 
+                      Param3, Description3, 
+                      Param4, Description4);
+            DbgPrint ("===========================================================\n\n");
+            DbgBreakPoint ();
         }
     }
-    else if ((Code & APPLICATION_VERIFIER_INTERNAL_WARNING))
-    {
-
-        if (!(NtCurrentPeb()->NtGlobalFlag & FLG_APPLICATION_VERIFIER))
-        {
-
-            DbgPrint("\n\n===========================================================\n");
-            DbgPrint("VERIFIER INTERNAL WARNING %p: pid 0x%X: %s \n"
-                     "\n\t%p : %s\n\t%p : %s\n\t%p : %s\n\t%p : %s\n",
-                     Code, HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess), Message, Param1, Description1, Param2,
-                     Description2, Param3, Description3, Param4, Description4);
-            DbgPrint("===========================================================\n\n");
-            DbgBreakPoint();
+    else if ((Code & APPLICATION_VERIFIER_INTERNAL_WARNING)) {
+        
+        if (! (NtCurrentPeb()->NtGlobalFlag & FLG_APPLICATION_VERIFIER)) {
+            
+            DbgPrint ("\n\n===========================================================\n");
+            DbgPrint ("VERIFIER INTERNAL WARNING %p: pid 0x%X: %s \n"
+                      "\n\t%p : %s\n\t%p : %s\n\t%p : %s\n\t%p : %s\n",
+                      Code, HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess), Message,
+                      Param1, Description1, 
+                      Param2, Description2, 
+                      Param3, Description3, 
+                      Param4, Description4);
+            DbgPrint ("===========================================================\n\n");
+            DbgBreakPoint ();
         }
     }
-    else
-    {
+    else {
+        
+        DbgPrint ("\n\n===========================================================\n");
+        DbgPrint ("VERIFIER STOP %p: pid 0x%X: %s \n"
+                  "\n\t%p : %s\n\t%p : %s\n\t%p : %s\n\t%p : %s\n",
+                  Code, HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess), Message,
+                  Param1, Description1, 
+                  Param2, Description2, 
+                  Param3, Description3, 
+                  Param4, Description4);
+        DbgPrint ("===========================================================\n\n");
 
-        DbgPrint("\n\n===========================================================\n");
-        DbgPrint("VERIFIER STOP %p: pid 0x%X: %s \n"
-                 "\n\t%p : %s\n\t%p : %s\n\t%p : %s\n\t%p : %s\n",
-                 Code, HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess), Message, Param1, Description1, Param2,
-                 Description2, Param3, Description3, Param4, Description4);
-        DbgPrint("===========================================================\n\n");
-
-        if (!DoNotBreak)
-        {
-            DbgBreakPoint();
+        if (! DoNotBreak) {
+            DbgBreakPoint ();
         }
     }
 }
@@ -1628,55 +1719,62 @@ VOID RtlApplicationVerifierStop(ULONG_PTR Code, PCHAR Message, ULONG_PTR Param1,
 BOOLEAN AVrfpDphKernel32Snapped;
 BOOLEAN AVrfpDphMsvcrtSnapped;
 
-#define SNAP_ROUTINE_GLOBALALLOC 0
-#define SNAP_ROUTINE_GLOBALREALLOC 1
-#define SNAP_ROUTINE_GLOBALFREE 2
-#define SNAP_ROUTINE_LOCALALLOC 3
-#define SNAP_ROUTINE_LOCALREALLOC 4
-#define SNAP_ROUTINE_LOCALFREE 5
-#define SNAP_ROUTINE_HEAPALLOC 6
-#define SNAP_ROUTINE_HEAPREALLOC 7
-#define SNAP_ROUTINE_HEAPFREE 8
-#define SNAP_ROUTINE_HEAPCREATE 9
-#define SNAP_ROUTINE_MALLOC 10
-#define SNAP_ROUTINE_CALLOC 11
-#define SNAP_ROUTINE_REALLOC 12
-#define SNAP_ROUTINE_FREE 13
-#define SNAP_ROUTINE_NEW 14
-#define SNAP_ROUTINE_DELETE 15
-#define SNAP_ROUTINE_NEW_ARRAY 16
-#define SNAP_ROUTINE_DELETE_ARRAY 17
-#define SNAP_ROUTINE_MAX_INDEX 18
+#define SNAP_ROUTINE_GLOBALALLOC     0
+#define SNAP_ROUTINE_GLOBALREALLOC   1
+#define SNAP_ROUTINE_GLOBALFREE      2
+#define SNAP_ROUTINE_LOCALALLOC      3
+#define SNAP_ROUTINE_LOCALREALLOC    4
+#define SNAP_ROUTINE_LOCALFREE       5
+#define SNAP_ROUTINE_HEAPALLOC       6
+#define SNAP_ROUTINE_HEAPREALLOC     7
+#define SNAP_ROUTINE_HEAPFREE        8
+#define SNAP_ROUTINE_HEAPCREATE      9
+#define SNAP_ROUTINE_MALLOC          10
+#define SNAP_ROUTINE_CALLOC          11
+#define SNAP_ROUTINE_REALLOC         12
+#define SNAP_ROUTINE_FREE            13
+#define SNAP_ROUTINE_NEW             14
+#define SNAP_ROUTINE_DELETE          15
+#define SNAP_ROUTINE_NEW_ARRAY       16
+#define SNAP_ROUTINE_DELETE_ARRAY    17
+#define SNAP_ROUTINE_MAX_INDEX       18
 
-PVOID AVrfpDphSnapRoutines[SNAP_ROUTINE_MAX_INDEX];
+PVOID AVrfpDphSnapRoutines [SNAP_ROUTINE_MAX_INDEX];
 
-typedef struct _DPH_SNAP_NAME
-{
+typedef struct _DPH_SNAP_NAME {
 
     PSTR Name;
     ULONG Index;
 
-} DPH_SNAP_NAME, *PDPH_SNAP_NAME;
+} DPH_SNAP_NAME, * PDPH_SNAP_NAME;
 
 DPH_SNAP_NAME
-AVrfpDphSnapNamesForKernel32[] = {
+AVrfpDphSnapNamesForKernel32 [] = {
 
-    { "GlobalAlloc", 0 },  { "GlobalReAlloc", 1 }, { "GlobalFree", 2 }, { "LocalAlloc", 3 },
-    { "LocalReAlloc", 4 }, { "LocalFree", 5 },     { "HeapAlloc", 6 },  { "HeapReAlloc", 7 },
-    { "HeapFree", 8 },     { "HeapCreate", 9 },    { NULL, 0 }
+    { "GlobalAlloc",   0 },
+    { "GlobalReAlloc", 1 },
+    { "GlobalFree",    2 },
+    { "LocalAlloc",    3 },
+    { "LocalReAlloc",  4 },
+    { "LocalFree",     5 },
+    { "HeapAlloc",     6 },
+    { "HeapReAlloc",   7 },
+    { "HeapFree",      8 },
+    { "HeapCreate",    9 },
+    { NULL, 0 }
 };
 
 DPH_SNAP_NAME
-AVrfpDphSnapNamesForMsvcrt[] = {
+AVrfpDphSnapNamesForMsvcrt [] = {
 
-    { "malloc", 10 },
-    { "calloc", 11 },
-    { "realloc", 12 },
-    { "free", 13 },
-    { "??2@YAPAXI@Z", 14 },  // operator new
-    { "??3@YAXPAX@Z", 15 },  // operator delete
-    { "??_U@YAPAXI@Z", 16 }, // operator new[]
-    { "??_V@YAXPAX@Z", 17 }, // operator delete[]
+    { "malloc",        10},
+    { "calloc",        11},
+    { "realloc",       12},
+    { "free",          13},
+    { "??2@YAPAXI@Z",  14}, // operator new
+    { "??3@YAXPAX@Z",  15}, // operator delete
+    { "??_U@YAPAXI@Z", 16}, // operator new[]
+    { "??_V@YAXPAX@Z", 17}, // operator delete[]
     { NULL, 0 }
 };
 
@@ -1685,47 +1783,104 @@ AVrfpDphSnapNamesForMsvcrt[] = {
 //
 
 PVOID
-AVrfpDphDllHeapAlloc(IN PVOID HeapHandle, IN ULONG Flags, IN SIZE_T Size);
+AVrfpDphDllHeapAlloc (
+    IN PVOID  HeapHandle,
+    IN ULONG  Flags,
+    IN SIZE_T Size
+    );
 
 PVOID
-AVrfpDphDllHeapReAlloc(IN PVOID HeapHandle, IN ULONG Flags, IN PVOID Address, IN SIZE_T Size);
+AVrfpDphDllHeapReAlloc (
+    IN PVOID  HeapHandle,
+    IN ULONG  Flags,
+    IN PVOID Address,
+    IN SIZE_T Size
+    );
 
 BOOLEAN
-AVrfpDphDllHeapFree(IN PVOID HeapHandle, IN ULONG Flags, IN PVOID Address);
+AVrfpDphDllHeapFree(
+    IN PVOID HeapHandle,
+    IN ULONG Flags,
+    IN PVOID Address
+    );
 
 PVOID
-AVrfpDphDllLocalAlloc(IN ULONG Flags, IN SIZE_T Size);
+AVrfpDphDllLocalAlloc (
+    IN ULONG  Flags,
+    IN SIZE_T Size
+    );
 
 PVOID
-AVrfpDphDllLocalReAlloc(IN PVOID Address, IN SIZE_T Size, IN ULONG Flags);
+AVrfpDphDllLocalReAlloc (
+    IN PVOID Address,
+    IN SIZE_T Size,
+    IN ULONG  Flags
+    );
 
 PVOID
-AVrfpDphDllLocalFree(IN PVOID Address);
+AVrfpDphDllLocalFree(
+    IN PVOID Address
+    );
 
 PVOID
-AVrfpDphDllGlobalAlloc(IN ULONG Flags, IN SIZE_T Size);
+AVrfpDphDllGlobalAlloc (
+    IN ULONG  Flags,
+    IN SIZE_T Size
+    );
 
 PVOID
-AVrfpDphDllGlobalReAlloc(IN PVOID Address, IN SIZE_T Size, IN ULONG Flags);
+AVrfpDphDllGlobalReAlloc (
+    IN PVOID Address,
+    IN SIZE_T Size,
+    IN ULONG  Flags
+    );
 
 PVOID
-AVrfpDphDllGlobalFree(IN PVOID Address);
+AVrfpDphDllGlobalFree(
+    IN PVOID Address
+    );
 
-PVOID __cdecl AVrfpDphDllmalloc(IN SIZE_T Size);
+PVOID __cdecl
+AVrfpDphDllmalloc (
+    IN SIZE_T Size
+    );
 
-PVOID __cdecl AVrfpDphDllcalloc(IN SIZE_T Number, IN SIZE_T Size);
+PVOID __cdecl
+AVrfpDphDllcalloc (
+    IN SIZE_T Number,
+    IN SIZE_T Size
+    );
 
-PVOID __cdecl AVrfpDphDllrealloc(IN PVOID Address, IN SIZE_T Size);
+PVOID __cdecl
+AVrfpDphDllrealloc (
+    IN PVOID Address,
+    IN SIZE_T Size
+    );
 
-VOID __cdecl AVrfpDphDllfree(IN PVOID Address);
+VOID __cdecl
+AVrfpDphDllfree (
+    IN PVOID Address
+    );
 
-PVOID __cdecl AVrfpDphDllNew(IN SIZE_T Size);
+PVOID __cdecl
+AVrfpDphDllNew (
+    IN SIZE_T Size
+    );
 
-VOID __cdecl AVrfpDphDllDelete(IN PVOID Address);
+VOID __cdecl
+AVrfpDphDllDelete (
+    IN PVOID Address
+    );
 
-PVOID __cdecl AVrfpDphDllNewArray(IN SIZE_T Size);
+PVOID __cdecl
+AVrfpDphDllNewArray (
+    IN SIZE_T Size
+    );
 
-VOID __cdecl AVrfpDphDllDeleteArray(IN PVOID Address);
+VOID __cdecl
+AVrfpDphDllDeleteArray (
+    IN PVOID Address
+    );
 
 //
 // Replacement function for msvcrt HeapCreate used to intercept
@@ -1733,7 +1888,11 @@ VOID __cdecl AVrfpDphDllDeleteArray(IN PVOID Address);
 //
 
 PVOID
-AVrfpDphDllHeapCreate(ULONG Options, SIZE_T InitialSize, SIZE_T MaximumSize);
+AVrfpDphDllHeapCreate (
+    ULONG Options,
+    SIZE_T InitialSize,
+    SIZE_T MaximumSize
+    );
 
 //
 // Address of heap created by msvcrt. This is needed
@@ -1747,7 +1906,10 @@ PVOID AVrfpDphMsvcrtHeap;
 //
 
 BOOLEAN
-AVrfpDphDetectSnapRoutines(PWSTR DllString, PDPH_SNAP_NAME SnapNames)
+AVrfpDphDetectSnapRoutines (
+    PWSTR DllString,
+    PDPH_SNAP_NAME SnapNames
+    )
 {
     PLDR_DATA_TABLE_ENTRY DllData;
     PIMAGE_EXPORT_DIRECTORY Directory;
@@ -1768,7 +1930,9 @@ AVrfpDphDetectSnapRoutines(PWSTR DllString, PDPH_SNAP_NAME SnapNames)
     PUNICODE_STRING DllNameToUse;
     BOOLEAN Redirected = FALSE;
 
-    RtlInitUnicodeString(&DllName, DllString);
+    RtlInitUnicodeString (
+        &DllName,
+        DllString);
 
     DynamicRedirectionString.Buffer = NULL;
 
@@ -1778,45 +1942,54 @@ AVrfpDphDetectSnapRoutines(PWSTR DllString, PDPH_SNAP_NAME SnapNames)
 
     DllNameToUse = &DllName;
 
-    Status = RtlDosApplyFileIsolationRedirection_Ustr(RTL_DOS_APPLY_FILE_REDIRECTION_USTR_FLAG_RESPECT_DOT_LOCAL,
-                                                      &DllName, &DefaultExtension, &StaticRedirectionString,
-                                                      &DynamicRedirectionString, &DllNameToUse, NULL, NULL, NULL);
-    if (NT_SUCCESS(Status))
-    {
+    Status = RtlDosApplyFileIsolationRedirection_Ustr(
+            RTL_DOS_APPLY_FILE_REDIRECTION_USTR_FLAG_RESPECT_DOT_LOCAL,
+            &DllName,
+            &DefaultExtension,
+            &StaticRedirectionString,
+            &DynamicRedirectionString,
+            &DllNameToUse,
+            NULL,
+            NULL,
+            NULL);
+    if (NT_SUCCESS(Status)) {
         Redirected = TRUE;
-    }
-    else if (Status == STATUS_SXS_KEY_NOT_FOUND)
-    {
+    } else if (Status == STATUS_SXS_KEY_NOT_FOUND) {
         Status = STATUS_SUCCESS;
     }
 
-    if (NT_SUCCESS(Status))
-    {
-        Result = LdrpCheckForLoadedDll(NULL, DllNameToUse, TRUE, Redirected, &DllData);
+    if (NT_SUCCESS(Status)) {
+        Result = LdrpCheckForLoadedDll (
+            NULL,
+            DllNameToUse,
+            TRUE,
+            Redirected,
+            &DllData);
 
         if (DynamicRedirectionString.Buffer != NULL)
             RtlFreeUnicodeString(&DynamicRedirectionString);
     }
 
-    if (Result == FALSE)
-    {
+    if (Result == FALSE) {
         return FALSE;
     }
 
     Base = DllData->DllBase;
 
-    Directory = RtlImageDirectoryEntryToData(DllData->DllBase, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &Size);
+    Directory = RtlImageDirectoryEntryToData (
+        DllData->DllBase,
+        TRUE,
+        IMAGE_DIRECTORY_ENTRY_EXPORT,
+        &Size
+        );
 
-    if (Directory == NULL)
-    {
+    if (Directory == NULL) {
         return FALSE;
     }
 
-    for (CurrentSnapName = SnapNames; CurrentSnapName->Name; CurrentSnapName += 1)
-    {
+    for (CurrentSnapName = SnapNames; CurrentSnapName->Name; CurrentSnapName += 1) {
 
-        for (Index = 0; Index < Directory->NumberOfFunctions; Index += 1)
-        {
+        for (Index = 0; Index < Directory->NumberOfFunctions; Index += 1) {
 
             NameAddress = Base + Directory->AddressOfNames;
             NameAddress = Base + ((ULONG *)NameAddress)[Index];
@@ -1824,14 +1997,13 @@ AVrfpDphDetectSnapRoutines(PWSTR DllString, PDPH_SNAP_NAME SnapNames)
             IndexAddress = Base + Directory->AddressOfNameOrdinals;
             RealIndex = (ULONG)(((USHORT *)IndexAddress)[Index]);
 
-            if (_stricmp(NameAddress, CurrentSnapName->Name) == 0)
-            {
+            if (_stricmp (NameAddress, CurrentSnapName->Name) == 0) {
 
                 FunctionAddress = Base + Directory->AddressOfFunctions;
                 FunctionAddress = Base + ((ULONG *)FunctionAddress)[RealIndex];
 
                 AVrfpDphSnapRoutines[CurrentSnapName->Index] = FunctionAddress;
-                DbgPrint("Page heap: found %s @ address %p \n", NameAddress, FunctionAddress);
+                DbgPrint ("Page heap: found %s @ address %p \n", NameAddress, FunctionAddress);
             }
         }
     }
@@ -1840,11 +2012,14 @@ AVrfpDphDetectSnapRoutines(PWSTR DllString, PDPH_SNAP_NAME SnapNames)
 }
 
 BOOLEAN
-AVrfpDphSnapImports(PLDR_DATA_TABLE_ENTRY LdrDataTableEntry, BOOLEAN CallToDetectCrtHeap)
+AVrfpDphSnapImports (
+    PLDR_DATA_TABLE_ENTRY LdrDataTableEntry,
+    BOOLEAN CallToDetectCrtHeap
+    )
 {
     PVOID IATBase;
     SIZE_T BigIATSize;
-    ULONG LittleIATSize;
+    ULONG  LittleIATSize;
     PVOID *ProcAddresses;
     ULONG NumberOfProcAddresses;
     ULONG OldProtect;
@@ -1857,26 +2032,31 @@ AVrfpDphSnapImports(PLDR_DATA_TABLE_ENTRY LdrDataTableEntry, BOOLEAN CallToDetec
     // and replace those thunks.
     //
 
-    IATBase = RtlImageDirectoryEntryToData(LdrDataTableEntry->DllBase, TRUE, IMAGE_DIRECTORY_ENTRY_IAT, &LittleIATSize);
+    IATBase = RtlImageDirectoryEntryToData(
+        LdrDataTableEntry->DllBase,
+        TRUE,
+        IMAGE_DIRECTORY_ENTRY_IAT,
+        &LittleIATSize);
 
-    if (IATBase != NULL)
-    {
+    if (IATBase != NULL) {
 
         BigIATSize = LittleIATSize;
 
-        st = NtProtectVirtualMemory(NtCurrentProcess(), &IATBase, &BigIATSize, PAGE_READWRITE, &OldProtect);
+        st = NtProtectVirtualMemory(
+            NtCurrentProcess(),
+            &IATBase,
+            &BigIATSize,
+            PAGE_READWRITE,
+            &OldProtect);
 
-        if (!NT_SUCCESS(st))
-        {
-            DbgPrint("LDR: Unable to unprotect IAT to enable per DLL page heap.\n");
+        if (!NT_SUCCESS(st)) {
+            DbgPrint( "LDR: Unable to unprotect IAT to enable per DLL page heap.\n" );
             return FALSE;
         }
-        else
-        {
+        else {
             ProcAddresses = (PVOID *)IATBase;
             NumberOfProcAddresses = (ULONG)(BigIATSize / sizeof(PVOID));
-            while (NumberOfProcAddresses--)
-            {
+            while (NumberOfProcAddresses--) {
 
                 //
                 // If we find a null in the import table we skip over it.
@@ -1885,153 +2065,158 @@ AVrfpDphSnapImports(PLDR_DATA_TABLE_ENTRY LdrDataTableEntry, BOOLEAN CallToDetec
                 // and therefore the address of malloc() is also null.
                 //
 
-                if (*ProcAddresses == NULL)
-                {
+                if (*ProcAddresses == NULL) {
                     ProcAddresses += 1;
                     continue;
                 }
 
-                if (CallToDetectCrtHeap)
-                {
-                    if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_HEAPCREATE])
-                    {
+                if (CallToDetectCrtHeap) {
+                    if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_HEAPCREATE]) {
                         *ProcAddresses = AVrfpDphDllHeapCreate;
-                        DbgPrint("Snapped (%ws) HeapCreate ... \n", LdrDataTableEntry->BaseDllName.Buffer);
+                        DbgPrint ("Snapped (%ws) HeapCreate ... \n",
+                            LdrDataTableEntry->BaseDllName.Buffer);
                     }
                 }
-                else
-                {
+                else {
 
                     //
                     // ntdll imports
                     //
 
-                    if (*ProcAddresses == RtlAllocateHeap)
-                    {
+                    if (*ProcAddresses == RtlAllocateHeap) {
                         *ProcAddresses = AVrfpDphDllHeapAlloc;
-                        DbgPrint("Snapped (%ws) RtlAllocateHeap ... \n", LdrDataTableEntry->BaseDllName.Buffer);
+                        DbgPrint ("Snapped (%ws) RtlAllocateHeap ... \n",
+                                  LdrDataTableEntry->BaseDllName.Buffer);
                     }
-                    else if (*ProcAddresses == RtlReAllocateHeap)
-                    {
+                    else if (*ProcAddresses == RtlReAllocateHeap) {
                         *ProcAddresses = AVrfpDphDllHeapReAlloc;
-                        DbgPrint("Snapped (%ws) RtlReAllocateHeap ... \n", LdrDataTableEntry->BaseDllName.Buffer);
+                        DbgPrint ("Snapped (%ws) RtlReAllocateHeap ... \n",
+                                  LdrDataTableEntry->BaseDllName.Buffer);
                     }
-                    else if (*ProcAddresses == RtlFreeHeap)
-                    {
+                    else if (*ProcAddresses == RtlFreeHeap) {
                         *ProcAddresses = AVrfpDphDllHeapFree;
-                        DbgPrint("Snapped (%ws) RtlFreeHeap ... \n", LdrDataTableEntry->BaseDllName.Buffer);
+                        DbgPrint ("Snapped (%ws) RtlFreeHeap ... \n",
+                                  LdrDataTableEntry->BaseDllName.Buffer);
                     }
 
                     //
                     // kernel32 imports
                     //
 
-                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_HEAPALLOC])
-                    {
+                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_HEAPALLOC]) {
                         *ProcAddresses = AVrfpDphDllHeapAlloc;
-                        DbgPrint("Snapped (%ws) HeapAlloc ... \n", LdrDataTableEntry->BaseDllName.Buffer);
+                        DbgPrint ("Snapped (%ws) HeapAlloc ... \n",
+                                  LdrDataTableEntry->BaseDllName.Buffer);
                     }
-                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_HEAPREALLOC])
-                    {
+                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_HEAPREALLOC]) {
                         *ProcAddresses = AVrfpDphDllHeapReAlloc;
-                        DbgPrint("Snapped (%ws) HeapReAlloc ... \n", LdrDataTableEntry->BaseDllName.Buffer);
+                        DbgPrint ("Snapped (%ws) HeapReAlloc ... \n",
+                                  LdrDataTableEntry->BaseDllName.Buffer);
                     }
-                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_HEAPFREE])
-                    {
+                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_HEAPFREE]) {
                         *ProcAddresses = AVrfpDphDllHeapFree;
-                        DbgPrint("Snapped (%ws) HeapFree ... \n", LdrDataTableEntry->BaseDllName.Buffer);
+                        DbgPrint ("Snapped (%ws) HeapFree ... \n",
+                                  LdrDataTableEntry->BaseDllName.Buffer);
                     }
 
-                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_LOCALALLOC])
-                    {
+                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_LOCALALLOC]) {
                         *ProcAddresses = AVrfpDphDllLocalAlloc;
-                        DbgPrint("Snapped (%ws) LocalAlloc ... \n", LdrDataTableEntry->BaseDllName.Buffer);
+                        DbgPrint ("Snapped (%ws) LocalAlloc ... \n",
+                                  LdrDataTableEntry->BaseDllName.Buffer);
                     }
-                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_LOCALREALLOC])
-                    {
+                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_LOCALREALLOC]) {
                         *ProcAddresses = AVrfpDphDllLocalReAlloc;
-                        DbgPrint("Snapped (%ws) LocalReAlloc ... \n", LdrDataTableEntry->BaseDllName.Buffer);
+                        DbgPrint ("Snapped (%ws) LocalReAlloc ... \n",
+                                  LdrDataTableEntry->BaseDllName.Buffer);
                     }
-                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_LOCALFREE])
-                    {
+                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_LOCALFREE]) {
                         *ProcAddresses = AVrfpDphDllLocalFree;
-                        DbgPrint("Snapped (%ws) LocalFree ... \n", LdrDataTableEntry->BaseDllName.Buffer);
+                        DbgPrint ("Snapped (%ws) LocalFree ... \n",
+                                  LdrDataTableEntry->BaseDllName.Buffer);
                     }
 
-                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_GLOBALALLOC])
-                    {
+                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_GLOBALALLOC]) {
                         *ProcAddresses = AVrfpDphDllGlobalAlloc;
-                        DbgPrint("Snapped (%ws) GlobalAlloc ... \n", LdrDataTableEntry->BaseDllName.Buffer);
+                        DbgPrint ("Snapped (%ws) GlobalAlloc ... \n",
+                                  LdrDataTableEntry->BaseDllName.Buffer);
                     }
-                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_GLOBALREALLOC])
-                    {
+                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_GLOBALREALLOC]) {
                         *ProcAddresses = AVrfpDphDllGlobalReAlloc;
-                        DbgPrint("Snapped (%ws) GlobalReAlloc ... \n", LdrDataTableEntry->BaseDllName.Buffer);
+                        DbgPrint ("Snapped (%ws) GlobalReAlloc ... \n",
+                                  LdrDataTableEntry->BaseDllName.Buffer);
                     }
-                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_GLOBALFREE])
-                    {
+                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_GLOBALFREE]) {
                         *ProcAddresses = AVrfpDphDllGlobalFree;
-                        DbgPrint("Snapped (%ws) GlobalFree ... \n", LdrDataTableEntry->BaseDllName.Buffer);
+                        DbgPrint ("Snapped (%ws) GlobalFree ... \n",
+                                  LdrDataTableEntry->BaseDllName.Buffer);
                     }
 
                     //
                     // msvcrt imports
                     //
 
-                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_MALLOC])
-                    {
+                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_MALLOC]) {
                         *ProcAddresses = AVrfpDphDllmalloc;
-                        DbgPrint("Snapped (%ws) malloc ... \n", LdrDataTableEntry->BaseDllName.Buffer);
+                        DbgPrint ("Snapped (%ws) malloc ... \n",
+                                  LdrDataTableEntry->BaseDllName.Buffer);
                     }
-                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_REALLOC])
-                    {
+                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_REALLOC]) {
                         *ProcAddresses = AVrfpDphDllrealloc;
-                        DbgPrint("Snapped (%ws) realloc ... \n", LdrDataTableEntry->BaseDllName.Buffer);
+                        DbgPrint ("Snapped (%ws) realloc ... \n",
+                                  LdrDataTableEntry->BaseDllName.Buffer);
                     }
-                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_CALLOC])
-                    {
+                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_CALLOC]) {
                         *ProcAddresses = AVrfpDphDllcalloc;
-                        DbgPrint("Snapped (%ws) calloc ... \n", LdrDataTableEntry->BaseDllName.Buffer);
+                        DbgPrint ("Snapped (%ws) calloc ... \n",
+                                  LdrDataTableEntry->BaseDllName.Buffer);
                     }
-                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_FREE])
-                    {
+                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_FREE]) {
                         *ProcAddresses = AVrfpDphDllfree;
-                        DbgPrint("Snapped (%ws) free ... \n", LdrDataTableEntry->BaseDllName.Buffer);
+                        DbgPrint ("Snapped (%ws) free ... \n",
+                                  LdrDataTableEntry->BaseDllName.Buffer);
                     }
 
-                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_NEW])
-                    {
+                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_NEW]) {
                         *ProcAddresses = AVrfpDphDllNew;
-                        DbgPrint("Snapped (%ws) operator new ... \n", LdrDataTableEntry->BaseDllName.Buffer);
+                        DbgPrint ("Snapped (%ws) operator new ... \n",
+                                  LdrDataTableEntry->BaseDllName.Buffer);
                     }
-                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_DELETE])
-                    {
+                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_DELETE]) {
                         *ProcAddresses = AVrfpDphDllDelete;
-                        DbgPrint("Snapped (%ws) operator delete ... \n", LdrDataTableEntry->BaseDllName.Buffer);
+                        DbgPrint ("Snapped (%ws) operator delete ... \n",
+                                  LdrDataTableEntry->BaseDllName.Buffer);
                     }
-                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_NEW_ARRAY])
-                    {
+                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_NEW_ARRAY]) {
                         *ProcAddresses = AVrfpDphDllNewArray;
-                        DbgPrint("Snapped (%ws) operator new[] ... \n", LdrDataTableEntry->BaseDllName.Buffer);
+                        DbgPrint ("Snapped (%ws) operator new[] ... \n",
+                                  LdrDataTableEntry->BaseDllName.Buffer);
                     }
-                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_DELETE_ARRAY])
-                    {
+                    else if (*ProcAddresses == AVrfpDphSnapRoutines[SNAP_ROUTINE_DELETE_ARRAY]) {
                         *ProcAddresses = AVrfpDphDllDeleteArray;
-                        DbgPrint("Snapped (%ws) operator delete[] ... \n", LdrDataTableEntry->BaseDllName.Buffer);
+                        DbgPrint ("Snapped (%ws) operator delete[] ... \n",
+                                  LdrDataTableEntry->BaseDllName.Buffer);
                     }
                 }
 
                 ProcAddresses += 1;
             }
 
-            NtProtectVirtualMemory(NtCurrentProcess(), &IATBase, &BigIATSize, OldProtect, &OldProtect);
+            NtProtectVirtualMemory(
+                NtCurrentProcess(),
+                &IATBase,
+                &BigIATSize,
+                OldProtect,
+                &OldProtect);
         }
     }
 
     return TRUE;
 }
 
-VOID AVrfPageHeapDllNotification(PLDR_DATA_TABLE_ENTRY LoadedDllData)
+VOID
+AVrfPageHeapDllNotification (
+    PLDR_DATA_TABLE_ENTRY LoadedDllData
+    )
 /*++
 
 Routine description:
@@ -2058,23 +2243,24 @@ Return value:
     // we return immediately.
     //
 
-    if (!(RtlpDphGlobalFlags & PAGE_HEAP_USE_DLL_NAMES))
-    {
+    if (! (RtlpDphGlobalFlags & PAGE_HEAP_USE_DLL_NAMES)) {
         return;
     }
 
-    if (!AVrfpDphKernel32Snapped)
-    {
+    if (! AVrfpDphKernel32Snapped) {
 
-        Kernel32JustSnapped = AVrfpDphDetectSnapRoutines(Kernel32String.Buffer, AVrfpDphSnapNamesForKernel32);
+        Kernel32JustSnapped = AVrfpDphDetectSnapRoutines (
+            Kernel32String.Buffer,
+            AVrfpDphSnapNamesForKernel32);
 
         AVrfpDphKernel32Snapped = Kernel32JustSnapped;
     }
 
-    if (!AVrfpDphMsvcrtSnapped)
-    {
+    if (! AVrfpDphMsvcrtSnapped) {
 
-        MsvcrtJustSnapped = AVrfpDphDetectSnapRoutines(L"msvcrt.dll", AVrfpDphSnapNamesForMsvcrt);
+        MsvcrtJustSnapped = AVrfpDphDetectSnapRoutines (
+            L"msvcrt.dll",
+            AVrfpDphSnapNamesForMsvcrt);
 
         AVrfpDphMsvcrtSnapped = MsvcrtJustSnapped;
     }
@@ -2084,8 +2270,7 @@ Return value:
     // to detect snap routines.
     //
 
-    if (Kernel32JustSnapped || MsvcrtJustSnapped)
-    {
+    if (Kernel32JustSnapped || MsvcrtJustSnapped) {
 
         PWSTR Current;
         PWSTR End;
@@ -2098,7 +2283,7 @@ Return value:
         UNICODE_STRING DynamicRedirectionString;
         PUNICODE_STRING DllNameToUse;
         BOOLEAN Redirected = FALSE;
-        NTSTATUS Status;
+        NTSTATUS Status;        
 
         DynamicRedirectionString.Buffer = NULL;
 
@@ -2108,64 +2293,68 @@ Return value:
 
         Current = RtlpDphTargetDlls;
 
-        while (*Current)
-        {
+        while (*Current) {
 
-            while (*Current == L' ')
-            {
+            while (*Current == L' ') {
                 Current += 1;
             }
 
             End = Current;
 
-            while (*End && *End != L' ')
-            {
+            while (*End && *End != L' ') {
                 End += 1;
             }
 
-            if (*Current == L'\0')
-            {
+            if (*Current == L'\0') {
                 break;
             }
 
             SavedChar = *End;
             *End = L'\0';
 
-            RtlInitUnicodeString(&DllName, Current);
+            RtlInitUnicodeString (
+                &DllName,
+                Current);
 
             DllNameToUse = &DllName;
 
             Status = RtlDosApplyFileIsolationRedirection_Ustr(
-                RTL_DOS_APPLY_FILE_REDIRECTION_USTR_FLAG_RESPECT_DOT_LOCAL, &DllName, &DefaultExtension,
-                &StaticRedirectionString, &DynamicRedirectionString, &DllNameToUse, NULL, NULL, NULL);
-            if (NT_SUCCESS(Status))
-            {
+                    RTL_DOS_APPLY_FILE_REDIRECTION_USTR_FLAG_RESPECT_DOT_LOCAL,
+                    &DllName,
+                    &DefaultExtension,
+                    &StaticRedirectionString,
+                    &DynamicRedirectionString,
+                    &DllNameToUse,
+                    NULL,
+                    NULL,
+                    NULL);
+            if (NT_SUCCESS(Status)) {
                 Redirected = TRUE;
-            }
-            else if (Status == STATUS_SXS_KEY_NOT_FOUND)
-            {
+            } else if (Status == STATUS_SXS_KEY_NOT_FOUND) {
                 Status = STATUS_SUCCESS;
             }
 
-            if (NT_SUCCESS(Status))
-            {
-                Result = LdrpCheckForLoadedDll(NULL, DllNameToUse, TRUE, Redirected, &DllData);
+            if (NT_SUCCESS(Status)) {
+                Result = LdrpCheckForLoadedDll (
+                    NULL,
+                    DllNameToUse,
+                    TRUE,
+                    Redirected,
+                    &DllData);
 
                 if (DynamicRedirectionString.Buffer != NULL)
                     RtlFreeUnicodeString(&DynamicRedirectionString);
             }
 
-            if (Result)
-            {
+            if (Result) {
 
-                if (DllData->DllBase == LoadedDllData->DllBase)
-                {
+                if (DllData->DllBase == LoadedDllData->DllBase) {
 #if DBG
-                    DbgPrint("Page heap: oversnapping %ws \n", DllData->BaseDllName);
+                    DbgPrint ("Page heap: oversnapping %ws \n", DllData->BaseDllName);
 #endif
                 }
 
-                AVrfpDphSnapImports(DllData, FALSE);
+                AVrfpDphSnapImports (DllData, FALSE);
             }
 
             *End = SavedChar;
@@ -2178,10 +2367,9 @@ Return value:
     // in order to detect when the CRT heap gets created.
     //
 
-    if (_wcsicmp(LoadedDllData->BaseDllName.Buffer, L"msvcrt.dll") == 0)
-    {
+    if (_wcsicmp (LoadedDllData->BaseDllName.Buffer, L"msvcrt.dll") == 0) {
 
-        AVrfpDphSnapImports(LoadedDllData, TRUE);
+        AVrfpDphSnapImports (LoadedDllData, TRUE);
     }
 
     //
@@ -2189,10 +2377,9 @@ Return value:
     // currently loaded dll is a target for page heap.
     //
 
-    if (RtlpDphIsDllTargeted(LoadedDllData->BaseDllName.Buffer))
-    {
+    if (RtlpDphIsDllTargeted (LoadedDllData->BaseDllName.Buffer)) {
 
-        AVrfpDphSnapImports(LoadedDllData, FALSE);
+        AVrfpDphSnapImports (LoadedDllData, FALSE);
     }
 }
 
@@ -2209,21 +2396,44 @@ Return value:
 #define BIAS_POINTER(p) ((PVOID)((ULONG_PTR)(p) | 0x01))
 
 PVOID
-AVrfpDphDllHeapAlloc(IN PVOID HeapHandle, IN ULONG Flags, IN SIZE_T Size)
+AVrfpDphDllHeapAlloc (
+    IN PVOID  HeapHandle,
+    IN ULONG  Flags,
+    IN SIZE_T Size
+    )
 {
-    return RtlpDebugPageHeapAllocate(BIAS_POINTER(HeapHandle), Flags, Size);
+    return RtlpDebugPageHeapAllocate (
+        BIAS_POINTER(HeapHandle),
+        Flags,
+        Size);
 }
 
 PVOID
-AVrfpDphDllHeapReAlloc(IN PVOID HeapHandle, IN ULONG Flags, IN PVOID Address, IN SIZE_T Size)
+AVrfpDphDllHeapReAlloc (
+    IN PVOID  HeapHandle,
+    IN ULONG  Flags,
+    IN PVOID Address,
+    IN SIZE_T Size
+    )
 {
-    return RtlpDebugPageHeapReAllocate(BIAS_POINTER(HeapHandle), Flags, Address, Size);
+    return RtlpDebugPageHeapReAllocate (
+        BIAS_POINTER(HeapHandle),
+        Flags,
+        Address,
+        Size);
 }
 
 BOOLEAN
-AVrfpDphDllHeapFree(IN PVOID HeapHandle, IN ULONG Flags, IN PVOID Address)
+AVrfpDphDllHeapFree(
+    IN PVOID HeapHandle,
+    IN ULONG Flags,
+    IN PVOID Address
+    )
 {
-    return RtlpDebugPageHeapFree(HeapHandle, Flags, Address);
+    return RtlpDebugPageHeapFree (
+        HeapHandle,
+        Flags,
+        Address);
 }
 
 //
@@ -2235,8 +2445,8 @@ AVrfpDphDllHeapFree(IN PVOID HeapHandle, IN ULONG Flags, IN PVOID Address)
 // these values for application compatibility reasons.
 //
 
-#define LMEM_MOVEABLE 0x0002
-#define LMEM_ZEROINIT 0x0040
+#define LMEM_MOVEABLE       0x0002
+#define LMEM_ZEROINIT       0x0040
 
 #if defined(_AMD64_) || defined(_IA64_)
 #define BASE_HANDLE_MARK_BIT 0x08
@@ -2244,163 +2454,207 @@ AVrfpDphDllHeapFree(IN PVOID HeapHandle, IN ULONG Flags, IN PVOID Address)
 #define BASE_HANDLE_MARK_BIT 0x04
 #endif
 
-typedef PVOID (*FUN_LOCAL_ALLOC)(IN ULONG Flags, IN SIZE_T Size);
+typedef PVOID
+(* FUN_LOCAL_ALLOC) (
+    IN ULONG  Flags,
+    IN SIZE_T Size
+    );
 
-typedef PVOID (*FUN_LOCAL_REALLOC)(IN PVOID Address, IN SIZE_T Size, IN ULONG Flags);
+typedef PVOID
+(* FUN_LOCAL_REALLOC) (
+    IN PVOID Address,
+    IN SIZE_T Size,
+    IN ULONG  Flags
+    );
 
-typedef PVOID (*FUN_LOCAL_FREE)(IN PVOID Address);
+typedef PVOID
+(* FUN_LOCAL_FREE)(
+    IN PVOID Address
+    );
 
-typedef PVOID (*FUN_GLOBAL_ALLOC)(IN ULONG Flags, IN SIZE_T Size);
+typedef PVOID
+(* FUN_GLOBAL_ALLOC) (
+    IN ULONG  Flags,
+    IN SIZE_T Size
+    );
 
-typedef PVOID (*FUN_GLOBAL_REALLOC)(IN PVOID Address, IN SIZE_T Size, IN ULONG Flags);
+typedef PVOID
+(* FUN_GLOBAL_REALLOC) (
+    IN PVOID Address,
+    IN SIZE_T Size,
+    IN ULONG  Flags
+    );
 
-typedef PVOID (*FUN_GLOBAL_FREE)(IN PVOID Address);
+typedef PVOID
+(* FUN_GLOBAL_FREE)(
+    IN PVOID Address
+    );
 
 PVOID
-AVrfpDphDllLocalAlloc(IN ULONG Flags, IN SIZE_T Size)
+AVrfpDphDllLocalAlloc (
+    IN ULONG  Flags,
+    IN SIZE_T Size
+    )
 {
     PVOID Block;
     FUN_LOCAL_ALLOC Original;
 
-    if (!(Flags & LMEM_MOVEABLE))
-    {
+    if (!(Flags & LMEM_MOVEABLE)) {
 
-        Block = RtlpDebugPageHeapAllocate(BIAS_POINTER(RtlProcessHeap()), 0, Size);
+        Block = RtlpDebugPageHeapAllocate (
+            BIAS_POINTER(RtlProcessHeap()),
+            0,
+            Size);
 
-        if (Block && (Flags & LMEM_ZEROINIT))
-        {
-            RtlZeroMemory(Block, Size);
+        if (Block && (Flags & LMEM_ZEROINIT)) {
+            RtlZeroMemory (Block, Size);
         }
 
         return Block;
     }
-    else
-    {
+    else {
 
         Original = (FUN_LOCAL_ALLOC)(AVrfpDphSnapRoutines[SNAP_ROUTINE_LOCALALLOC]);
-        return (*Original)(Flags, Size);
+        return (* Original) (Flags, Size);
     }
 }
 
 PVOID
-AVrfpDphDllLocalReAlloc(IN PVOID Address, IN SIZE_T Size, IN ULONG Flags)
+AVrfpDphDllLocalReAlloc (
+    IN PVOID Address,
+    IN SIZE_T Size,
+    IN ULONG  Flags
+    )
 {
     PVOID Block;
     FUN_LOCAL_REALLOC Original;
 
-    if (!(Flags & LMEM_MOVEABLE))
-    {
+    if (!(Flags & LMEM_MOVEABLE)) {
 
-        Block = RtlpDebugPageHeapReAllocate(BIAS_POINTER(RtlProcessHeap()), 0, Address, Size);
+        Block = RtlpDebugPageHeapReAllocate (
+            BIAS_POINTER(RtlProcessHeap()),
+            0,
+            Address,
+            Size);
 
         return Block;
     }
-    else
-    {
+    else {
 
         Original = (FUN_LOCAL_REALLOC)(AVrfpDphSnapRoutines[SNAP_ROUTINE_LOCALREALLOC]);
-        return (*Original)(Address, Size, Flags);
+        return (* Original) (Address, Size, Flags);
     }
 }
 
 PVOID
-AVrfpDphDllLocalFree(IN PVOID Address)
+AVrfpDphDllLocalFree(
+    IN PVOID Address
+    )
 {
     BOOLEAN Result;
     FUN_LOCAL_FREE Original;
 
-    if ((ULONG_PTR)Address & BASE_HANDLE_MARK_BIT)
-    {
+    if ((ULONG_PTR)Address & BASE_HANDLE_MARK_BIT) {
 
         Original = (FUN_LOCAL_FREE)(AVrfpDphSnapRoutines[SNAP_ROUTINE_LOCALFREE]);
-        return (*Original)(Address);
+        return (* Original) (Address);
     }
-    else
-    {
+    else {
 
-        Result = RtlpDebugPageHeapFree(RtlProcessHeap(), 0, Address);
+        Result = RtlpDebugPageHeapFree (
+            RtlProcessHeap(),
+            0,
+            Address);
 
-        if (Result)
-        {
+        if (Result) {
             return NULL;
         }
-        else
-        {
+        else {
             return Address;
         }
     }
 }
 
 PVOID
-AVrfpDphDllGlobalAlloc(IN ULONG Flags, IN SIZE_T Size)
+AVrfpDphDllGlobalAlloc (
+    IN ULONG  Flags,
+    IN SIZE_T Size
+    )
 {
     PVOID Block;
     FUN_GLOBAL_ALLOC Original;
 
-    if (!(Flags & LMEM_MOVEABLE))
-    {
+    if (!(Flags & LMEM_MOVEABLE)) {
 
-        Block = RtlpDebugPageHeapAllocate(BIAS_POINTER(RtlProcessHeap()), 0, Size);
+        Block = RtlpDebugPageHeapAllocate (
+            BIAS_POINTER(RtlProcessHeap()),
+            0,
+            Size);
 
-        if (Block && (Flags & LMEM_ZEROINIT))
-        {
-            RtlZeroMemory(Block, Size);
+        if (Block && (Flags & LMEM_ZEROINIT)) {
+            RtlZeroMemory (Block, Size);
         }
 
         return Block;
     }
-    else
-    {
+    else {
 
         Original = (FUN_GLOBAL_ALLOC)(AVrfpDphSnapRoutines[SNAP_ROUTINE_GLOBALALLOC]);
-        return (*Original)(Flags, Size);
+        return (* Original) (Flags, Size);
     }
 }
 
 PVOID
-AVrfpDphDllGlobalReAlloc(IN PVOID Address, IN SIZE_T Size, IN ULONG Flags)
+AVrfpDphDllGlobalReAlloc (
+    IN PVOID Address,
+    IN SIZE_T Size,
+    IN ULONG  Flags
+    )
 {
     PVOID Block;
     FUN_GLOBAL_REALLOC Original;
 
-    if (!(Flags & LMEM_MOVEABLE))
-    {
+    if (!(Flags & LMEM_MOVEABLE)) {
 
-        Block = RtlpDebugPageHeapReAllocate(BIAS_POINTER(RtlProcessHeap()), 0, Address, Size);
+        Block = RtlpDebugPageHeapReAllocate (
+            BIAS_POINTER(RtlProcessHeap()),
+            0,
+            Address,
+            Size);
 
         return Block;
     }
-    else
-    {
+    else {
 
         Original = (FUN_GLOBAL_REALLOC)(AVrfpDphSnapRoutines[SNAP_ROUTINE_GLOBALREALLOC]);
-        return (*Original)(Address, Size, Flags);
+        return (* Original) (Address, Size, Flags);
     }
 }
 
 PVOID
-AVrfpDphDllGlobalFree(IN PVOID Address)
+AVrfpDphDllGlobalFree(
+    IN PVOID Address
+    )
 {
     BOOLEAN Result;
     FUN_GLOBAL_FREE Original;
 
-    if ((ULONG_PTR)Address & BASE_HANDLE_MARK_BIT)
-    {
+    if ((ULONG_PTR)Address & BASE_HANDLE_MARK_BIT) {
 
         Original = (FUN_GLOBAL_FREE)(AVrfpDphSnapRoutines[SNAP_ROUTINE_GLOBALFREE]);
-        return (*Original)(Address);
+        return (* Original) (Address);
     }
-    else
-    {
+    else {
 
-        Result = RtlpDebugPageHeapFree(RtlProcessHeap(), 0, Address);
+        Result = RtlpDebugPageHeapFree (
+            RtlProcessHeap(),
+            0,
+            Address);
 
-        if (Result)
-        {
+        if (Result) {
             return NULL;
         }
-        else
-        {
+        else {
             return Address;
         }
     }
@@ -2410,58 +2664,85 @@ AVrfpDphDllGlobalFree(IN PVOID Address)
 // malloc, calloc, realloc, free
 //
 
-PVOID __cdecl AVrfpDphDllmalloc(IN SIZE_T Size)
+PVOID __cdecl
+AVrfpDphDllmalloc (
+    IN SIZE_T Size
+    )
 {
     PVOID Block;
 
     ASSERT(AVrfpDphMsvcrtHeap != NULL);
 
-    Block = RtlpDebugPageHeapAllocate(BIAS_POINTER(AVrfpDphMsvcrtHeap), 0, Size);
+    Block = RtlpDebugPageHeapAllocate (
+        BIAS_POINTER(AVrfpDphMsvcrtHeap),
+        0,
+        Size);
 
     return Block;
 }
 
-PVOID __cdecl AVrfpDphDllcalloc(IN SIZE_T Number, IN SIZE_T Size)
+PVOID __cdecl
+AVrfpDphDllcalloc (
+    IN SIZE_T Number,
+    IN SIZE_T Size
+    )
 {
     PVOID Block;
 
     ASSERT(AVrfpDphMsvcrtHeap != NULL);
 
-    Block = RtlpDebugPageHeapAllocate(BIAS_POINTER(AVrfpDphMsvcrtHeap), 0, Size * Number);
+    Block =  RtlpDebugPageHeapAllocate (
+        BIAS_POINTER(AVrfpDphMsvcrtHeap),
+        0,
+        Size * Number);
 
-    if (Block)
-    {
-        RtlZeroMemory(Block, Size * Number);
+    if (Block) {
+        RtlZeroMemory (Block, Size * Number);
     }
 
     return Block;
 }
 
-PVOID __cdecl AVrfpDphDllrealloc(IN PVOID Address, IN SIZE_T Size)
+PVOID __cdecl
+AVrfpDphDllrealloc (
+    IN PVOID Address,
+    IN SIZE_T Size
+    )
 {
     PVOID Block;
 
     ASSERT(AVrfpDphMsvcrtHeap != NULL);
 
-    if (Address == NULL)
-    {
+    if (Address == NULL) {
 
-        Block = RtlpDebugPageHeapAllocate(BIAS_POINTER(AVrfpDphMsvcrtHeap), 0, Size);
+        Block = RtlpDebugPageHeapAllocate (
+            BIAS_POINTER(AVrfpDphMsvcrtHeap),
+            0,
+            Size);
     }
-    else
-    {
+    else {
 
-        Block = RtlpDebugPageHeapReAllocate(BIAS_POINTER(AVrfpDphMsvcrtHeap), 0, Address, Size);
+        Block = RtlpDebugPageHeapReAllocate (
+            BIAS_POINTER(AVrfpDphMsvcrtHeap),
+            0,
+            Address,
+            Size);
     }
 
     return Block;
 }
 
-VOID __cdecl AVrfpDphDllfree(IN PVOID Address)
+VOID __cdecl
+AVrfpDphDllfree (
+    IN PVOID Address
+    )
 {
     ASSERT(AVrfpDphMsvcrtHeap != NULL);
 
-    RtlpDebugPageHeapFree(AVrfpDphMsvcrtHeap, 0, Address);
+    RtlpDebugPageHeapFree (
+        AVrfpDphMsvcrtHeap,
+        0,
+        Address);
 }
 
 //
@@ -2469,55 +2750,89 @@ VOID __cdecl AVrfpDphDllfree(IN PVOID Address)
 // operator new[], delete[]
 //
 
-PVOID __cdecl AVrfpDphDllNew(IN SIZE_T Size)
+PVOID __cdecl
+AVrfpDphDllNew (
+    IN SIZE_T Size
+    )
 {
     PVOID Block;
 
     ASSERT(AVrfpDphMsvcrtHeap != NULL);
 
-    Block = RtlpDebugPageHeapAllocate(BIAS_POINTER(AVrfpDphMsvcrtHeap), 0, Size);
+    Block = RtlpDebugPageHeapAllocate (
+        BIAS_POINTER(AVrfpDphMsvcrtHeap),
+        0,
+        Size);
 
     return Block;
 }
 
-VOID __cdecl AVrfpDphDllDelete(IN PVOID Address)
+VOID __cdecl
+AVrfpDphDllDelete (
+    IN PVOID Address
+    )
 {
     ASSERT(AVrfpDphMsvcrtHeap != NULL);
 
-    RtlpDebugPageHeapFree(AVrfpDphMsvcrtHeap, 0, Address);
+    RtlpDebugPageHeapFree (
+        AVrfpDphMsvcrtHeap,
+        0,
+        Address);
 }
 
-PVOID __cdecl AVrfpDphDllNewArray(IN SIZE_T Size)
+PVOID __cdecl
+AVrfpDphDllNewArray (
+    IN SIZE_T Size
+    )
 {
     ASSERT(AVrfpDphMsvcrtHeap != NULL);
 
-    return RtlpDebugPageHeapAllocate(BIAS_POINTER(AVrfpDphMsvcrtHeap), 0, Size);
+    return RtlpDebugPageHeapAllocate (
+        BIAS_POINTER(AVrfpDphMsvcrtHeap),
+        0,
+        Size);
 }
 
-VOID __cdecl AVrfpDphDllDeleteArray(IN PVOID Address)
+VOID __cdecl
+AVrfpDphDllDeleteArray (
+    IN PVOID Address
+    )
 {
     ASSERT(AVrfpDphMsvcrtHeap != NULL);
 
-    RtlpDebugPageHeapFree(AVrfpDphMsvcrtHeap, 0, Address);
+    RtlpDebugPageHeapFree (
+        AVrfpDphMsvcrtHeap,
+        0,
+        Address);
 }
 
 //
 // HeapCreate
 //
 
-typedef PVOID (*FUN_HEAP_CREATE)(ULONG Options, SIZE_T InitialSize, SIZE_T MaximumSize);
+typedef PVOID
+(* FUN_HEAP_CREATE) (
+    ULONG Options,
+    SIZE_T InitialSize,
+    SIZE_T MaximumSize
+    );
 
 PVOID
-AVrfpDphDllHeapCreate(ULONG Options, SIZE_T InitialSize, SIZE_T MaximumSize)
+AVrfpDphDllHeapCreate (
+    ULONG Options,
+    SIZE_T InitialSize,
+    SIZE_T MaximumSize
+    )
 {
     PVOID Heap;
     FUN_HEAP_CREATE Original;
 
     Original = (FUN_HEAP_CREATE)(AVrfpDphSnapRoutines[SNAP_ROUTINE_HEAPCREATE]);
-    Heap = (*Original)(Options, InitialSize, MaximumSize);
+    Heap = (* Original) (Options, InitialSize, MaximumSize);
 
     AVrfpDphMsvcrtHeap = Heap;
-    DbgPrint("Page heap: detected CRT heap @ %p \n", AVrfpDphMsvcrtHeap);
+    DbgPrint ("Page heap: detected CRT heap @ %p \n", AVrfpDphMsvcrtHeap);
 
     return Heap;
 }
+

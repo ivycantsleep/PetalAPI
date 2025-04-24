@@ -20,11 +20,17 @@ Revision History:
 
 #include "basedll.h"
 
-#define USHORT_MAX ((USHORT)(-1))
-#define DWORD_MAX ((DWORD)(-1))
-#define CH_COUNT_MAX (DWORD_MAX / sizeof(WCHAR))
+#define USHORT_MAX      ((USHORT)(-1))
+#define DWORD_MAX       ((DWORD)(-1))
+#define CH_COUNT_MAX    ( DWORD_MAX / sizeof( WCHAR ) ) 
 
-BOOL WINAPI DefineDosDeviceA(DWORD dwFlags, LPCSTR lpDeviceName, LPCSTR lpTargetPath)
+BOOL
+WINAPI
+DefineDosDeviceA(
+    DWORD dwFlags,
+    LPCSTR lpDeviceName,
+    LPCSTR lpTargetPath
+    )
 {
     NTSTATUS Status;
     BOOL Result;
@@ -34,60 +40,63 @@ BOOL WINAPI DefineDosDeviceA(DWORD dwFlags, LPCSTR lpDeviceName, LPCSTR lpTarget
     PCWSTR lpDeviceNameW;
     PCWSTR lpTargetPathW;
 
-    RtlInitAnsiString(&AnsiString, lpDeviceName);
+    RtlInitAnsiString( &AnsiString, lpDeviceName );
     DeviceName = &NtCurrentTeb()->StaticUnicodeString;
-    Status = RtlAnsiStringToUnicodeString(DeviceName, &AnsiString, FALSE);
-    if (!NT_SUCCESS(Status))
-    {
-        if (Status == STATUS_BUFFER_OVERFLOW)
-        {
-            SetLastError(ERROR_FILENAME_EXCED_RANGE);
-        }
-        else
-        {
-            BaseSetLastNTError(Status);
-        }
+    Status = RtlAnsiStringToUnicodeString( DeviceName, &AnsiString, FALSE );
+    if (!NT_SUCCESS( Status )) {
+        if ( Status == STATUS_BUFFER_OVERFLOW ) {
+            SetLastError( ERROR_FILENAME_EXCED_RANGE );
+            }
+        else {
+            BaseSetLastNTError( Status );
+            }
         return FALSE;
-    }
-    else
-    {
+        }
+    else {
         lpDeviceNameW = DeviceName->Buffer;
-    }
+        }
 
-    if (ARGUMENT_PRESENT(lpTargetPath))
-    {
-        RtlInitAnsiString(&AnsiString, lpTargetPath);
-        Status = RtlAnsiStringToUnicodeString(&TargetPath, &AnsiString, TRUE);
-        if (!NT_SUCCESS(Status))
-        {
-            BaseSetLastNTError(Status);
+    if (ARGUMENT_PRESENT( lpTargetPath )) {
+        RtlInitAnsiString( &AnsiString, lpTargetPath );
+        Status = RtlAnsiStringToUnicodeString( &TargetPath, &AnsiString, TRUE );
+        if (!NT_SUCCESS( Status )) {
+            BaseSetLastNTError( Status );
             return FALSE;
-        }
-        else
-        {
+            }
+        else {
             lpTargetPathW = TargetPath.Buffer;
+            }
         }
-    }
-    else
-    {
+    else {
         lpTargetPathW = NULL;
-    }
+        }
 
-    Result = DefineDosDeviceW(dwFlags, lpDeviceNameW, lpTargetPathW);
+    Result = DefineDosDeviceW( dwFlags,
+                               lpDeviceNameW,
+                               lpTargetPathW
+                             );
 
-    if (lpTargetPathW != NULL)
-    {
-        RtlFreeUnicodeString(&TargetPath);
-    }
+    if (lpTargetPathW != NULL) {
+        RtlFreeUnicodeString( &TargetPath );
+        }
 
     return Result;
 }
 
 
-typedef long(WINAPI *PBROADCASTSYSTEMMESSAGEW)(DWORD, LPDWORD, UINT, WPARAM, LPARAM);
+typedef
+long
+(WINAPI *PBROADCASTSYSTEMMESSAGEW)( DWORD, LPDWORD, UINT, WPARAM, LPARAM );
 
 
-BOOL WINAPI DefineDosDeviceW(DWORD dwFlags, PCWSTR lpDeviceName, PCWSTR lpTargetPath)
+
+BOOL
+WINAPI
+DefineDosDeviceW(
+    DWORD dwFlags,
+    PCWSTR lpDeviceName,
+    PCWSTR lpTargetPath
+    )
 
 /*++
 
@@ -155,142 +164,166 @@ Return Value:
     NTSTATUS Status;
 #endif
 
-    if (dwFlags & ~(DDD_RAW_TARGET_PATH | DDD_REMOVE_DEFINITION | DDD_EXACT_MATCH_ON_REMOVE | DDD_NO_BROADCAST_SYSTEM |
-                    DDD_LUID_BROADCAST_DRIVE) ||
-        ((dwFlags & DDD_EXACT_MATCH_ON_REMOVE) && (!(dwFlags & DDD_REMOVE_DEFINITION))) ||
-        ((!ARGUMENT_PRESENT(lpTargetPath)) && (!(dwFlags & (DDD_REMOVE_DEFINITION | DDD_LUID_BROADCAST_DRIVE)))) ||
+    if (dwFlags & ~(DDD_RAW_TARGET_PATH |
+                    DDD_REMOVE_DEFINITION |
+                    DDD_EXACT_MATCH_ON_REMOVE |
+                    DDD_NO_BROADCAST_SYSTEM |
+                    DDD_LUID_BROADCAST_DRIVE
+                   ) ||
+        ((dwFlags & DDD_EXACT_MATCH_ON_REMOVE) &&
+         (!(dwFlags & DDD_REMOVE_DEFINITION))
+        ) ||
+        ((!ARGUMENT_PRESENT( lpTargetPath )) &&
+         (!(dwFlags & (DDD_REMOVE_DEFINITION | DDD_LUID_BROADCAST_DRIVE)))
+        ) ||
         ((dwFlags & DDD_LUID_BROADCAST_DRIVE) &&
-         ((!ARGUMENT_PRESENT(lpDeviceName)) || ARGUMENT_PRESENT(lpTargetPath) ||
+         ((!ARGUMENT_PRESENT( lpDeviceName )) ||
+          ARGUMENT_PRESENT( lpTargetPath ) ||
           (dwFlags & (DDD_RAW_TARGET_PATH | DDD_EXACT_MATCH_ON_REMOVE | DDD_NO_BROADCAST_SYSTEM)) ||
-          (LuidDevMapsEnabled == FALSE))))
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
+          (LuidDevMapsEnabled == FALSE)
+         )
+        )
+       ) {
+        SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
-    }
+        }
 
-    RtlInitUnicodeString(&DeviceName, lpDeviceName);
+    RtlInitUnicodeString( &DeviceName, lpDeviceName );
 #if !defined(BUILD_WOW6432)
     PointerCount = 1;
     n = DeviceName.MaximumLength;
 #endif
-    if (ARGUMENT_PRESENT(lpTargetPath))
-    {
-        if (!(dwFlags & DDD_RAW_TARGET_PATH))
-        {
-            if (!RtlDosPathNameToNtPathName_U(lpTargetPath, &TargetPath, NULL, NULL))
-            {
-                BaseSetLastNTError(STATUS_OBJECT_NAME_INVALID);
+    if (ARGUMENT_PRESENT( lpTargetPath )) {
+        if (!(dwFlags & DDD_RAW_TARGET_PATH)) {
+            if (!RtlDosPathNameToNtPathName_U( lpTargetPath,
+                                               &TargetPath,
+                                               NULL,
+                                               NULL
+                                             )
+               ) {
+                BaseSetLastNTError( STATUS_OBJECT_NAME_INVALID );
                 return FALSE;
+                }
             }
-        }
-        else
-        {
-            RtlInitUnicodeString(&TargetPath, lpTargetPath);
-        }
+        else {
+            RtlInitUnicodeString( &TargetPath, lpTargetPath );
+            }
 #if !defined(BUILD_WOW6432)
         PointerCount += 1;
         n += TargetPath.MaximumLength;
 #endif
-    }
-    else
-    {
-        RtlInitUnicodeString(&TargetPath, NULL);
-    }
+        }
+    else {
+        RtlInitUnicodeString( &TargetPath, NULL );
+        }
 
-#if defined(BUILD_WOW6432)
-    Status = CsrBasepDefineDosDevice(dwFlags, &DeviceName, &TargetPath);
+#if defined(BUILD_WOW6432)    
+    Status = CsrBasepDefineDosDevice(dwFlags, &DeviceName, &TargetPath); 
 
-    if (TargetPath.Length != 0 && !(dwFlags & DDD_RAW_TARGET_PATH))
-    {
-        RtlFreeUnicodeString(&TargetPath);
+    if (TargetPath.Length != 0 && !(dwFlags & DDD_RAW_TARGET_PATH)) {
+        RtlFreeUnicodeString( &TargetPath );
     }
 #else
-    p = CsrAllocateCaptureBuffer(PointerCount, n);
-    if (p == NULL)
-    {
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+    p = CsrAllocateCaptureBuffer( PointerCount, n );
+    if (p == NULL) {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return FALSE;
-    }
+        }
 
     a->Flags = dwFlags;
     a->DeviceName.MaximumLength =
-        (USHORT)CsrAllocateMessagePointer(p, DeviceName.MaximumLength, (PVOID *)&a->DeviceName.Buffer);
-    RtlUpcaseUnicodeString(&a->DeviceName, &DeviceName, FALSE);
-    if (TargetPath.Length != 0)
-    {
+        (USHORT)CsrAllocateMessagePointer( p,
+                                           DeviceName.MaximumLength,
+                                           (PVOID *)&a->DeviceName.Buffer
+                                         );
+    RtlUpcaseUnicodeString( &a->DeviceName, &DeviceName, FALSE );
+    if (TargetPath.Length != 0) {
         a->TargetPath.MaximumLength =
-            (USHORT)CsrAllocateMessagePointer(p, TargetPath.MaximumLength, (PVOID *)&a->TargetPath.Buffer);
-        RtlCopyUnicodeString(&a->TargetPath, &TargetPath);
-        if (!(dwFlags & DDD_RAW_TARGET_PATH))
-        {
-            RtlFreeUnicodeString(&TargetPath);
+            (USHORT)CsrAllocateMessagePointer( p,
+                                               TargetPath.MaximumLength,
+                                               (PVOID *)&a->TargetPath.Buffer
+                                             );
+        RtlCopyUnicodeString( &a->TargetPath, &TargetPath );
+        if (!(dwFlags & DDD_RAW_TARGET_PATH)) {
+            RtlFreeUnicodeString( &TargetPath );
+            }
         }
-    }
-    else
-    {
-        RtlInitUnicodeString(&a->TargetPath, NULL);
-    }
+    else {
+        RtlInitUnicodeString( &a->TargetPath, NULL );
+        }
 
-    CsrClientCallServer((PCSR_API_MSG)&m, p, CSR_MAKE_API_NUMBER(BASESRV_SERVERDLL_INDEX, BasepDefineDosDevice),
-                        sizeof(*a));
-    CsrFreeCaptureBuffer(p);
+    CsrClientCallServer( (PCSR_API_MSG)&m,
+                         p,
+                         CSR_MAKE_API_NUMBER( BASESRV_SERVERDLL_INDEX,
+                                              BasepDefineDosDevice
+                                            ),
+                         sizeof( *a )
+                       );
+    CsrFreeCaptureBuffer( p );
 #endif
 
 #if defined(BUILD_WOW6432)
-    if (NT_SUCCESS(Status))
-    {
+    if (NT_SUCCESS( Status )) {
 #else
-    if (NT_SUCCESS((NTSTATUS)m.ReturnValue))
-    {
+    if (NT_SUCCESS( (NTSTATUS)m.ReturnValue )) {
 #endif
         HMODULE hUser32Dll;
         PBROADCASTSYSTEMMESSAGEW pBroadCastSystemMessageW;
 
 
-        if (!(dwFlags & DDD_NO_BROADCAST_SYSTEM) && DeviceName.Length == (2 * sizeof(WCHAR)) &&
-            DeviceName.Buffer[1] == L':' && (iDrive = RtlUpcaseUnicodeChar(DeviceName.Buffer[0]) - L'A') < 26 &&
-            LuidDevMapsEnabled == FALSE)
-        {
-            dbv.dbcv_size = sizeof(dbv);
+        if (!(dwFlags & DDD_NO_BROADCAST_SYSTEM) &&
+            DeviceName.Length == (2 * sizeof( WCHAR )) &&
+            DeviceName.Buffer[ 1 ] == L':' &&
+            (iDrive = RtlUpcaseUnicodeChar( DeviceName.Buffer[ 0 ] ) - L'A') < 26 &&
+            LuidDevMapsEnabled == FALSE
+           ) {
+            dbv.dbcv_size       = sizeof( dbv );
             dbv.dbcv_devicetype = DBT_DEVTYP_VOLUME;
-            dbv.dbcv_reserved = 0;
-            dbv.dbcv_unitmask = (1 << iDrive);
-            dbv.dbcv_flags = DBTF_NET;
+            dbv.dbcv_reserved   = 0;
+            dbv.dbcv_unitmask   = (1 << iDrive);
+            dbv.dbcv_flags      = DBTF_NET;
 
-            hUser32Dll = LoadLibraryW(L"USER32.DLL");
+            hUser32Dll = LoadLibraryW( L"USER32.DLL" );
 
-            if (hUser32Dll != NULL)
-            {
-                pBroadCastSystemMessageW =
-                    (PBROADCASTSYSTEMMESSAGEW)GetProcAddress(hUser32Dll, "BroadcastSystemMessageW");
+            if (hUser32Dll != NULL) {
+                pBroadCastSystemMessageW = (PBROADCASTSYSTEMMESSAGEW)
+                    GetProcAddress( hUser32Dll, "BroadcastSystemMessageW" );
 
                 // broadcast to all windows!
-                if (pBroadCastSystemMessageW != NULL)
-                {
-                    (*pBroadCastSystemMessageW)(
-                        BSF_FORCEIFHUNG | BSF_NOHANG | BSF_NOTIMEOUTIFNOTHUNG, &dwRec, WM_DEVICECHANGE,
-                        (WPARAM)((dwFlags & DDD_REMOVE_DEFINITION) ? DBT_DEVICEREMOVECOMPLETE : DBT_DEVICEARRIVAL),
-                        (LPARAM)(DEV_BROADCAST_HDR *)&dbv);
+                if (pBroadCastSystemMessageW != NULL) {
+                    (*pBroadCastSystemMessageW)( BSF_FORCEIFHUNG |
+                                                    BSF_NOHANG |
+                                                    BSF_NOTIMEOUTIFNOTHUNG,
+                                                 &dwRec,
+                                                 WM_DEVICECHANGE,
+                                                  (WPARAM)((dwFlags & DDD_REMOVE_DEFINITION) ?
+                                                                    DBT_DEVICEREMOVECOMPLETE :
+                                                                    DBT_DEVICEARRIVAL
+                                                         ),
+                                                 (LPARAM)(DEV_BROADCAST_HDR *)&dbv
+                                               );
+                    }
                 }
+                FreeLibrary (hUser32Dll);
             }
-            FreeLibrary(hUser32Dll);
-        }
 
         return TRUE;
-    }
-    else
-    {
+        }
+    else {
 #if defined(BUILD_WOW6432)
-        BaseSetLastNTError(Status);
+        BaseSetLastNTError( Status );
 #else
-        BaseSetLastNTError((NTSTATUS)m.ReturnValue);
+        BaseSetLastNTError( (NTSTATUS)m.ReturnValue );
 #endif
         return FALSE;
-    }
+        }
 }
 
 NTSTATUS
-IsGlobalDeviceMap(IN HANDLE hDirObject, OUT PBOOLEAN pbGlobalDeviceMap)
+IsGlobalDeviceMap(
+    IN HANDLE hDirObject,
+    OUT PBOOLEAN pbGlobalDeviceMap
+    )
 
 /*++
 
@@ -331,13 +364,11 @@ Return Value:
     ULONG ReturnedLength;
     NTSTATUS Status = STATUS_UNSUCCESSFUL;
 
-    if ((pbGlobalDeviceMap == NULL) || (hDirObject == NULL))
-    {
-        return (STATUS_INVALID_PARAMETER);
+    if( ( pbGlobalDeviceMap == NULL ) || ( hDirObject == NULL ) ) {
+        return( STATUS_INVALID_PARAMETER );
     }
 
-    try
-    {
+    try {
         ObjectName.Length = 0;
         ObjectName.MaximumLength = 0;
         ObjectName.Buffer = NULL;
@@ -346,20 +377,26 @@ Return Value:
         //
         // Determine the length of the directory object's name
         //
-        Status = NtQueryObject(hDirObject, ObjectNameInformation, (PVOID)&ObjectName, 0, &ReturnedLength);
+        Status = NtQueryObject( hDirObject,
+                                ObjectNameInformation,
+                                (PVOID) &ObjectName,
+                                0,
+                                &ReturnedLength
+                              );
 
-        if (!NT_SUCCESS(Status) && (Status != STATUS_INFO_LENGTH_MISMATCH))
-        {
+        if( !NT_SUCCESS( Status ) && (Status != STATUS_INFO_LENGTH_MISMATCH) ) {
             leave;
         }
 
         //
         // allocate memory for the directory object's name
         //
-        NameBuffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), ReturnedLength);
+        NameBuffer = RtlAllocateHeap( RtlProcessHeap(),
+                                      MAKE_TAG( TMP_TAG ),
+                                      ReturnedLength
+                                    );
 
-        if (NameBuffer == NULL)
-        {
+        if( NameBuffer == NULL ) {
             Status = STATUS_NO_MEMORY;
             leave;
         }
@@ -367,35 +404,44 @@ Return Value:
         //
         // get the full name of the directory object
         //
-        Status = NtQueryObject(hDirObject, ObjectNameInformation, NameBuffer, ReturnedLength, &ReturnedLength);
+        Status = NtQueryObject( hDirObject,
+                                ObjectNameInformation,
+                                NameBuffer,
+                                ReturnedLength,
+                                &ReturnedLength
+                              );
 
-        if (!NT_SUCCESS(Status))
-        {
+        if( !NT_SUCCESS( Status )) {
             leave;
         }
 
-        RtlInitUnicodeString(&GlobalDeviceMapName, L"\\GLOBAL??");
+        RtlInitUnicodeString ( &GlobalDeviceMapName, L"\\GLOBAL??" );
 
         //
         // Check if the directory object is the global device map
         //
-        *pbGlobalDeviceMap = RtlEqualUnicodeString(&GlobalDeviceMapName, (PUNICODE_STRING)NameBuffer, FALSE);
+        *pbGlobalDeviceMap = RtlEqualUnicodeString( &GlobalDeviceMapName,
+                                                    (PUNICODE_STRING)NameBuffer,
+                                                    FALSE);
 
         Status = STATUS_SUCCESS;
     }
-    finally
-    {
-        if (NameBuffer != NULL)
-        {
-            RtlFreeHeap(RtlProcessHeap(), 0, NameBuffer);
+    finally {
+        if( NameBuffer != NULL ) {
+            RtlFreeHeap( RtlProcessHeap(), 0, NameBuffer );
             NameBuffer = NULL;
         }
     }
-    return (Status);
+    return ( Status );
 }
 
 DWORD
-FindSymbolicLinkEntry(IN PWSTR lpKey, IN PWSTR lpBuffer, IN ULONG nElements, OUT PBOOLEAN pbResult)
+FindSymbolicLinkEntry(
+    IN PWSTR lpKey,
+    IN PWSTR lpBuffer,
+    IN ULONG nElements,
+    OUT PBOOLEAN pbResult
+    )
 /*++
 
 Routine Description:
@@ -431,9 +477,8 @@ Return Value:
     //
     // Check for invalid parameters
     //
-    if ((lpKey == NULL) || (lpBuffer == NULL) || (pbResult == NULL))
-    {
-        return (ERROR_INVALID_PARAMETER);
+    if( (lpKey == NULL) || (lpBuffer == NULL) || (pbResult == NULL) ) {
+        return( ERROR_INVALID_PARAMETER );
     }
 
     //
@@ -444,10 +489,8 @@ Return Value:
     //
     // Search for the number of names specified
     //
-    while (i < nElements)
-    {
-        if (!wcscmp(lpKey, lpBuffer))
-        {
+    while( i < nElements ) {
+        if( !wcscmp( lpKey, lpBuffer ) ) {
             //
             // Found the name, can stop searching & pass back the result
             //
@@ -460,15 +503,18 @@ Return Value:
         //
         // Get the next name
         //
-        while (*lpBuffer++)
-            ;
+        while (*lpBuffer++);
     }
-    return (NO_ERROR);
+    return( NO_ERROR );
 }
 
 DWORD
 WINAPI
-QueryDosDeviceA(LPCSTR lpDeviceName, LPSTR lpTargetPath, DWORD ucchMax)
+QueryDosDeviceA(
+    LPCSTR lpDeviceName,
+    LPSTR lpTargetPath,
+    DWORD ucchMax
+    )
 {
     NTSTATUS Status;
     DWORD Result;
@@ -478,68 +524,72 @@ QueryDosDeviceA(LPCSTR lpDeviceName, LPSTR lpTargetPath, DWORD ucchMax)
     PCWSTR lpDeviceNameW;
     PWSTR lpTargetPathW;
 
-    if (ARGUMENT_PRESENT(lpDeviceName))
-    {
-        RtlInitAnsiString(&AnsiString, lpDeviceName);
+    if (ARGUMENT_PRESENT( lpDeviceName )) {
+        RtlInitAnsiString( &AnsiString, lpDeviceName );
         DeviceName = &NtCurrentTeb()->StaticUnicodeString;
-        Status = RtlAnsiStringToUnicodeString(DeviceName, &AnsiString, FALSE);
-        if (!NT_SUCCESS(Status))
-        {
-            if (Status == STATUS_BUFFER_OVERFLOW)
-            {
-                SetLastError(ERROR_FILENAME_EXCED_RANGE);
-            }
-            else
-            {
-                BaseSetLastNTError(Status);
-            }
+        Status = RtlAnsiStringToUnicodeString( DeviceName, &AnsiString, FALSE );
+        if (!NT_SUCCESS( Status )) {
+            if ( Status == STATUS_BUFFER_OVERFLOW ) {
+                SetLastError( ERROR_FILENAME_EXCED_RANGE );
+                }
+            else {
+                BaseSetLastNTError( Status );
+                }
             return FALSE;
-        }
-        else
-        {
+            }
+        else {
             lpDeviceNameW = DeviceName->Buffer;
+            }
         }
-    }
-    else
-    {
+    else {
         lpDeviceNameW = NULL;
-    }
+        }
 
-    lpTargetPathW = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), ucchMax * sizeof(WCHAR));
-    if (lpTargetPathW == NULL)
-    {
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+    lpTargetPathW = RtlAllocateHeap( RtlProcessHeap(),
+                                     MAKE_TAG( TMP_TAG ),
+                                     ucchMax * sizeof( WCHAR )
+                                   );
+    if (lpTargetPathW == NULL) {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return FALSE;
-    }
+        }
 
-    Result = QueryDosDeviceW(lpDeviceNameW, lpTargetPathW, ucchMax);
+    Result = QueryDosDeviceW( lpDeviceNameW,
+                              lpTargetPathW,
+                              ucchMax
+                            );
 
-    if (Result != 0)
-    {
+    if (Result != 0) {
         TargetPath.Buffer = lpTargetPathW;
-        TargetPath.Length = (USHORT)(Result * sizeof(WCHAR));
+        TargetPath.Length = (USHORT)(Result * sizeof( WCHAR ));
         TargetPath.MaximumLength = (USHORT)(TargetPath.Length + 1);
 
         AnsiString.Buffer = lpTargetPath;
         AnsiString.Length = 0;
         AnsiString.MaximumLength = (USHORT)ucchMax;
 
-        Status = RtlUnicodeStringToAnsiString(&AnsiString, &TargetPath, FALSE);
-        if (!NT_SUCCESS(Status))
-        {
-            BaseSetLastNTError(Status);
+        Status = RtlUnicodeStringToAnsiString( &AnsiString,
+                                               &TargetPath,
+                                               FALSE
+                                             );
+        if (!NT_SUCCESS( Status )) {
+            BaseSetLastNTError( Status );
             Result = 0;
+            }
         }
-    }
 
-    RtlFreeHeap(RtlProcessHeap(), 0, lpTargetPathW);
+    RtlFreeHeap( RtlProcessHeap(), 0, lpTargetPathW );
     return Result;
 }
 
 
 DWORD
 WINAPI
-QueryDosDeviceW(PCWSTR lpDeviceName, PWSTR lpTargetPath, DWORD ucchMax)
+QueryDosDeviceW(
+    PCWSTR lpDeviceName,
+    PWSTR lpTargetPath,
+    DWORD ucchMax
+    )
 {
     NTSTATUS Status;
     UNICODE_STRING UnicodeString;
@@ -548,7 +598,7 @@ QueryDosDeviceW(PCWSTR lpDeviceName, PWSTR lpTargetPath, DWORD ucchMax)
     HANDLE LinkHandle;
     POBJECT_DIRECTORY_INFORMATION DirInfo;
     BOOLEAN RestartScan;
-    UCHAR DirInfoBuffer[512];
+    UCHAR DirInfoBuffer[ 512 ];
     CLONG Count = 0;
     ULONG Context = 0;
     ULONG ReturnedLength;
@@ -559,84 +609,90 @@ QueryDosDeviceW(PCWSTR lpDeviceName, PWSTR lpTargetPath, DWORD ucchMax)
     PWSTR lpBuffer = lpTargetPath;
     DWORD Result, BufferSize;
 
-    RtlInitUnicodeString(&UnicodeString, L"\\??");
+    RtlInitUnicodeString( &UnicodeString, L"\\??" );
 
-    InitializeObjectAttributes(&Attributes, &UnicodeString, OBJ_CASE_INSENSITIVE, NULL, NULL);
-    Status = NtOpenDirectoryObject(&DirectoryHandle, DIRECTORY_QUERY, &Attributes);
+    InitializeObjectAttributes( &Attributes,
+                                &UnicodeString,
+                                OBJ_CASE_INSENSITIVE,
+                                NULL,
+                                NULL
+                              );
+    Status = NtOpenDirectoryObject( &DirectoryHandle,
+                                    DIRECTORY_QUERY,
+                                    &Attributes
+                                  );
 
-    if (!NT_SUCCESS(Status))
-    {
-        BaseSetLastNTError(Status);
+    if (!NT_SUCCESS( Status )) {
+        BaseSetLastNTError( Status );
         return 0;
     }
 
     ucchReturned = 0;
-    try
-    {
-        if (ARGUMENT_PRESENT(lpDeviceName))
-        {
-            RtlInitUnicodeString(&UnicodeString, lpDeviceName);
-            InitializeObjectAttributes(&Attributes, &UnicodeString, OBJ_CASE_INSENSITIVE, DirectoryHandle, NULL);
-            Status = NtOpenSymbolicLinkObject(&LinkHandle, SYMBOLIC_LINK_QUERY, &Attributes);
-            if (NT_SUCCESS(Status))
-            {
+    try {
+        if (ARGUMENT_PRESENT( lpDeviceName )) {
+            RtlInitUnicodeString( &UnicodeString, lpDeviceName );
+            InitializeObjectAttributes( &Attributes,
+                                        &UnicodeString,
+                                        OBJ_CASE_INSENSITIVE,
+                                        DirectoryHandle,
+                                        NULL
+                                      );
+            Status = NtOpenSymbolicLinkObject( &LinkHandle,
+                                               SYMBOLIC_LINK_QUERY,
+                                               &Attributes
+                                             );
+            if (NT_SUCCESS( Status )) {
                 UnicodeString.Buffer = lpTargetPath;
                 UnicodeString.Length = 0;
 
                 //
                 // Check for possible overflow of a DWORD
                 //
-                if (ucchMax > CH_COUNT_MAX)
-                {
+                if (ucchMax > CH_COUNT_MAX) {
                     BufferSize = DWORD_MAX;
-                }
-                else
-                {
-                    BufferSize = ucchMax * sizeof(WCHAR);
+                } else {
+                    BufferSize = ucchMax * sizeof( WCHAR );
                 }
 
                 //
                 // Check for possible overflow of a USHORT
                 //
-                if (BufferSize > (DWORD)(USHORT_MAX))
-                {
+                if (BufferSize > (DWORD)(USHORT_MAX)) {
                     UnicodeString.MaximumLength = USHORT_MAX;
-                }
-                else
-                {
+                } else {
                     UnicodeString.MaximumLength = (USHORT)(BufferSize);
                 }
 
                 ReturnedLength = 0;
-                Status = NtQuerySymbolicLinkObject(LinkHandle, &UnicodeString, &ReturnedLength);
-                NtClose(LinkHandle);
-                if (NT_SUCCESS(Status))
-                {
-                    ucchReturned = ReturnedLength / sizeof(WCHAR);
+                Status = NtQuerySymbolicLinkObject( LinkHandle,
+                                                    &UnicodeString,
+                                                    &ReturnedLength
+                                                  );
+                NtClose( LinkHandle );
+                if (NT_SUCCESS( Status )) {
+                    ucchReturned = ReturnedLength / sizeof( WCHAR );
 
-                    if (((ucchReturned == 0) ||
-                         ((ucchReturned > 0) && (lpTargetPath[ucchReturned - 1] != UNICODE_NULL))) &&
-                        (ucchReturned < ucchMax))
-                    {
+                    if ( ( (ucchReturned == 0) ||
+                           ( (ucchReturned > 0) &&
+                             (lpTargetPath[ ucchReturned - 1 ] != UNICODE_NULL)
+                           )
+                         ) &&
+                         (ucchReturned < ucchMax)
+                       ) {
 
-                        lpTargetPath[ucchReturned] = UNICODE_NULL;
+                        lpTargetPath[ ucchReturned ] = UNICODE_NULL;
                         ucchReturned++;
                     }
 
-                    if (ucchReturned < ucchMax)
-                    {
-                        lpTargetPath[ucchReturned++] = UNICODE_NULL;
-                    }
-                    else
-                    {
+                    if (ucchReturned < ucchMax) {
+                        lpTargetPath[ ucchReturned++ ] = UNICODE_NULL;
+                    } else {
                         ucchReturned = 0;
                         Status = STATUS_BUFFER_TOO_SMALL;
                     }
                 }
             }
-        }
-        else
-        {
+        } else {
             //
             // Dump all the symbolic links in the device map's directory
             // With LUID device maps enabled, we must search two directories
@@ -644,20 +700,20 @@ QueryDosDeviceW(PCWSTR lpDeviceName, PWSTR lpTargetPath, DWORD ucchMax)
             // global device map
             //
 
-            if (BaseStaticServerData->LUIDDeviceMapsEnabled == TRUE)
-            {
+            if (BaseStaticServerData->LUIDDeviceMapsEnabled == TRUE) {
                 BOOLEAN GlobalDeviceMap = TRUE;
 
                 //
                 // Determine if directory is the global directory
                 //
-                Status = IsGlobalDeviceMap(DirectoryHandle, &GlobalDeviceMap);
+                Status = IsGlobalDeviceMap( DirectoryHandle,
+                                            &GlobalDeviceMap );
 
                 //
                 // if !global, set second directory search flag
                 //
-                if ((NT_SUCCESS(Status)) && (GlobalDeviceMap == FALSE))
-                {
+                if( (NT_SUCCESS( Status )) &&
+                    (GlobalDeviceMap == FALSE) ) {
                     ScanGlobalDeviceMap = TRUE;
                 }
             }
@@ -665,35 +721,39 @@ QueryDosDeviceW(PCWSTR lpDeviceName, PWSTR lpTargetPath, DWORD ucchMax)
             nElements = 0;
             RestartScan = TRUE;
             DirInfo = (POBJECT_DIRECTORY_INFORMATION)&DirInfoBuffer;
-            while (TRUE)
-            {
-                Status = NtQueryDirectoryObject(DirectoryHandle, (PVOID)DirInfo, sizeof(DirInfoBuffer), TRUE,
-                                                RestartScan, &Context, &ReturnedLength);
+            while (TRUE) {
+                Status = NtQueryDirectoryObject( DirectoryHandle,
+                                                 (PVOID)DirInfo,
+                                                 sizeof( DirInfoBuffer ),
+                                                 TRUE,
+                                                 RestartScan,
+                                                 &Context,
+                                                 &ReturnedLength
+                                               );
 
                 //
                 //  Check the status of the operation.
                 //
 
-                if (!NT_SUCCESS(Status))
-                {
-                    if (Status == STATUS_NO_MORE_ENTRIES)
-                    {
+                if (!NT_SUCCESS( Status )) {
+                    if (Status == STATUS_NO_MORE_ENTRIES) {
                         Status = STATUS_SUCCESS;
                     }
 
                     break;
                 }
 
-                if (!wcscmp(DirInfo->TypeName.Buffer, L"SymbolicLink"))
-                {
-                    ucchName = DirInfo->Name.Length / sizeof(WCHAR);
-                    if ((ucchReturned + ucchName + 1 + 1) > ucchMax)
-                    {
+                if (!wcscmp( DirInfo->TypeName.Buffer, L"SymbolicLink" )) {
+                    ucchName = DirInfo->Name.Length / sizeof( WCHAR );
+                    if ((ucchReturned + ucchName + 1 + 1) > ucchMax) {
                         ucchReturned = 0;
                         Status = STATUS_BUFFER_TOO_SMALL;
                         break;
                     }
-                    RtlMoveMemory(lpTargetPath, DirInfo->Name.Buffer, DirInfo->Name.Length);
+                    RtlMoveMemory( lpTargetPath,
+                                   DirInfo->Name.Buffer,
+                                   DirInfo->Name.Length
+                                 );
                     lpTargetPath += ucchName;
                     *lpTargetPath++ = UNICODE_NULL;
                     ucchReturned += ucchName + 1;
@@ -703,9 +763,9 @@ QueryDosDeviceW(PCWSTR lpDeviceName, PWSTR lpTargetPath, DWORD ucchMax)
                 RestartScan = FALSE;
             }
 
-            if ((BaseStaticServerData->LUIDDeviceMapsEnabled == TRUE) && (NT_SUCCESS(Status)) &&
-                ScanGlobalDeviceMap == TRUE)
-            {
+            if ( (BaseStaticServerData->LUIDDeviceMapsEnabled == TRUE) &&
+                 (NT_SUCCESS( Status )) &&
+                 ScanGlobalDeviceMap == TRUE) {
                 //
                 // need to perform a second scan for the
                 // global device map because the first scan only
@@ -715,22 +775,28 @@ QueryDosDeviceW(PCWSTR lpDeviceName, PWSTR lpTargetPath, DWORD ucchMax)
                 //
                 // close DirectoryHandle, set to NULL
                 //
-                if (DirectoryHandle != NULL)
-                {
-                    NtClose(DirectoryHandle);
+                if( DirectoryHandle != NULL ) {
+                    NtClose( DirectoryHandle );
                     DirectoryHandle = NULL;
                 }
 
                 //
                 // open the global device map
                 //
-                RtlInitUnicodeString(&UnicodeString, L"\\GLOBAL??");
+                RtlInitUnicodeString( &UnicodeString, L"\\GLOBAL??" );
 
-                InitializeObjectAttributes(&Attributes, &UnicodeString, OBJ_CASE_INSENSITIVE, NULL, NULL);
-                Status = NtOpenDirectoryObject(&DirectoryHandle, DIRECTORY_QUERY, &Attributes);
+                InitializeObjectAttributes( &Attributes,
+                                            &UnicodeString,
+                                            OBJ_CASE_INSENSITIVE,
+                                            NULL,
+                                            NULL
+                                          );
+                Status = NtOpenDirectoryObject( &DirectoryHandle,
+                                                DIRECTORY_QUERY,
+                                                &Attributes
+                                              );
 
-                if (!NT_SUCCESS(Status))
-                {
+                if (!NT_SUCCESS( Status )) {
                     DirectoryHandle = NULL;
                     leave;
                 }
@@ -740,39 +806,46 @@ QueryDosDeviceW(PCWSTR lpDeviceName, PWSTR lpTargetPath, DWORD ucchMax)
                 // scan the global device map
                 //
                 RestartScan = TRUE;
-                while (TRUE)
-                {
-                    Status = NtQueryDirectoryObject(DirectoryHandle, (PVOID)DirInfo, sizeof(DirInfoBuffer), TRUE,
-                                                    RestartScan, &Context, &ReturnedLength);
+                while (TRUE) {
+                    Status = NtQueryDirectoryObject( DirectoryHandle,
+                                                     (PVOID)DirInfo,
+                                                     sizeof( DirInfoBuffer ),
+                                                     TRUE,
+                                                     RestartScan,
+                                                     &Context,
+                                                     &ReturnedLength
+                                                   );
 
                     //
                     //  Check the status of the operation.
                     //
 
-                    if (!NT_SUCCESS(Status))
-                    {
-                        if (Status == STATUS_NO_MORE_ENTRIES)
-                        {
+                    if (!NT_SUCCESS( Status )) {
+                        if (Status == STATUS_NO_MORE_ENTRIES) {
                             Status = STATUS_SUCCESS;
                         }
 
                         break;
                     }
 
-                    if (!wcscmp(DirInfo->TypeName.Buffer, L"SymbolicLink"))
-                    {
-                        Result = FindSymbolicLinkEntry(DirInfo->Name.Buffer, lpBuffer, nElements, &DuplicateEntry);
+                    if (!wcscmp( DirInfo->TypeName.Buffer, L"SymbolicLink" )) {
+                        Result = FindSymbolicLinkEntry(
+                                                DirInfo->Name.Buffer,
+                                                lpBuffer,
+                                                nElements,
+                                                &DuplicateEntry);
 
-                        if ((Result == NO_ERROR) && (DuplicateEntry == FALSE))
-                        {
-                            ucchName = DirInfo->Name.Length / sizeof(WCHAR);
-                            if ((ucchReturned + ucchName + 1 + 1) > ucchMax)
-                            {
+                        if ((Result == NO_ERROR) && (DuplicateEntry == FALSE)) {
+                            ucchName = DirInfo->Name.Length / sizeof( WCHAR );
+                            if ((ucchReturned + ucchName + 1 + 1) > ucchMax) {
                                 ucchReturned = 0;
                                 Status = STATUS_BUFFER_TOO_SMALL;
                                 break;
                             }
-                            RtlMoveMemory(lpTargetPath, DirInfo->Name.Buffer, DirInfo->Name.Length);
+                            RtlMoveMemory( lpTargetPath,
+                                           DirInfo->Name.Buffer,
+                                           DirInfo->Name.Length
+                                         );
                             lpTargetPath += ucchName;
                             *lpTargetPath++ = UNICODE_NULL;
                             ucchReturned += ucchName + 1;
@@ -781,27 +854,23 @@ QueryDosDeviceW(PCWSTR lpDeviceName, PWSTR lpTargetPath, DWORD ucchMax)
 
                     RestartScan = FALSE;
                 }
+
             }
 
-            if (NT_SUCCESS(Status))
-            {
+            if (NT_SUCCESS( Status )) {
                 *lpTargetPath++ = UNICODE_NULL;
                 ucchReturned++;
             }
         }
-    }
-    finally
-    {
-        if (DirectoryHandle != NULL)
-        {
-            NtClose(DirectoryHandle);
+    } finally {
+        if( DirectoryHandle != NULL ) {
+            NtClose( DirectoryHandle );
         }
     }
 
-    if (!NT_SUCCESS(Status))
-    {
+    if (!NT_SUCCESS( Status )) {
         ucchReturned = 0;
-        BaseSetLastNTError(Status);
+        BaseSetLastNTError( Status );
     }
 
     return ucchReturned;

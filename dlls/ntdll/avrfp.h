@@ -22,16 +22,30 @@ Revision History:
 #define _AVRFP_
 
 //
-// Application verifier interfaces used in other parts
+// Application verifier interfaces used in other parts 
 // of the loader.
 //
 
-VOID AVrfInitializeVerifier(BOOLEAN EnabledSystemWide, PUNICODE_STRING ImageName, ULONG Phase);
+VOID
+AVrfInitializeVerifier (
+    BOOLEAN EnabledSystemWide,
+    PUNICODE_STRING ImageName,
+    ULONG Phase
+    );
 
-VOID AVrfDllLoadNotification(PLDR_DATA_TABLE_ENTRY LoadedDllData);
+VOID
+AVrfDllLoadNotification (
+    PLDR_DATA_TABLE_ENTRY LoadedDllData
+    );
 
-VOID AVrfDllUnloadNotification(PLDR_DATA_TABLE_ENTRY LoadedDllData);
+VOID
+AVrfDllUnloadNotification (
+    PLDR_DATA_TABLE_ENTRY LoadedDllData
+    );
 
-VOID AVrfPageHeapDllNotification(PLDR_DATA_TABLE_ENTRY LoadedDllData);
+VOID
+AVrfPageHeapDllNotification (
+    PLDR_DATA_TABLE_ENTRY LoadedDllData
+    );
 
 #endif // _AVRFP_

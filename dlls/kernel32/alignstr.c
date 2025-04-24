@@ -61,7 +61,11 @@ Revision History:
 //--
 
 PUWSTR
-__cdecl uaw_wcschr(IN PCUWSTR String, IN WCHAR Character)
+__cdecl
+uaw_wcschr(
+    IN PCUWSTR String,
+    IN WCHAR   Character
+    )
 {
     PUWSTR pch;
 
@@ -71,16 +75,13 @@ __cdecl uaw_wcschr(IN PCUWSTR String, IN WCHAR Character)
     //
 
     pch = (PUWSTR)String;
-    while (TRUE)
-    {
+    while (TRUE) {
 
-        if (*pch == Character)
-        {
+        if (*pch == Character) {
             return pch;
         }
 
-        if (*pch == 0)
-        {
+        if (*pch == 0) {
             return NULL;
         }
         pch++;
@@ -115,7 +116,11 @@ __cdecl uaw_wcschr(IN PCUWSTR String, IN WCHAR Character)
 //--
 
 PUWSTR
-_cdecl uaw_wcscpy(IN PUWSTR Destination, IN PCUWSTR Source)
+_cdecl
+uaw_wcscpy(
+    IN PUWSTR  Destination,
+    IN PCUWSTR Source
+    )
 {
     PCUWSTR src;
     PUWSTR dst;
@@ -123,12 +128,10 @@ _cdecl uaw_wcscpy(IN PUWSTR Destination, IN PCUWSTR Source)
     src = Source;
     dst = Destination;
 
-    while (TRUE)
-    {
+    while (TRUE) {
 
         *dst = *src;
-        if (*src == 0)
-        {
+        if (*src == 0) {
             return Destination;
         }
 
@@ -161,13 +164,16 @@ _cdecl uaw_wcscpy(IN PUWSTR Destination, IN PCUWSTR Source)
 //
 //--
 
-size_t __cdecl uaw_wcslen(IN PCUWSTR String)
+size_t
+__cdecl
+uaw_wcslen(
+    IN PCUWSTR String
+    )
 {
     PCUWSTR pch;
-
+    
     pch = String;
-    while (*pch != 0)
-    {
+    while (*pch != 0) {
         pch++;
     }
     return pch - String;
@@ -201,7 +207,11 @@ size_t __cdecl uaw_wcslen(IN PCUWSTR String)
 //--
 
 PUWSTR
-__cdecl uaw_wcsrchr(IN PCUWSTR String, IN WCHAR Character)
+__cdecl
+uaw_wcsrchr(
+    IN PCUWSTR String,
+    IN WCHAR   Character
+    )
 {
     PCUWSTR pch;
     PUWSTR lastMatch;
@@ -214,10 +224,8 @@ __cdecl uaw_wcsrchr(IN PCUWSTR String, IN WCHAR Character)
     // Note that the search INCLUDES the terminating null character.
     //
 
-    while (TRUE)
-    {
-        if (*pch == Character)
-        {
+    while (TRUE) {
+        if (*pch == Character) {
 
             //
             // Found either the first match or a new match closer to the end,
@@ -227,15 +235,19 @@ __cdecl uaw_wcsrchr(IN PCUWSTR String, IN WCHAR Character)
             lastMatch = (PUWSTR)pch;
         }
 
-        if (*pch == 0)
-        {
+        if (*pch == 0) {
             return lastMatch;
         }
         pch++;
     }
 }
 
-int APIENTRY uaw_lstrcmpW(PCUWSTR String1, PCUWSTR String2)
+int
+APIENTRY
+uaw_lstrcmpW(
+    PCUWSTR String1,
+    PCUWSTR String2
+    )
 {
     PCWSTR alignedString1;
     PCWSTR alignedString2;
@@ -245,13 +257,18 @@ int APIENTRY uaw_lstrcmpW(PCUWSTR String1, PCUWSTR String2)
     // function.
     //
 
-    WSTR_ALIGNED_STACK_COPY(&alignedString1, String1);
-    WSTR_ALIGNED_STACK_COPY(&alignedString2, String2);
+    WSTR_ALIGNED_STACK_COPY( &alignedString1, String1 );
+    WSTR_ALIGNED_STACK_COPY( &alignedString2, String2 );
 
-    return lstrcmpW(alignedString1, alignedString2);
+    return lstrcmpW( alignedString1, alignedString2 );
 }
 
-int APIENTRY uaw_lstrcmpiW(PCUWSTR String1, PCUWSTR String2)
+int
+APIENTRY
+uaw_lstrcmpiW(
+    PCUWSTR String1,
+    PCUWSTR String2
+    )
 {
     PCWSTR alignedString1;
     PCWSTR alignedString2;
@@ -261,22 +278,24 @@ int APIENTRY uaw_lstrcmpiW(PCUWSTR String1, PCUWSTR String2)
     // function.
     //
 
-    WSTR_ALIGNED_STACK_COPY(&alignedString1, String1);
-    WSTR_ALIGNED_STACK_COPY(&alignedString2, String2);
+    WSTR_ALIGNED_STACK_COPY( &alignedString1, String1 );
+    WSTR_ALIGNED_STACK_COPY( &alignedString2, String2 );
 
-    return lstrcmpiW(alignedString1, alignedString2);
+    return lstrcmpiW( alignedString1, alignedString2 );
 }
 
-int APIENTRY uaw_lstrlenW(LPCUWSTR lpString)
+int
+APIENTRY
+uaw_lstrlenW(
+    LPCUWSTR lpString
+    )
 {
     if (!lpString)
         return 0;
-    __try
-    {
+    __try {
         return uaw_wcslen(lpString);
     }
-    __except (EXCEPTION_EXECUTE_HANDLER)
-    {
+    __except (EXCEPTION_EXECUTE_HANDLER) {
         return 0;
     }
 }

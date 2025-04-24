@@ -36,21 +36,27 @@ Notes:
 
 #include <dnsapi.h>
 
-typedef DNS_STATUS(WINAPI DNS_VALIDATE_NAME_FN)(IN LPCWSTR Name, IN DNS_NAME_FORMAT Format);
+typedef DNS_STATUS
+(WINAPI DNS_VALIDATE_NAME_FN)(
+    IN LPCWSTR Name,
+    IN DNS_NAME_FORMAT Format
+    );
 //
 //
 
 #define REASONABLE_LENGTH 128
 
-#define COMPUTERNAME_ROOT L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\ComputerName"
+#define COMPUTERNAME_ROOT \
+    L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\ComputerName"
 
 #define NON_VOLATILE_COMPUTERNAME_NODE \
     L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\ComputerName\\ComputerName"
 
 #define VOLATILE_COMPUTERNAME_NODE \
     L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\ComputerName\\ActiveComputerName"
-
-#define ALT_COMPUTERNAME_NODE L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\LanmanServer\\Parameters"
+    
+#define ALT_COMPUTERNAME_NODE \
+    L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\LanmanServer\\Parameters"
 
 #define VOLATILE_COMPUTERNAME L"ActiveComputerName"
 #define NON_VOLATILE_COMPUTERNAME L"ComputerName"
@@ -58,40 +64,53 @@ typedef DNS_STATUS(WINAPI DNS_VALIDATE_NAME_FN)(IN LPCWSTR Name, IN DNS_NAME_FOR
 #define COMPUTERNAME_OPTIONAL_NAME L"OptionalNames"
 #define CLASS_STRING L"Network ComputerName"
 
-#define TCPIP_POLICY_ROOT L"\\Registry\\Machine\\Software\\Policies\\Microsoft\\System\\DNSclient"
+#define TCPIP_POLICY_ROOT \
+        L"\\Registry\\Machine\\Software\\Policies\\Microsoft\\System\\DNSclient"
 
-#define TCPIP_POLICY_DOMAINNAME L"PrimaryDnsSuffix"
+#define TCPIP_POLICY_DOMAINNAME \
+        L"PrimaryDnsSuffix"
 
-#define TCPIP_ROOT L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\Tcpip\\Parameters"
+#define TCPIP_ROOT \
+        L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\Tcpip\\Parameters"
 
-#define TCPIP_HOSTNAME L"Hostname"
+#define TCPIP_HOSTNAME \
+        L"Hostname"
+	
+#define TCPIP_NV_HOSTNAME \
+        L"NV Hostname"
 
-#define TCPIP_NV_HOSTNAME L"NV Hostname"
+#define TCPIP_DOMAINNAME \
+        L"Domain"
 
-#define TCPIP_DOMAINNAME L"Domain"
-
-#define TCPIP_NV_DOMAINNAME L"NV Domain"
-
-#define DNSCACHE_ROOT L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\DnsCache\\Parameters"
-
-#define DNS_ALT_HOSTNAME L"AlternateComputerNames"
+#define TCPIP_NV_DOMAINNAME \
+        L"NV Domain"
+	
+#define DNSCACHE_ROOT \
+        L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\DnsCache\\Parameters"
+	
+#define DNS_ALT_HOSTNAME \
+        L"AlternateComputerNames"
 
 //
 // Allow the cluster guys to override the returned
 // names with their own virtual names
 //
 
-const PWSTR ClusterNameVars[] = { L"_CLUSTER_NETWORK_NAME_", L"_CLUSTER_NETWORK_HOSTNAME_", L"_CLUSTER_NETWORK_DOMAIN_",
-                                  L"_CLUSTER_NETWORK_FQDN_" };
+const PWSTR ClusterNameVars[] = {
+                L"_CLUSTER_NETWORK_NAME_",
+                L"_CLUSTER_NETWORK_HOSTNAME_",
+                L"_CLUSTER_NETWORK_DOMAIN_",
+                L"_CLUSTER_NETWORK_FQDN_"
+                };
 
 //
 // Disallowed control characters (not including \0)
 //
 
-#define CTRL_CHARS_0 L"\001\002\003\004\005\006\007"
-#define CTRL_CHARS_1 L"\010\011\012\013\014\015\016\017"
-#define CTRL_CHARS_2 L"\020\021\022\023\024\025\026\027"
-#define CTRL_CHARS_3 L"\030\031\032\033\034\035\036\037"
+#define CTRL_CHARS_0       L"\001\002\003\004\005\006\007"
+#define CTRL_CHARS_1   L"\010\011\012\013\014\015\016\017"
+#define CTRL_CHARS_2   L"\020\021\022\023\024\025\026\027"
+#define CTRL_CHARS_3   L"\030\031\032\033\034\035\036\037"
 
 #define CTRL_CHARS_STR CTRL_CHARS_0 CTRL_CHARS_1 CTRL_CHARS_2 CTRL_CHARS_3
 
@@ -99,7 +118,7 @@ const PWSTR ClusterNameVars[] = { L"_CLUSTER_NETWORK_NAME_", L"_CLUSTER_NETWORK_
 // Combinations of the above
 //
 
-#define ILLEGAL_NAME_CHARS_STR L"\"/\\[]:|<>+=;,?" CTRL_CHARS_STR
+#define ILLEGAL_NAME_CHARS_STR  L"\"/\\[]:|<>+=;,?" CTRL_CHARS_STR
 
 WCHAR DnsApiDllString[] = L"DNSAPI.DLL";
 
@@ -107,7 +126,10 @@ WCHAR DnsApiDllString[] = L"DNSAPI.DLL";
 #define DNS_DOMAINNAME 1
 
 DWORD
-BaseMultiByteToWideCharWithAlloc(LPCSTR lpBuffer, LPWSTR *ppBufferW)
+BaseMultiByteToWideCharWithAlloc(
+    LPCSTR   lpBuffer,
+    LPWSTR * ppBufferW
+    )
 /*++
 
 Routine Description:
@@ -129,34 +151,39 @@ Return Value:
     ULONG cchBuffer = 0;
     BOOL fSuccess = TRUE;
 
-    if (lpBuffer == NULL)
-    {
-        *ppBufferW = NULL;
-        return ERROR_SUCCESS;
+    if (lpBuffer==NULL) {
+        *ppBufferW=NULL;
+	return ERROR_SUCCESS;
     }
 
     cchBuffer = strlen(lpBuffer);
-
+    
     // get enough space to cover the string and a trailing null
-    *ppBufferW = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), (cchBuffer + 1) * sizeof(WCHAR));
-    if (*ppBufferW == NULL)
-    {
-        return ERROR_NOT_ENOUGH_MEMORY;
+    *ppBufferW = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( TMP_TAG ), (cchBuffer + 1) * sizeof(WCHAR));
+    if (*ppBufferW==NULL) {
+	return ERROR_NOT_ENOUGH_MEMORY;
     }
 
-    fSuccess = MultiByteToWideChar(CP_ACP, 0, lpBuffer, (cchBuffer + 1) * sizeof(CHAR), *ppBufferW, cchBuffer + 1);
-    if (fSuccess)
-    {
-        return ERROR_SUCCESS;
+    fSuccess = MultiByteToWideChar(CP_ACP, 
+			      0,
+			      lpBuffer,
+			      (cchBuffer+1)*sizeof(CHAR),
+			      *ppBufferW,
+			      cchBuffer+1
+			      );
+    if (fSuccess) {
+	return ERROR_SUCCESS;
     }
-    else
-    {
-        return GetLastError();
+    else {
+	return GetLastError();
     }
 }
 
 DWORD
-BaseWideCharToMultiByteWithAlloc(LPCWSTR lpBuffer, LPSTR *ppBufferA)
+BaseWideCharToMultiByteWithAlloc(
+    LPCWSTR lpBuffer,
+    LPSTR * ppBufferA
+    )
 /*++
 
 Routine Description:
@@ -179,25 +206,32 @@ Return Value:
     DWORD err = ERROR_SUCCESS;
 
     cchBuffer = wcslen(lpBuffer);
-    *ppBufferA = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), (cchBuffer + 1) * sizeof(CHAR));
-    if (*ppBufferA == NULL)
-    {
-        return ERROR_NOT_ENOUGH_MEMORY;
+    *ppBufferA = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( TMP_TAG ), (cchBuffer + 1) * sizeof(CHAR));
+    if (*ppBufferA==NULL) {
+	return ERROR_NOT_ENOUGH_MEMORY;
     }
 
-    err =
-        WideCharToMultiByte(CP_ACP, 0, lpBuffer, cchBuffer + 1, *ppBufferA, (cchBuffer + 1) * sizeof(CHAR), NULL, NULL);
-    if (err != 0)
-    {
-        return ERROR_SUCCESS;
+    err = WideCharToMultiByte(CP_ACP, 
+			      0,
+			      lpBuffer,
+			      cchBuffer+1,
+			      *ppBufferA,
+			      (cchBuffer+1)*sizeof(CHAR),
+			      NULL,
+			      NULL
+			      );
+    if (err!=0) {
+	return ERROR_SUCCESS;
     }
-    else
-    {
-        return GetLastError();
+    else {
+	return GetLastError();
     }
 }
 
-VOID BaseConvertCharFree(VOID *lpBuffer)
+VOID
+BaseConvertCharFree(
+    VOID * lpBuffer
+    )
 /*++
 
 Routine Description:
@@ -215,13 +249,15 @@ Return Value:
 
 --*/
 {
-    if (lpBuffer != NULL)
-    {
-        RtlFreeHeap(RtlProcessHeap(), 0, lpBuffer);
+    if (lpBuffer!=NULL) {
+	RtlFreeHeap(RtlProcessHeap(), 0, lpBuffer);
     }
 }
 
-BOOL BaseValidateFlags(ULONG ulFlags)
+BOOL
+BaseValidateFlags(
+    ULONG ulFlags
+    )
 /*++
 
 Routine Description:
@@ -245,14 +281,16 @@ Return Value:
 
 --*/
 {
-    if (ulFlags != 0)
-    {
-        return FALSE;
+    if (ulFlags!=0) {
+	return FALSE;
     }
     return TRUE;
 }
 
-BOOL BaseValidateNetbiosName(IN LPCWSTR lpComputerName)
+BOOL
+BaseValidateNetbiosName(
+    IN LPCWSTR lpComputerName
+    )
 /*++
 
 Routine Description:
@@ -277,41 +315,45 @@ Return Value:
 
     //
     // The name length limitation should be based on ANSI. (LanMan compatibility)
-    //
+    // 
 
-    NtStatus =
-        RtlUnicodeToMultiByteSize(&AnsiComputerNameLength, (LPWSTR)lpComputerName, cchComputerName * sizeof(WCHAR));
+    NtStatus = RtlUnicodeToMultiByteSize(&AnsiComputerNameLength,
+                                         (LPWSTR)lpComputerName,
+                                         cchComputerName * sizeof(WCHAR));
 
-    if ((!NT_SUCCESS(NtStatus)) || (AnsiComputerNameLength == 0) || (AnsiComputerNameLength > MAX_COMPUTERNAME_LENGTH))
-    {
+    if ((!NT_SUCCESS(NtStatus)) ||
+        (AnsiComputerNameLength == 0 )||(AnsiComputerNameLength > MAX_COMPUTERNAME_LENGTH)) {
         SetLastError(ERROR_INVALID_PARAMETER);
-        return (FALSE);
+        return(FALSE);
     }
 
     //
     // Check for illegal characters; return an error if one is found
     //
 
-    if (wcscspn(lpComputerName, ILLEGAL_NAME_CHARS_STR) < cchComputerName)
-    {
+    if (wcscspn(lpComputerName, ILLEGAL_NAME_CHARS_STR) < cchComputerName) {
         SetLastError(ERROR_INVALID_PARAMETER);
-        return (FALSE);
+        return(FALSE);
     }
 
     //
     // Check for leading or trailing spaces
     //
 
-    if (lpComputerName[0] == L' ' || lpComputerName[cchComputerName - 1] == L' ')
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return (FALSE);
+    if (lpComputerName[0] == L' ' ||
+        lpComputerName[cchComputerName-1] == L' ') {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return(FALSE);
+
     }
 
-    return (TRUE);
+    return(TRUE);
 }
 
-BOOL BaseValidateDnsNames(LPCWSTR lpDnsHostname)
+BOOL
+BaseValidateDnsNames(
+    LPCWSTR lpDnsHostname
+    )
 /*++
 
 Routine Description:
@@ -330,44 +372,49 @@ Return Value:
 --*/
 {
 
-    HANDLE DnsApi;
-    DNS_VALIDATE_NAME_FN *DnsValidateNameFn;
-    DNS_STATUS DnsStatus;
+    HANDLE DnsApi ;
+    DNS_VALIDATE_NAME_FN * DnsValidateNameFn ;
+    DNS_STATUS DnsStatus ;
 
     DnsApi = LoadLibraryW(DnsApiDllString);
 
-    if (!DnsApi)
-    {
-        SetLastError(ERROR_DLL_NOT_FOUND);
-        return FALSE;
+    if ( !DnsApi ) {
+	SetLastError(ERROR_DLL_NOT_FOUND);
+	return FALSE ;
     }
 
-    DnsValidateNameFn = (DNS_VALIDATE_NAME_FN *)GetProcAddress(DnsApi, "DnsValidateName_W");
+    DnsValidateNameFn = (DNS_VALIDATE_NAME_FN *) GetProcAddress( DnsApi, "DnsValidateName_W" );
 
-    if (!DnsValidateNameFn)
+    if ( !DnsValidateNameFn )
     {
-        FreeLibrary(DnsApi);
-        SetLastError(ERROR_INVALID_DLL);
-        return FALSE;
+        FreeLibrary( DnsApi );
+	SetLastError(ERROR_INVALID_DLL);
+        return FALSE ;
     }
 
-    DnsStatus = DnsValidateNameFn(lpDnsHostname, DnsNameHostnameLabel);
+    DnsStatus = DnsValidateNameFn( lpDnsHostname, DnsNameHostnameLabel );
 
-    FreeLibrary(DnsApi);
+    FreeLibrary( DnsApi );
 
-    if ((DnsStatus == 0) || (DnsStatus == DNS_ERROR_NON_RFC_NAME))
+    if ( ( DnsStatus == 0 ) ||
+         ( DnsStatus == DNS_ERROR_NON_RFC_NAME ) )
     {
-        return TRUE;
+	return TRUE;
     }
     else
     {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
+	SetLastError(ERROR_INVALID_PARAMETER);
+	return FALSE;
     }
 }
 
-DWORD
-BasepGetMultiValueAddr(IN LPWSTR lpMultiValue, IN DWORD dwIndex, OUT LPWSTR *ppFound, OUT LPDWORD pcchIndex)
+DWORD 
+BasepGetMultiValueAddr(
+    IN LPWSTR       lpMultiValue,
+    IN DWORD        dwIndex,
+    OUT LPWSTR *    ppFound,
+    OUT LPDWORD     pcchIndex
+    )
 /*++
 
 Routine Description:
@@ -394,29 +441,30 @@ Return Value:
     DWORD cchTempIndex = 0;
 
     // lpMultiValue is a concatenated string of (non-null)strings, null terminated
-    for (i = 0; (i < dwIndex) && (lpMultiValue[0] != L'\0'); i++)
-    {
-        cchTempIndex += wcslen(lpMultiValue) + 1;
-        lpMultiValue += wcslen(lpMultiValue) + 1;
+    for (i=0; (i<dwIndex) && (lpMultiValue[0] != L'\0'); i++) {
+	cchTempIndex += wcslen(lpMultiValue) + 1;
+	lpMultiValue += wcslen(lpMultiValue) + 1;
     }
-
+    
     // if we found the correct index, it's in lpMultiValue
-    if (lpMultiValue[0] != L'\0')
-    {
-        *ppFound = lpMultiValue;
-        *pcchIndex = cchTempIndex;
-        err = ERROR_SUCCESS;
+    if (lpMultiValue[0]!=L'\0') {
+	*ppFound = lpMultiValue;
+	*pcchIndex = cchTempIndex;
+	err = ERROR_SUCCESS; 
     }
-    else
-    {
-        err = ERROR_NOT_FOUND;
+    else {
+	err = ERROR_NOT_FOUND;
     }
 
     return err;
 }
 
-DWORD
-BaseGetMultiValueIndex(IN LPWSTR lpMultiValue, IN LPCWSTR lpValue, OUT DWORD *pcchIndex)
+DWORD 
+BaseGetMultiValueIndex(
+    IN LPWSTR   lpMultiValue,
+    IN LPCWSTR  lpValue,
+    OUT DWORD * pcchIndex
+    )
 /*++
 
 Routine Description:
@@ -441,25 +489,29 @@ Return Value:
     DWORD i = 0;
     DWORD err = ERROR_SUCCESS;
     BOOL fFound = FALSE;
-
-    while ((err == ERROR_SUCCESS) && !fFound)
-    {
-        err = BasepGetMultiValueAddr(lpMultiValue, i, &lpFound, &cchFoundIndex);
-        if (err == ERROR_SUCCESS)
-        {
-            if ((wcslen(lpFound) == wcslen(lpValue)) && (!_memicmp(lpFound, lpValue, wcslen(lpValue) * sizeof(WCHAR))))
-            {
-                fFound = TRUE;
-                *pcchIndex = i;
-            }
-        }
-        i++;
+   
+    while ((err==ERROR_SUCCESS) && !fFound) {
+	err = BasepGetMultiValueAddr(lpMultiValue,
+				   i,
+				   &lpFound,
+				   &cchFoundIndex);
+	if (err == ERROR_SUCCESS) { 
+	    if ((wcslen(lpFound)==wcslen(lpValue)) && (!_memicmp(lpFound,lpValue, wcslen(lpValue)*sizeof(WCHAR)))) {
+		fFound = TRUE;
+		*pcchIndex = i;
+	    }
+	}
+	i++;
     }
     return err;
 }
 
-DWORD
-BaseRemoveMultiValue(IN OUT LPWSTR lpMultiValue, IN DWORD dwIndex, IN OUT LPDWORD pcchMultiValue)
+DWORD 
+BaseRemoveMultiValue(
+    IN OUT LPWSTR    lpMultiValue,
+    IN DWORD         dwIndex,
+    IN OUT LPDWORD   pcchMultiValue
+    )
 /*++
 
 Routine Description:
@@ -485,34 +537,41 @@ Return Value:
     DWORD dwIndexFound = 0;
     DWORD dwIndexRest = 0;
 
-    err = BasepGetMultiValueAddr(lpMultiValue, dwIndex, &lpFound, &dwIndexFound);
-    if (err == ERROR_SUCCESS)
-    {
-        // lpFound is a pointer to a string
-        // inside of lpMultiValue, to delete it,
-        // copy the rest of the string down
-        err = BasepGetMultiValueAddr(lpMultiValue, dwIndex + 1, &lpRest, &dwIndexRest);
-        if (err == ERROR_SUCCESS)
-        {
-            // copy everything down
+    err = BasepGetMultiValueAddr(lpMultiValue,
+			       dwIndex,
+			       &lpFound,
+			       &dwIndexFound);
+    if (err==ERROR_SUCCESS) {
+	// lpFound is a pointer to a string
+	// inside of lpMultiValue, to delete it,
+	// copy the rest of the string down
+	err = BasepGetMultiValueAddr(lpMultiValue,
+				   dwIndex+1,
+				   &lpRest,
+				   &dwIndexRest);
+	if (err == ERROR_SUCCESS) {
+	    // copy everything down
 
-            memmove(lpFound, lpRest, (*pcchMultiValue - dwIndexRest) * sizeof(WCHAR));
-            *pcchMultiValue = *pcchMultiValue - (dwIndexRest - dwIndexFound);
-            lpMultiValue[*pcchMultiValue] = L'\0';
-        }
-        else if (err == ERROR_NOT_FOUND)
-        {
-            // string to remove is last string, simply write an extra null to orphan the string
-            *pcchMultiValue = *pcchMultiValue - (wcslen(lpFound) + 1);
-            lpMultiValue[*pcchMultiValue] = L'\0';
-            err = ERROR_SUCCESS;
-        }
+	    memmove(lpFound,lpRest,(*pcchMultiValue - dwIndexRest)*sizeof(WCHAR));
+	    *pcchMultiValue = *pcchMultiValue - (dwIndexRest-dwIndexFound);
+	    lpMultiValue[*pcchMultiValue] = L'\0';
+	}
+	else if (err == ERROR_NOT_FOUND) {
+	    // string to remove is last string, simply write an extra null to orphan the string 
+	    *pcchMultiValue = *pcchMultiValue - (wcslen(lpFound) +1);
+	    lpMultiValue[*pcchMultiValue] = L'\0';
+	    err = ERROR_SUCCESS;
+	} 
     }
     return err;
 }
 
-DWORD
-BaseAddMultiValue(IN OUT LPWSTR lpMultiValue, IN LPCWSTR lpValue, IN DWORD cchMultiValue)
+DWORD 
+BaseAddMultiValue(
+    IN OUT LPWSTR    lpMultiValue,
+    IN LPCWSTR       lpValue,
+    IN DWORD         cchMultiValue
+    )
 /*++
 
 Routine Description:
@@ -533,14 +592,19 @@ Return Value:
 
 --*/
 {
-    memcpy(lpMultiValue + cchMultiValue, lpValue, (wcslen(lpValue) + 1) * sizeof(WCHAR));
+    memcpy(lpMultiValue + cchMultiValue, lpValue, (wcslen(lpValue)+1)*sizeof(WCHAR));
     lpMultiValue[cchMultiValue + wcslen(lpValue) + 1] = L'\0';
 
     return ERROR_SUCCESS;
 }
 
 NTSTATUS
-BasepGetNameFromReg(PCWSTR Path, PCWSTR Value, PWSTR Buffer, PDWORD Length)
+BasepGetNameFromReg(
+    PCWSTR Path,
+    PCWSTR Value,
+    PWSTR Buffer,
+    PDWORD Length
+    )
 /*++
 
 Routine Description:
@@ -565,16 +629,16 @@ Return Value:
 --*/
 
 {
-    NTSTATUS Status;
-    HANDLE Key;
-    OBJECT_ATTRIBUTES ObjA;
+    NTSTATUS Status ;
+    HANDLE Key ;
+    OBJECT_ATTRIBUTES ObjA ;
     UNICODE_STRING KeyName;
     UNICODE_STRING ValueName;
 
 
-    BYTE ValueBuffer[REASONABLE_LENGTH];
+    BYTE ValueBuffer[ REASONABLE_LENGTH ];
     PKEY_VALUE_FULL_INFORMATION pKeyValueInformation = (PKEY_VALUE_FULL_INFORMATION)ValueBuffer;
-    BOOLEAN FreeBuffer = FALSE;
+    BOOLEAN FreeBuffer = FALSE ;
     DWORD ValueLength;
     PWCHAR pTerminator;
 
@@ -582,35 +646,49 @@ Return Value:
     // Open the node for the Subkey
     //
 
-    RtlInitUnicodeString(&KeyName, Path);
+    RtlInitUnicodeString(&KeyName, Path );
 
-    InitializeObjectAttributes(&ObjA, &KeyName, OBJ_CASE_INSENSITIVE, NULL, NULL);
+    InitializeObjectAttributes(&ObjA,
+                              &KeyName,
+                              OBJ_CASE_INSENSITIVE,
+                              NULL,
+                              NULL
+                              );
 
-    Status = NtOpenKey(&Key, KEY_READ, &ObjA);
+    Status = NtOpenKey(&Key, KEY_READ, &ObjA );
 
-    if (NT_SUCCESS(Status))
-    {
+    if (NT_SUCCESS(Status)) {
 
-        RtlInitUnicodeString(&ValueName, Value);
+        RtlInitUnicodeString( &ValueName, Value );
 
-        Status = NtQueryValueKey(Key, &ValueName, KeyValueFullInformation, pKeyValueInformation, REASONABLE_LENGTH,
-                                 &ValueLength);
+        Status = NtQueryValueKey(Key,
+                                   &ValueName,
+                                   KeyValueFullInformation,
+                                   pKeyValueInformation,
+                                   REASONABLE_LENGTH ,
+                                   &ValueLength);
 
-        if (Status == STATUS_BUFFER_OVERFLOW)
+        if ( Status == STATUS_BUFFER_OVERFLOW )
         {
-            pKeyValueInformation = RtlAllocateHeap(RtlProcessHeap(), 0, ValueLength);
+            pKeyValueInformation = RtlAllocateHeap( RtlProcessHeap(),
+                                                    0,
+                                                    ValueLength );
 
-            if (pKeyValueInformation)
+            if ( pKeyValueInformation )
             {
-                FreeBuffer = TRUE;
+                FreeBuffer = TRUE ;
 
-                Status = NtQueryValueKey(Key, &ValueName, KeyValueFullInformation, pKeyValueInformation, ValueLength,
-                                         &ValueLength);
+                Status = NtQueryValueKey( Key,
+                                          &ValueName,
+                                          KeyValueFullInformation,
+                                          pKeyValueInformation,
+                                          ValueLength,
+                                          &ValueLength );
+
             }
         }
 
-        if (NT_SUCCESS(Status))
-        {
+        if ( NT_SUCCESS(Status) ) {
 
             //
             // If the user's buffer is big enough, move it in
@@ -618,52 +696,61 @@ Return Value:
             // it's not.
             //
 
-            pTerminator = (PWCHAR)((PBYTE)pKeyValueInformation + pKeyValueInformation->DataOffset +
-                                   pKeyValueInformation->DataLength);
+            pTerminator = (PWCHAR)((PBYTE) pKeyValueInformation +
+                pKeyValueInformation->DataOffset +
+                pKeyValueInformation->DataLength);
             pTerminator--;
 
-            if (*pTerminator == L'\0')
-            {
-                pKeyValueInformation->DataLength -= sizeof(WCHAR);
+            if (*pTerminator == L'\0') {
+               pKeyValueInformation->DataLength -= sizeof(WCHAR);
             }
 
-            if ((*Length >= pKeyValueInformation->DataLength / sizeof(WCHAR) + 1) && (Buffer != NULL))
-            {
-                //
-                // This isn't guaranteed to be NULL terminated, make it so
-                //
-                RtlCopyMemory(Buffer, (LPWSTR)((PBYTE)pKeyValueInformation + pKeyValueInformation->DataOffset),
-                              pKeyValueInformation->DataLength);
+            if ( ( *Length >= pKeyValueInformation->DataLength/sizeof(WCHAR) + 1) &&
+                 ( Buffer != NULL ) ) {
+               //
+               // This isn't guaranteed to be NULL terminated, make it so
+               //
+                    RtlCopyMemory(Buffer,
+                        (LPWSTR)((PBYTE) pKeyValueInformation +
+                        pKeyValueInformation->DataOffset),
+                        pKeyValueInformation->DataLength);
 
-                pTerminator = (PWCHAR)((PBYTE)Buffer + pKeyValueInformation->DataLength);
-                *pTerminator = L'\0';
+                    pTerminator = (PWCHAR) ((PBYTE) Buffer +
+                        pKeyValueInformation->DataLength);
+                    *pTerminator = L'\0';
 
-                //
-                // Return the number of characters to the caller
-                //
+                    //
+                    // Return the number of characters to the caller
+                    //
 
-                *Length = pKeyValueInformation->DataLength / sizeof(WCHAR);
+                    *Length = pKeyValueInformation->DataLength / sizeof(WCHAR) ;
+
             }
-            else
-            {
+            else {
                 Status = STATUS_BUFFER_OVERFLOW;
-                *Length = pKeyValueInformation->DataLength / sizeof(WCHAR) + 1;
+                *Length = pKeyValueInformation->DataLength/sizeof(WCHAR) + 1;
             }
+
         }
 
-        NtClose(Key);
+        NtClose( Key );
     }
 
-    if (FreeBuffer)
+    if ( FreeBuffer )
     {
-        RtlFreeHeap(RtlProcessHeap(), 0, pKeyValueInformation);
+        RtlFreeHeap( RtlProcessHeap(), 0, pKeyValueInformation );
     }
 
-    return Status;
+    return Status ;
+
 }
 
 NTSTATUS
-BaseSetNameInReg(PCWSTR Path, PCWSTR Value, PCWSTR Buffer)
+BaseSetNameInReg(
+    PCWSTR Path,
+    PCWSTR Value,
+    PCWSTR Buffer
+    )
 /*++
 
 Routine Description:
@@ -698,13 +785,18 @@ Return Value:
 
     RtlInitUnicodeString(&KeyName, Path);
 
-    InitializeObjectAttributes(&ObjectAttributes, &KeyName, OBJ_CASE_INSENSITIVE, NULL, NULL);
+    InitializeObjectAttributes(&ObjectAttributes,
+                              &KeyName,
+                              OBJ_CASE_INSENSITIVE,
+                              NULL,
+                              NULL
+                              );
 
     NtStatus = NtOpenKey(&hKey, KEY_READ | KEY_WRITE, &ObjectAttributes);
 
-    if (!NT_SUCCESS(NtStatus))
+    if ( !NT_SUCCESS( NtStatus ) )
     {
-        return NtStatus;
+        return NtStatus ;
     }
 
     //
@@ -713,23 +805,33 @@ Return Value:
 
     RtlInitUnicodeString(&ValueName, Value);
 
-    ValueLength = (wcslen(Buffer) + 1) * sizeof(WCHAR);
+    ValueLength = (wcslen( Buffer ) + 1) * sizeof(WCHAR);
 
-    NtStatus = NtSetValueKey(hKey, &ValueName, 0, REG_SZ, (LPWSTR)Buffer, ValueLength);
+    NtStatus = NtSetValueKey(hKey,
+                             &ValueName,
+                             0,
+			     REG_SZ,
+                             (LPWSTR) Buffer,
+                             ValueLength);
 
-    if (NT_SUCCESS(NtStatus))
+    if ( NT_SUCCESS( NtStatus ) )
     {
-        NtFlushKey(hKey);
+        NtFlushKey( hKey );
     }
 
     NtClose(hKey);
 
-    return NtStatus;
+    return NtStatus ;
 }
 
 
 NTSTATUS
-BaseSetMultiNameInReg(PCWSTR Path, PCWSTR Value, PCWSTR Buffer, DWORD BufferSize)
+BaseSetMultiNameInReg(
+    PCWSTR Path,
+    PCWSTR Value,
+    PCWSTR Buffer,
+    DWORD  BufferSize
+    )
 /*++
 
 Routine Description:
@@ -761,20 +863,31 @@ Return Value:
     UNICODE_STRING ValueName;
     OBJECT_ATTRIBUTES ObjectAttributes;
     HANDLE hKey = NULL;
-
+   
     //
     // Open the ComputerName\ComputerName node
     //
 
     RtlInitUnicodeString(&KeyName, Path);
 
-    InitializeObjectAttributes(&ObjectAttributes, &KeyName, OBJ_CASE_INSENSITIVE, NULL, NULL);
+    InitializeObjectAttributes(&ObjectAttributes,
+                              &KeyName,
+                              OBJ_CASE_INSENSITIVE,
+                              NULL,
+                              NULL
+                              );
 
-    NtStatus = NtCreateKey(&hKey, KEY_READ | KEY_WRITE, &ObjectAttributes, 0, NULL, 0, NULL);
+    NtStatus = NtCreateKey(&hKey, 
+			   KEY_READ | KEY_WRITE, 
+			   &ObjectAttributes,
+			   0,
+			   NULL,
+			   0,
+			   NULL);
 
-    if (!NT_SUCCESS(NtStatus))
+    if ( !NT_SUCCESS( NtStatus ) )
     {
-        return NtStatus;
+        return NtStatus ;
     }
 
     //
@@ -783,20 +896,29 @@ Return Value:
 
     RtlInitUnicodeString(&ValueName, Value);
 
-    NtStatus = NtSetValueKey(hKey, &ValueName, 0, REG_MULTI_SZ, (LPWSTR)Buffer, BufferSize);
+    NtStatus = NtSetValueKey(hKey,
+                             &ValueName,
+                             0,
+                             REG_MULTI_SZ,
+                             (LPWSTR) Buffer,
+                             BufferSize);
 
-    if (NT_SUCCESS(NtStatus))
+    if ( NT_SUCCESS( NtStatus ) )
     {
-        NtFlushKey(hKey);
+        NtFlushKey( hKey );
     }
 
     NtClose(hKey);
 
-    return NtStatus;
+    return NtStatus ;
 }
 
 NTSTATUS
-BaseCreateMultiValue(PCWSTR Path, PCWSTR Value, PCWSTR Buffer)
+BaseCreateMultiValue(
+    PCWSTR Path,
+    PCWSTR Value,
+    PCWSTR Buffer
+    )
 /*++
 
 Routine Description:
@@ -821,24 +943,29 @@ Return Value:
     NTSTATUS NtStatus = STATUS_SUCCESS;
     LPWSTR lpMultiValue = NULL;
 
-    lpMultiValue = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), (wcslen(Buffer) + 2) * sizeof(WCHAR));
-    if (lpMultiValue == NULL)
-    {
-        NtStatus = STATUS_NO_MEMORY;
+    lpMultiValue = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG ( TMP_TAG ), (wcslen(Buffer)+2)*sizeof(WCHAR));
+    if (lpMultiValue==NULL) {
+	NtStatus = STATUS_NO_MEMORY;
     }
-    else
-    {
-        memcpy(lpMultiValue, Buffer, wcslen(Buffer) * sizeof(WCHAR));
-        lpMultiValue[wcslen(Buffer)] = L'\0';
-        lpMultiValue[wcslen(Buffer) + 1] = L'\0';
-        NtStatus = BaseSetMultiNameInReg(Path, Value, lpMultiValue, (wcslen(Buffer) + 2) * sizeof(WCHAR));
-        RtlFreeHeap(RtlProcessHeap(), 0, lpMultiValue);
+    else { 
+	memcpy(lpMultiValue, Buffer, wcslen(Buffer)*sizeof(WCHAR));
+	lpMultiValue[wcslen(Buffer)] = L'\0';
+	lpMultiValue[wcslen(Buffer)+1] = L'\0';
+	NtStatus = BaseSetMultiNameInReg(Path,
+					 Value,
+					 lpMultiValue,
+					 (wcslen(Buffer)+2)*sizeof(WCHAR));
+	RtlFreeHeap(RtlProcessHeap(), 0, lpMultiValue);
     }
     return NtStatus;
 }
 
 NTSTATUS
-BaseAddMultiNameInReg(PCWSTR Path, PCWSTR Value, PCWSTR Buffer)
+BaseAddMultiNameInReg(
+    PCWSTR Path,
+    PCWSTR Value,
+    PCWSTR Buffer
+    )
 /*++
 
 Routine Description:
@@ -860,65 +987,66 @@ Return Value:
 
 --*/
 {
-
+    
     NTSTATUS NtStatus = STATUS_SUCCESS;
     LPWSTR lpMultiValue = NULL;
-    ULONG cchMultiValue = 0;
+    ULONG  cchMultiValue = 0;
     DWORD dwIndex = 0;
     DWORD err = ERROR_SUCCESS;
 
-    NtStatus = BasepGetNameFromReg(Path, Value, lpMultiValue, &cchMultiValue);
+    NtStatus = BasepGetNameFromReg(Path,
+				   Value,
+				   lpMultiValue,
+				   &cchMultiValue);
 
-    if (NtStatus == STATUS_NOT_FOUND || NtStatus == STATUS_OBJECT_NAME_NOT_FOUND)
-    {
-        // create it, then we are done
-        NtStatus = BaseCreateMultiValue(Path, Value, Buffer);
-        return NtStatus;
-    }
-    else if (NtStatus == STATUS_BUFFER_OVERFLOW)
-    {
-        lpMultiValue =
-            RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), (cchMultiValue + 2 + wcslen(Buffer)) * sizeof(WCHAR));
-        if (lpMultiValue == NULL)
-        {
-            NtStatus = STATUS_NO_MEMORY;
-        }
-        else
-        {
-            NtStatus = BasepGetNameFromReg(Path, Value, lpMultiValue, &cchMultiValue);
-        }
-    }
+    if ( NtStatus==STATUS_NOT_FOUND || NtStatus==STATUS_OBJECT_NAME_NOT_FOUND) {
+	// create it, then we are done
+	NtStatus = BaseCreateMultiValue(Path,Value,Buffer);
+	return NtStatus;
+    } else if ( NtStatus==STATUS_BUFFER_OVERFLOW ) {
+	lpMultiValue = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( TMP_TAG ), (cchMultiValue+2+wcslen(Buffer))*sizeof(WCHAR));
+	if (lpMultiValue==NULL) {
+	    NtStatus = STATUS_NO_MEMORY;
+	}
+	else {
+	    NtStatus = BasepGetNameFromReg(Path,
+					   Value,
+					   lpMultiValue,
+					   &cchMultiValue);
+	}
+    } 
 
-    if (NT_SUCCESS(NtStatus))
-    {
-        // does it already exist in this structure?
-        err = BaseGetMultiValueIndex(lpMultiValue, Buffer, &dwIndex);
+    if (NT_SUCCESS( NtStatus)) {
+	// does it already exist in this structure?  
+	err = BaseGetMultiValueIndex(lpMultiValue,
+				     Buffer, &dwIndex);
 
-        // if err==ERROR_SUCCESS, then the above function found the string already in the value.
-        // don't add a duplicate
-        if (err != ERROR_SUCCESS)
-        {
+	// if err==ERROR_SUCCESS, then the above function found the string already in the value.
+	// don't add a duplicate
+	if (err!=ERROR_SUCCESS) {
 
-            err = BaseAddMultiValue(lpMultiValue, Buffer, cchMultiValue);
-
-            if (err == ERROR_SUCCESS)
-            {
-                NtStatus = BaseSetMultiNameInReg(Path, Value, lpMultiValue,
-                                                 (cchMultiValue + 2 + wcslen(Buffer)) * sizeof(WCHAR));
-            }
-        }
+	    err = BaseAddMultiValue(lpMultiValue, Buffer, cchMultiValue);
+	       
+	    if (err == ERROR_SUCCESS) {
+		NtStatus = BaseSetMultiNameInReg(Path, Value, lpMultiValue, (cchMultiValue+2+wcslen(Buffer))*sizeof(WCHAR));
+	    }
+	}
     }
 
-    if (lpMultiValue)
-    {
-        RtlFreeHeap(RtlProcessHeap(), 0, lpMultiValue);
+    if (lpMultiValue) {
+	RtlFreeHeap( RtlProcessHeap(), 0, lpMultiValue);
     }
-    return NtStatus;
+    return NtStatus ;
+
 }
 
 
 NTSTATUS
-BaseRemoveMultiNameFromReg(PCWSTR Path, PCWSTR Value, PCWSTR Buffer)
+BaseRemoveMultiNameFromReg(
+    PCWSTR Path,
+    PCWSTR Value,
+    PCWSTR Buffer
+    )
 /*++
 
 Routine Description:
@@ -944,52 +1072,62 @@ Return Value:
     DWORD err = ERROR_SUCCESS;
     DWORD dwIndex = 0;
     LPWSTR lpMultiValue = NULL;
-    ULONG cchNames = 0;
+    ULONG  cchNames = 0;
     BOOL fNameRemoved = FALSE;
 
-    NtStatus = BasepGetNameFromReg(Path, Value, lpMultiValue, &cchNames);
+    NtStatus = BasepGetNameFromReg(Path,
+				   Value,
+				   lpMultiValue,
+				   &cchNames);
 
-    if (NtStatus == STATUS_BUFFER_OVERFLOW)
-    {
-        lpMultiValue = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), (cchNames) * sizeof(WCHAR));
-        if (lpMultiValue == NULL)
-        {
-            NtStatus = STATUS_NO_MEMORY;
-        }
-        else
-        {
-            NtStatus = BasepGetNameFromReg(Path, Value, lpMultiValue, &cchNames);
-            err = RtlNtStatusToDosError(NtStatus);
-            if (err == ERROR_SUCCESS)
-            {
-                // search for and remove all values in structure
-                while (err == ERROR_SUCCESS)
-                {
-                    err = BaseGetMultiValueIndex(lpMultiValue, Buffer, &dwIndex);
-                    if (err == ERROR_SUCCESS)
-                    {
-                        err = BaseRemoveMultiValue(lpMultiValue, dwIndex, &cchNames);
-                        fNameRemoved = TRUE;
-                    }
-                }
-                // if we removed a name, write it to the registry...
-                if (fNameRemoved)
-                {
-                    NtStatus = BaseSetMultiNameInReg(Path, Value, lpMultiValue, (cchNames + 1) * sizeof(WCHAR));
-                }
-                else
-                {
-                    // Nothing to remove! ERRROR
-                    NtStatus = STATUS_NOT_FOUND;
-                }
-            }
-            RtlFreeHeap(RtlProcessHeap(), 0, lpMultiValue);
-        }
+    if (NtStatus==STATUS_BUFFER_OVERFLOW) {
+	lpMultiValue = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( TMP_TAG ), (cchNames) * sizeof(WCHAR));
+	if (lpMultiValue==NULL) {
+	    NtStatus = STATUS_NO_MEMORY;
+	}
+	else { 
+	    NtStatus = BasepGetNameFromReg(Path,
+					   Value,
+					   lpMultiValue,
+					   &cchNames);
+	    err = RtlNtStatusToDosError(NtStatus);
+	    if (err == ERROR_SUCCESS) {
+		// search for and remove all values in structure 
+		while (err==ERROR_SUCCESS) { 
+		    err = BaseGetMultiValueIndex(lpMultiValue,
+						 Buffer,
+						 &dwIndex);
+		    if (err == ERROR_SUCCESS) {
+			err = BaseRemoveMultiValue(lpMultiValue,
+						   dwIndex,
+						   &cchNames);
+			fNameRemoved = TRUE;
+		    }
+		}
+		// if we removed a name, write it to the registry...
+		if (fNameRemoved) {
+		    NtStatus = BaseSetMultiNameInReg(
+			Path,
+			Value,
+			lpMultiValue,
+			(cchNames+1)*sizeof(WCHAR));  
+		} 
+		else {
+		    // Nothing to remove! ERRROR
+		    NtStatus = STATUS_NOT_FOUND;
+		    
+		}
+	    }
+	    RtlFreeHeap(RtlProcessHeap(), 0, lpMultiValue);
+	}
     }
     return NtStatus;
 }
 
-BOOL BaseSetNetbiosName(IN LPCWSTR lpComputerName)
+BOOL
+BaseSetNetbiosName(
+    IN LPCWSTR lpComputerName
+    )
 /*++
 
 Routine Description:
@@ -1006,35 +1144,39 @@ Return Value:
 
 --*/
 {
-    NTSTATUS NtStatus;
+    NTSTATUS NtStatus ;
 
     //
     // Validate that the supplied computername is valid (not too long,
     // no incorrect characters, no leading or trailing spaces)
     //
 
-    if (!BaseValidateNetbiosName(lpComputerName))
-    {
-        return (FALSE);
+    if (!BaseValidateNetbiosName(lpComputerName)) {
+	return(FALSE);
     }
 
     //
     // Open the ComputerName\ComputerName node
     //
 
-    NtStatus = BaseSetNameInReg(NON_VOLATILE_COMPUTERNAME_NODE, COMPUTERNAME_VALUE_NAME, lpComputerName);
+    NtStatus = BaseSetNameInReg( NON_VOLATILE_COMPUTERNAME_NODE,
+                                 COMPUTERNAME_VALUE_NAME,
+                                 lpComputerName );
 
-    if (!NT_SUCCESS(NtStatus))
+    if ( !NT_SUCCESS( NtStatus ))
     {
-        BaseSetLastNTError(NtStatus);
+        BaseSetLastNTError( NtStatus );
 
-        return FALSE;
+        return FALSE ;
     }
 
-    return TRUE;
+    return TRUE ;
 }
 
-BOOL BaseSetDnsName(LPCWSTR lpComputerName)
+BOOL
+BaseSetDnsName(
+    LPCWSTR lpComputerName
+    )
 /*++
 
 Routine Description:
@@ -1052,74 +1194,82 @@ Return Value:
 --*/
 {
 
-    UNICODE_STRING NewComputerName;
-    UNICODE_STRING DnsName;
-    NTSTATUS Status;
-    BOOL Return;
-    HANDLE DnsApi;
-    DNS_VALIDATE_NAME_FN *DnsValidateNameFn;
-    DNS_STATUS DnsStatus;
+    UNICODE_STRING NewComputerName ;
+    UNICODE_STRING DnsName ;
+    NTSTATUS Status ;
+    BOOL Return ;
+    HANDLE DnsApi ;
+    DNS_VALIDATE_NAME_FN * DnsValidateNameFn ;
+    DNS_STATUS DnsStatus ;
 
     DnsApi = LoadLibraryW(DnsApiDllString);
 
-    if (!DnsApi)
+    if ( !DnsApi )
     {
-        return FALSE;
+        return FALSE ;
     }
 
-    DnsValidateNameFn = (DNS_VALIDATE_NAME_FN *)GetProcAddress(DnsApi, "DnsValidateName_W");
+    DnsValidateNameFn = (DNS_VALIDATE_NAME_FN *) GetProcAddress( DnsApi, "DnsValidateName_W" );
 
-    if (!DnsValidateNameFn)
+    if ( !DnsValidateNameFn )
     {
-        FreeLibrary(DnsApi);
+        FreeLibrary( DnsApi );
 
-        return FALSE;
+        return FALSE ;
     }
 
-    DnsStatus = DnsValidateNameFn(lpComputerName, DnsNameHostnameLabel);
+    DnsStatus = DnsValidateNameFn( lpComputerName, DnsNameHostnameLabel );
 
-    FreeLibrary(DnsApi);
+    FreeLibrary( DnsApi );
 
-    if ((DnsStatus == 0) || (DnsStatus == DNS_ERROR_NON_RFC_NAME))
+    if ( ( DnsStatus == 0 ) ||
+         ( DnsStatus == DNS_ERROR_NON_RFC_NAME ) )
     {
-        Status = BaseSetNameInReg(TCPIP_ROOT, TCPIP_NV_HOSTNAME, lpComputerName);
+        Status = BaseSetNameInReg( TCPIP_ROOT,
+                                   TCPIP_NV_HOSTNAME,
+                                   lpComputerName );
     }
     else
     {
-        Status = STATUS_INVALID_PARAMETER;
+        Status = STATUS_INVALID_PARAMETER ;
     }
 
-    if (NT_SUCCESS(Status))
+    if ( NT_SUCCESS( Status ) )
     {
-        RtlInitUnicodeString(&DnsName, lpComputerName);
+        RtlInitUnicodeString( &DnsName, lpComputerName );
 
-        Status = RtlDnsHostNameToComputerName(&NewComputerName, &DnsName, TRUE);
+        Status = RtlDnsHostNameToComputerName( &NewComputerName,
+                                               &DnsName,
+                                               TRUE );
 
-        if (NT_SUCCESS(Status))
+        if ( NT_SUCCESS( Status ) )
         {
-            Return = BaseSetNetbiosName(NewComputerName.Buffer);
+            Return = BaseSetNetbiosName( NewComputerName.Buffer );
 
-            RtlFreeUnicodeString(&NewComputerName);
+            RtlFreeUnicodeString( &NewComputerName );
 
-            if (!Return)
+            if ( !Return )
             {
                 //
                 // What?  Rollback?
                 //
 
-                return FALSE;
+                return FALSE ;
             }
 
-            return TRUE;
+            return TRUE ;
         }
     }
 
-    BaseSetLastNTError(Status);
+    BaseSetLastNTError( Status ) ;
 
-    return FALSE;
+    return FALSE ;
 }
 
-BOOL BaseSetDnsDomain(LPCWSTR lpName)
+BOOL
+BaseSetDnsDomain(
+    LPCWSTR lpName
+    )
 /*++
 
 Routine Description:
@@ -1136,40 +1286,40 @@ Return Value:
 
 --*/
 {
-    NTSTATUS Status;
-    HANDLE DnsApi;
-    DNS_VALIDATE_NAME_FN *DnsValidateNameFn;
-    DNS_STATUS DnsStatus;
+    NTSTATUS Status ;
+    HANDLE DnsApi ;
+    DNS_VALIDATE_NAME_FN * DnsValidateNameFn ;
+    DNS_STATUS DnsStatus ;
 
     //
     // Special case the empty string, which is legal, but not according to dnsapi
     //
 
-    if (*lpName)
+    if ( *lpName )
     {
         DnsApi = LoadLibraryW(DnsApiDllString);
 
-        if (!DnsApi)
+        if ( !DnsApi )
         {
-            return FALSE;
+            return FALSE ;
         }
 
-        DnsValidateNameFn = (DNS_VALIDATE_NAME_FN *)GetProcAddress(DnsApi, "DnsValidateName_W");
+        DnsValidateNameFn = (DNS_VALIDATE_NAME_FN *) GetProcAddress( DnsApi, "DnsValidateName_W" );
 
-        if (!DnsValidateNameFn)
+        if ( !DnsValidateNameFn )
         {
-            FreeLibrary(DnsApi);
+            FreeLibrary( DnsApi );
 
-            return FALSE;
+            return FALSE ;
         }
 
-        DnsStatus = DnsValidateNameFn(lpName, DnsNameDomain);
+        DnsStatus = DnsValidateNameFn( lpName, DnsNameDomain );
 
-        FreeLibrary(DnsApi);
+        FreeLibrary( DnsApi );
     }
     else
     {
-        DnsStatus = 0;
+        DnsStatus = 0 ;
     }
 
     //
@@ -1177,26 +1327,35 @@ Return Value:
     //
 
 
-    if ((DnsStatus == 0) || (DnsStatus == DNS_ERROR_NON_RFC_NAME))
+    if ( ( DnsStatus == 0 ) ||
+         ( DnsStatus == DNS_ERROR_NON_RFC_NAME ) )
     {
-        Status = BaseSetNameInReg(TCPIP_ROOT, TCPIP_NV_DOMAINNAME, lpName);
+        Status = BaseSetNameInReg(
+                        TCPIP_ROOT,
+                        TCPIP_NV_DOMAINNAME,
+                        lpName );
     }
     else
     {
-        Status = STATUS_INVALID_PARAMETER;
+        Status = STATUS_INVALID_PARAMETER ;
     }
 
 
-    if (!NT_SUCCESS(Status))
+
+    if ( !NT_SUCCESS( Status ) )
     {
-        BaseSetLastNTError(Status);
+        BaseSetLastNTError( Status );
 
-        return FALSE;
+        return FALSE ;
     }
-    return TRUE;
+    return TRUE ;
+
 }
 
-BOOL BaseSetAltNetBiosName(IN LPCWSTR lpComputerName)
+BOOL
+BaseSetAltNetBiosName(
+    IN LPCWSTR lpComputerName
+    )
 /*++
 
 Routine Description:
@@ -1215,25 +1374,30 @@ Return Value:
 {
     NTSTATUS NtStatus = STATUS_SUCCESS;
 
-    if (!BaseValidateNetbiosName(lpComputerName))
-    {
-        BaseSetLastNTError(STATUS_INVALID_PARAMETER);
-        return (FALSE);
+    if (!BaseValidateNetbiosName(lpComputerName)) {
+	BaseSetLastNTError( STATUS_INVALID_PARAMETER );
+	return(FALSE);
     }
 
-    NtStatus = BaseAddMultiNameInReg(ALT_COMPUTERNAME_NODE, COMPUTERNAME_OPTIONAL_NAME, lpComputerName);
+    NtStatus = BaseAddMultiNameInReg( 
+	ALT_COMPUTERNAME_NODE,
+	COMPUTERNAME_OPTIONAL_NAME,
+	lpComputerName );
 
-
-    if (!NT_SUCCESS(NtStatus))
+    
+    if ( !NT_SUCCESS( NtStatus ))
     {
-        BaseSetLastNTError(NtStatus);
-        return FALSE;
+        BaseSetLastNTError( NtStatus );
+        return FALSE ;
     }
 
-    return TRUE;
+    return TRUE ;
 }
 
-BOOL BaseSetAltDnsFQHostname(IN LPCWSTR lpDnsFQHostname)
+BOOL
+BaseSetAltDnsFQHostname(
+    IN LPCWSTR lpDnsFQHostname
+    )
 /*++
 
 Routine Description:
@@ -1252,19 +1416,25 @@ Return Value:
 {
     NTSTATUS NtStatus = STATUS_SUCCESS;
 
-    NtStatus = BaseAddMultiNameInReg(DNSCACHE_ROOT, DNS_ALT_HOSTNAME, lpDnsFQHostname);
+    NtStatus = BaseAddMultiNameInReg(
+	DNSCACHE_ROOT,
+	DNS_ALT_HOSTNAME,  
+	lpDnsFQHostname);
 
-
-    if (!NT_SUCCESS(NtStatus))
+    
+    if ( !NT_SUCCESS( NtStatus ))
     {
-        BaseSetLastNTError(NtStatus);
-        return FALSE;
+        BaseSetLastNTError( NtStatus );
+        return FALSE ;
     }
 
-    return TRUE;
+    return TRUE ;
 }
 
-BOOL BaseIsAltDnsFQHostname(LPCWSTR lpAltDnsFQHostname)
+BOOL
+BaseIsAltDnsFQHostname(
+    LPCWSTR lpAltDnsFQHostname
+    )
 /*++
 
 Routine Description:
@@ -1289,28 +1459,36 @@ Return Value:
     DWORD dwIndex = 0;
     DWORD err = ERROR_SUCCESS;
 
-    NtStatus = BasepGetNameFromReg(DNSCACHE_ROOT, DNS_ALT_HOSTNAME, lpNames, &cchNames);
+    NtStatus = BasepGetNameFromReg(DNSCACHE_ROOT,
+				   DNS_ALT_HOSTNAME,
+				   lpNames,
+				   &cchNames);
 
-    if (NtStatus == STATUS_BUFFER_OVERFLOW)
-    {
-        lpNames = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), (cchNames) * sizeof(WCHAR));
-        if (lpNames != NULL)
-        {
-            NtStatus = BasepGetNameFromReg(DNSCACHE_ROOT, DNS_ALT_HOSTNAME, lpNames, &cchNames);
-            err = RtlNtStatusToDosError(NtStatus);
-            if (err == ERROR_SUCCESS)
-            {
+    if (NtStatus==STATUS_BUFFER_OVERFLOW) {
+	lpNames = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( TMP_TAG ), (cchNames) * sizeof(WCHAR));
+	if (lpNames!=NULL) { 
+	    NtStatus = BasepGetNameFromReg(DNSCACHE_ROOT,
+					   DNS_ALT_HOSTNAME,
+					   lpNames,
+					   &cchNames);
+	    err = RtlNtStatusToDosError(NtStatus);
+	    if (err == ERROR_SUCCESS) {
 
-                err = BaseGetMultiValueIndex(lpNames, lpAltDnsFQHostname, &dwIndex);
-                fFound = err == ERROR_SUCCESS;
-            }
-            RtlFreeHeap(RtlProcessHeap(), 0, lpNames);
-        }
+		err = BaseGetMultiValueIndex(lpNames,
+					     lpAltDnsFQHostname,
+					     &dwIndex);
+		fFound = err==ERROR_SUCCESS; 
+	    }
+	    RtlFreeHeap( RtlProcessHeap(), 0, lpNames);
+	}
     }
     return fFound;
 }
 
-BOOL BaseRemoveAltNetBiosName(IN LPCWSTR lpAltComputerName)
+BOOL
+BaseRemoveAltNetBiosName(
+    IN LPCWSTR lpAltComputerName
+    )
 /*++
 
 Routine Description:
@@ -1329,18 +1507,23 @@ Return Value:
 {
     NTSTATUS NtStatus = STATUS_SUCCESS;
 
-    NtStatus = BaseRemoveMultiNameFromReg(ALT_COMPUTERNAME_NODE, COMPUTERNAME_OPTIONAL_NAME, lpAltComputerName);
-
-    if (!NT_SUCCESS(NtStatus))
+    NtStatus = BaseRemoveMultiNameFromReg ( ALT_COMPUTERNAME_NODE,
+					    COMPUTERNAME_OPTIONAL_NAME,
+					    lpAltComputerName );
+    
+    if ( !NT_SUCCESS( NtStatus ))
     {
-        BaseSetLastNTError(NtStatus);
-        return FALSE;
+        BaseSetLastNTError( NtStatus );
+        return FALSE ;
     }
 
-    return TRUE;
+    return TRUE ;
 }
 
-BOOL BaseRemoveAltDnsFQHostname(IN LPCWSTR lpAltDnsFQHostname)
+BOOL
+BaseRemoveAltDnsFQHostname(
+    IN LPCWSTR lpAltDnsFQHostname
+    )
 /*++
 
 Routine Description:
@@ -1359,19 +1542,24 @@ Return Value:
 {
     NTSTATUS NtStatus = STATUS_SUCCESS;
 
-    NtStatus = BaseRemoveMultiNameFromReg(DNSCACHE_ROOT, DNS_ALT_HOSTNAME, lpAltDnsFQHostname);
-
-    if (!NT_SUCCESS(NtStatus))
+    NtStatus = BaseRemoveMultiNameFromReg ( DNSCACHE_ROOT,
+					 DNS_ALT_HOSTNAME,
+					 lpAltDnsFQHostname );
+    
+    if ( !NT_SUCCESS( NtStatus ))
     {
-        BaseSetLastNTError(NtStatus);
-        return FALSE;
+        BaseSetLastNTError( NtStatus );
+        return FALSE ;
     }
 
-    return TRUE;
+    return TRUE ;
 }
 
 DWORD
-BaseEnumAltDnsFQHostnames(OUT LPWSTR lpAltDnsFQHostnames, IN OUT LPDWORD nSize)
+BaseEnumAltDnsFQHostnames(
+    OUT LPWSTR lpAltDnsFQHostnames,
+    IN OUT LPDWORD nSize
+    )
 
 /*++
 
@@ -1383,28 +1571,32 @@ Routine Description:
 {
     NTSTATUS status = STATUS_SUCCESS;
 
-    status = BasepGetNameFromReg(DNSCACHE_ROOT, DNS_ALT_HOSTNAME, lpAltDnsFQHostnames, nSize);
+    status = BasepGetNameFromReg(
+	DNSCACHE_ROOT,
+	DNS_ALT_HOSTNAME,  
+	lpAltDnsFQHostnames,
+	nSize);
 
-    if (status == STATUS_OBJECT_NAME_NOT_FOUND)
-    {
-        if ((lpAltDnsFQHostnames != NULL) && (*nSize > 0))
-        {
-            lpAltDnsFQHostnames[0] = L'\0';
-            *nSize = 0;
-            status = STATUS_SUCCESS;
-        }
-        else
-        {
-            *nSize = 1;
-            status = STATUS_BUFFER_OVERFLOW;
-        }
+    if (status == STATUS_OBJECT_NAME_NOT_FOUND) {
+	if ((lpAltDnsFQHostnames!=NULL) && (*nSize>0)) {
+	    lpAltDnsFQHostnames[0]=L'\0';
+	    *nSize=0;
+	    status=STATUS_SUCCESS;
+	}
+	else {
+	    *nSize=1;
+	    status=STATUS_BUFFER_OVERFLOW;
+	} 
     }
 
     return RtlNtStatusToDosError(status);
 }
 
 LPWSTR
-BaseParseDnsName(IN LPCWSTR lpDnsName, IN ULONG NamePart)
+BaseParseDnsName(
+    IN LPCWSTR lpDnsName,
+    IN ULONG NamePart
+    )
 /*++
 
 Routine Description:
@@ -1427,51 +1619,46 @@ Return Value:
     ULONG cchName = 0;
     LPWSTR lpName = NULL;
 
-    if (lpDnsName == NULL)
-    {
-        return NULL;
+    if (lpDnsName==NULL) {
+	return NULL;
     }
-
+    
     cchCharIndex = wcscspn(lpDnsName, L".");
 
-    if (NamePart == DNS_HOSTNAME)
-    {
-        cchName = cchCharIndex;
+    if (NamePart==DNS_HOSTNAME) {
+	cchName = cchCharIndex;
     }
-    else
-    {
-        if (cchCharIndex == wcslen(lpDnsName))
-        {
-            // no period found,
-            cchName = 0;
-        }
-        else
-        {
-            cchName = wcslen(lpDnsName) - (cchCharIndex + 1);
-        }
+    else {
+	if (cchCharIndex==wcslen(lpDnsName)) {
+	    // no period found, 
+	    cchName = 0;
+	}
+	else {
+	    cchName =  wcslen(lpDnsName)-(cchCharIndex+1);
+	}
     }
 
-    lpName = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), (cchName + 1) * sizeof(WCHAR));
-    if (lpName == NULL)
-    {
-        return NULL;
+    lpName = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( TMP_TAG ), (cchName + 1)*sizeof(WCHAR));
+    if (lpName==NULL) {
+	return NULL; 
     }
 
     // copy the correct part into the structure
-    if (NamePart == DNS_HOSTNAME)
-    {
-        wcsncpy(lpName, lpDnsName, cchName);
+    if (NamePart==DNS_HOSTNAME) {
+	wcsncpy(lpName, lpDnsName, cchName);
     }
-    else
-    {
-        wcsncpy(lpName, (LPWSTR)(lpDnsName + cchCharIndex + 1), cchName);
+    else {
+	wcsncpy(lpName, (LPWSTR)(lpDnsName + cchCharIndex + 1), cchName); 
     }
     lpName[cchName] = L'\0';
 
     return lpName;
 }
 
-BOOL BaseIsNetBiosNameInUse(LPWSTR lpCompName)
+BOOL
+BaseIsNetBiosNameInUse(
+    LPWSTR lpCompName
+    )
 /*++
 
 Routine Description:
@@ -1502,88 +1689,80 @@ Return Value:
     BOOL fInUse = FALSE;
     BOOL fIsNetBiosNameInUse = TRUE;
 
-    NtStatus = BasepGetNameFromReg(DNSCACHE_ROOT, DNS_ALT_HOSTNAME, lpMultiValue, &cchMultiValue);
+    NtStatus = BasepGetNameFromReg(DNSCACHE_ROOT, 
+			DNS_ALT_HOSTNAME, 
+			lpMultiValue, 
+			&cchMultiValue);
     err = RtlNtStatusToDosError(NtStatus);
-    if (err == ERROR_MORE_DATA)
-    {
-        lpMultiValue = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), cchMultiValue * sizeof(WCHAR));
-        if (lpMultiValue == NULL)
-        {
-            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-            return TRUE;
-        }
-        NtStatus = BasepGetNameFromReg(DNSCACHE_ROOT, DNS_ALT_HOSTNAME, lpMultiValue, &cchMultiValue);
-        err = RtlNtStatusToDosError(NtStatus);
+    if (err==ERROR_MORE_DATA) {
+	lpMultiValue = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( TMP_TAG ), cchMultiValue * sizeof(WCHAR));
+	if (lpMultiValue==NULL) {
+	    SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+	    return TRUE;
+	}
+	NtStatus = BasepGetNameFromReg(DNSCACHE_ROOT,
+				       DNS_ALT_HOSTNAME,
+				       lpMultiValue,
+				       &cchMultiValue);
+	err=RtlNtStatusToDosError(NtStatus);
     }
-    if (err == ERROR_SUCCESS)
-    {
-        dwIndex = 0;
-        while (err == ERROR_SUCCESS)
-        {
-            err = BasepGetMultiValueAddr(lpMultiValue, dwIndex, &lpAltDnsFQHostname, &cchAltDnsHostname);
+    if (err == ERROR_SUCCESS) {
+	dwIndex = 0;
+	while (err == ERROR_SUCCESS) { 
+	    err = BasepGetMultiValueAddr(lpMultiValue,
+				       dwIndex,
+				       &lpAltDnsFQHostname,
+				       &cchAltDnsHostname);
 
-            // get net bios names
-            if (err == ERROR_SUCCESS)
-            {
-                if (!DnsHostnameToComputerNameW(lpAltDnsFQHostname, lpAltCompName, &cchAltCompName))
-                {
-                    err = GetLastError();
-                    if (err == ERROR_MORE_DATA)
-                    {
-                        // DnsHostNameToComputerNameW bug
-                        cchAltCompName += 1;
-                        // DnsHostNameToComputerNameW bug
+	    // get net bios names
+	    if (err == ERROR_SUCCESS) {
+		if (!DnsHostnameToComputerNameW(lpAltDnsFQHostname,
+						      lpAltCompName,
+						      &cchAltCompName)) {
+		    err = GetLastError();
+		    if (err==ERROR_MORE_DATA) {
+			// DnsHostNameToComputerNameW bug
+			cchAltCompName += 1;
+			// DnsHostNameToComputerNameW bug
 
-                        lpAltCompName =
-                            RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), cchAltCompName * sizeof(WCHAR));
-                        if (lpAltCompName == NULL)
-                        {
-                            err = ERROR_NOT_ENOUGH_MEMORY;
-                        }
-                        else
-                        {
-                            if (!DnsHostnameToComputerNameW(lpAltDnsFQHostname, lpAltCompName, &cchAltCompName))
-                            {
-                                err = GetLastError();
-                            }
-                            else
-                            {
-                                err = ERROR_SUCCESS;
-                            }
-                        }
-                    }
-                }
-                if (err == ERROR_SUCCESS)
-                {
-                    if (!_wcsicmp(lpAltCompName, lpCompName))
-                    {
-                        fInUse = TRUE;
-                    }
-                }
-            }
-            dwIndex++;
-        }
-
-        // exits the above while loop when err==ERROR_NOT_FOUND, whether found or not
-        if (err == ERROR_NOT_FOUND)
-        {
-            fIsNetBiosNameInUse = fInUse;
-            err = ERROR_SUCCESS;
-        }
-        else
-        {
-            // error, default to in use
-            fIsNetBiosNameInUse = TRUE;
-        }
+			lpAltCompName = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( TMP_TAG ), cchAltCompName*sizeof(WCHAR));
+			if (lpAltCompName==NULL) {
+			    err = ERROR_NOT_ENOUGH_MEMORY;
+			}
+			else {
+			    if (!DnsHostnameToComputerNameW(lpAltDnsFQHostname, lpAltCompName, &cchAltCompName)) {
+				err = GetLastError();
+			    } else {
+				err = ERROR_SUCCESS;
+			    }
+			}
+		    }  
+		}
+		if (err==ERROR_SUCCESS) {
+		    if (!_wcsicmp(lpAltCompName, lpCompName)) {
+			fInUse = TRUE;
+		    }
+		}
+	    }
+	    dwIndex++;
+	}
+	
+	// exits the above while loop when err==ERROR_NOT_FOUND, whether found or not
+	if (err==ERROR_NOT_FOUND) {
+	    fIsNetBiosNameInUse = fInUse;
+	    err = ERROR_SUCCESS;
+	}
+	else {
+	    // error, default to in use
+	    fIsNetBiosNameInUse = TRUE;
+	}
     }
 
-    if (lpMultiValue)
-    {
-        RtlFreeHeap(RtlProcessHeap(), 0, lpMultiValue);
+    if (lpMultiValue) {
+	RtlFreeHeap(RtlProcessHeap(), 0, lpMultiValue);
     }
-    if (lpAltCompName)
-    {
-        RtlFreeHeap(RtlProcessHeap(), 0, lpAltCompName);
+    if (lpAltCompName) {
+	RtlFreeHeap(RtlProcessHeap(), 0, lpAltCompName);
     }
     return fIsNetBiosNameInUse;
 }
@@ -1593,7 +1772,12 @@ Return Value:
 //
 
 NTSTATUS
-GetNameFromValue(HANDLE hKey, LPWSTR SubKeyName, LPWSTR ValueValue, LPDWORD nSize)
+GetNameFromValue(
+    HANDLE hKey,
+    LPWSTR SubKeyName,
+    LPWSTR ValueValue,
+    LPDWORD nSize
+    )
 
 /*++
 
@@ -1620,9 +1804,8 @@ Return Value:
 --*/
 {
 
-#define VALUE_BUFFER_SIZE                 \
-    (sizeof(KEY_VALUE_FULL_INFORMATION) + \
-     (sizeof(COMPUTERNAME_VALUE_NAME) + MAX_COMPUTERNAME_LENGTH + 1) * sizeof(WCHAR))
+#define VALUE_BUFFER_SIZE (sizeof(KEY_VALUE_FULL_INFORMATION) + \
+    (sizeof( COMPUTERNAME_VALUE_NAME ) + MAX_COMPUTERNAME_LENGTH + 1) * sizeof(WCHAR))
 
     NTSTATUS NtStatus;
     UNICODE_STRING KeyName;
@@ -1640,22 +1823,30 @@ Return Value:
 
     RtlInitUnicodeString(&KeyName, SubKeyName);
 
-    InitializeObjectAttributes(&ObjectAttributes, &KeyName, OBJ_CASE_INSENSITIVE, hKey, NULL);
+    InitializeObjectAttributes(&ObjectAttributes,
+                              &KeyName,
+                              OBJ_CASE_INSENSITIVE,
+                              hKey,
+                              NULL
+                              );
 
     NtStatus = NtOpenKey(&hSubKey, KEY_READ, &ObjectAttributes);
 
-    if (NT_SUCCESS(NtStatus))
-    {
+    if (NT_SUCCESS(NtStatus)) {
 
         RtlInitUnicodeString(&ValueName, COMPUTERNAME_VALUE_NAME);
 
-        NtStatus = NtQueryValueKey(hSubKey, &ValueName, KeyValueFullInformation, pKeyValueInformation,
-                                   VALUE_BUFFER_SIZE, &ValueLength);
+        NtStatus = NtQueryValueKey(hSubKey,
+                                   &ValueName,
+                                   KeyValueFullInformation,
+                                   pKeyValueInformation,
+                                   VALUE_BUFFER_SIZE,
+                                   &ValueLength);
 
         NtClose(hSubKey);
 
-        if (NT_SUCCESS(NtStatus) && (pKeyValueInformation->DataLength > 0))
-        {
+        if (NT_SUCCESS(NtStatus) && 
+            (pKeyValueInformation->DataLength > 0 )) {
 
             //
             // If the user's buffer is big enough, move it in
@@ -1663,61 +1854,67 @@ Return Value:
             // it's not.
             //
 
-            pTerminator = (PWCHAR)((PBYTE)pKeyValueInformation + pKeyValueInformation->DataOffset +
-                                   pKeyValueInformation->DataLength);
+            pTerminator = (PWCHAR)((PBYTE) pKeyValueInformation +
+                pKeyValueInformation->DataOffset +
+                pKeyValueInformation->DataLength);
             pTerminator--;
 
-            if (*pTerminator == L'\0')
-            {
-                pKeyValueInformation->DataLength -= sizeof(WCHAR);
+            if (*pTerminator == L'\0') {
+               pKeyValueInformation->DataLength -= sizeof(WCHAR);
             }
 
-            if (*nSize >= pKeyValueInformation->DataLength / sizeof(WCHAR) + 1)
-            {
-                //
-                // This isn't guaranteed to be NULL terminated, make it so
-                //
-                RtlCopyMemory(ValueValue, (LPWSTR)((PBYTE)pKeyValueInformation + pKeyValueInformation->DataOffset),
-                              pKeyValueInformation->DataLength);
+            if (*nSize >= pKeyValueInformation->DataLength/sizeof(WCHAR) + 1) {
+               //
+               // This isn't guaranteed to be NULL terminated, make it so
+               //
+                    RtlCopyMemory(ValueValue,
+                        (LPWSTR)((PBYTE) pKeyValueInformation +
+                        pKeyValueInformation->DataOffset),
+                        pKeyValueInformation->DataLength);
 
-                pTerminator = (PWCHAR)((PBYTE)ValueValue + pKeyValueInformation->DataLength);
-                *pTerminator = L'\0';
+                    pTerminator = (PWCHAR) ((PBYTE) ValueValue +
+                        pKeyValueInformation->DataLength);
+                    *pTerminator = L'\0';
 
-                //
-                // Return the number of characters to the caller
-                //
+                    //
+                    // Return the number of characters to the caller
+                    //
 
-                *nSize = wcslen(ValueValue);
+                    *nSize = wcslen(ValueValue);
             }
-            else
-            {
+            else {
                 NtStatus = STATUS_BUFFER_OVERFLOW;
-                *nSize = pKeyValueInformation->DataLength / sizeof(WCHAR) + 1;
+                *nSize = pKeyValueInformation->DataLength/sizeof(WCHAR) + 1;
             }
+
         }
-        else
-        {
+        else {
             //
             // If the value has been deleted (zero length data),
             // return object not found.
             //
 
-            if (NT_SUCCESS(NtStatus))
+            if ( NT_SUCCESS( NtStatus ) )
             {
-                NtStatus = STATUS_OBJECT_NAME_NOT_FOUND;
+                NtStatus = STATUS_OBJECT_NAME_NOT_FOUND ;
             }
         }
     }
 
-    return (NtStatus);
+    return(NtStatus);
 }
 
-
+
 //
 // UNICODE APIs
 //
 
-BOOL WINAPI GetComputerNameW(LPWSTR lpBuffer, LPDWORD nSize)
+BOOL
+WINAPI
+GetComputerNameW (
+    LPWSTR lpBuffer,
+    LPDWORD nSize
+    )
 
 /*++
 
@@ -1765,35 +1962,34 @@ Return Value:
     // into working when its network name and computer name are different.
     //
 
-    ValueLength = GetEnvironmentVariableW(L"_CLUSTER_NETWORK_NAME_", lpBuffer, *nSize);
-    if (ValueLength != 0)
-    {
+    ValueLength = GetEnvironmentVariableW(L"_CLUSTER_NETWORK_NAME_",
+                                          lpBuffer,
+                                          *nSize);
+    if (ValueLength != 0) {
         //
         // The environment variable exists, return it directly but make sure
         // we honor return semantics
         //
-        ReturnValue = (*nSize >= ValueLength ? TRUE : FALSE);
-        if (!ReturnValue)
-        {
-            SetLastError(ERROR_BUFFER_OVERFLOW);
+        ReturnValue = ( *nSize >= ValueLength ? TRUE : FALSE );
+        if ( !ReturnValue ) {
+            SetLastError( ERROR_BUFFER_OVERFLOW );
         }
         *nSize = ValueLength;
-        return (ReturnValue);
+        return(ReturnValue);
     }
 
 
-    if ((gpTermsrvGetComputerName) && ((errcode = gpTermsrvGetComputerName(lpBuffer, nSize)) != ERROR_RETRY))
-    {
+    if ( (gpTermsrvGetComputerName) &&
+            ((errcode =  gpTermsrvGetComputerName(lpBuffer, nSize)) != ERROR_RETRY) ) {
 
-        if (errcode == ERROR_BUFFER_OVERFLOW)
-        {
+        if (errcode == ERROR_BUFFER_OVERFLOW ) {
             ReturnValue = FALSE;
             goto Cleanup;
-        }
-        else
-        {
+
+        } else {
             goto GoodReturn;
         }
+
     }
 
     //
@@ -1803,12 +1999,16 @@ Return Value:
 
     RtlInitUnicodeString(&KeyName, COMPUTERNAME_ROOT);
 
-    InitializeObjectAttributes(&ObjectAttributes, &KeyName, OBJ_CASE_INSENSITIVE, NULL, NULL);
+    InitializeObjectAttributes(&ObjectAttributes,
+                              &KeyName,
+                              OBJ_CASE_INSENSITIVE,
+                              NULL,
+                              NULL
+                              );
 
     NtStatus = NtOpenKey(&hKey, KEY_READ, &ObjectAttributes);
 
-    if (NtStatus == STATUS_OBJECT_NAME_NOT_FOUND)
-    {
+    if (NtStatus == STATUS_OBJECT_NAME_NOT_FOUND) {
 
         //
         // This should never happen!  This key should have been created
@@ -1830,8 +2030,7 @@ Return Value:
         goto GoodReturn;
     }
 
-    if (!NT_SUCCESS(NtStatus))
-    {
+    if (!NT_SUCCESS(NtStatus)) {
 
         //
         // Some other error, return it to the caller
@@ -1844,21 +2043,20 @@ Return Value:
     // Try to get the name from the volatile key
     //
 
-    NtStatus = GetNameFromValue(hKey, VOLATILE_COMPUTERNAME, lpBuffer, nSize);
+    NtStatus = GetNameFromValue(hKey, VOLATILE_COMPUTERNAME, lpBuffer,
+        nSize);
 
     //
     // The user's buffer wasn't big enough, just return the error.
     //
 
-    if (NtStatus == STATUS_BUFFER_OVERFLOW)
-    {
+    if(NtStatus == STATUS_BUFFER_OVERFLOW) {
         SetLastError(ERROR_BUFFER_OVERFLOW);
         ReturnValue = FALSE;
         goto Cleanup;
     }
 
-    if (NT_SUCCESS(NtStatus))
-    {
+    if (NT_SUCCESS(NtStatus)) {
 
         //
         // The volatile copy is already there, just return it
@@ -1871,10 +2069,10 @@ Return Value:
     // The volatile key isn't there, try for the non-volatile one
     //
 
-    NtStatus = GetNameFromValue(hKey, NON_VOLATILE_COMPUTERNAME, lpBuffer, nSize);
+    NtStatus = GetNameFromValue(hKey, NON_VOLATILE_COMPUTERNAME, lpBuffer,
+        nSize);
 
-    if (NtStatus == STATUS_OBJECT_NAME_NOT_FOUND)
-    {
+    if (NtStatus == STATUS_OBJECT_NAME_NOT_FOUND) {
 
         //
         // This should never happen!  This value should have been created
@@ -1894,8 +2092,7 @@ Return Value:
         goto GoodReturn;
     }
 
-    if (!NT_SUCCESS(NtStatus))
-    {
+    if (!NT_SUCCESS(NtStatus)) {
 
         //
         // Some other error, return it to the caller
@@ -1916,26 +2113,35 @@ Return Value:
 
     RtlInitUnicodeString(&KeyName, VOLATILE_COMPUTERNAME);
 
-    InitializeObjectAttributes(&ObjectAttributes, &KeyName, OBJ_CASE_INSENSITIVE, hKey, NULL);
+    InitializeObjectAttributes(&ObjectAttributes,
+                              &KeyName,
+                              OBJ_CASE_INSENSITIVE,
+                              hKey,
+                              NULL
+                              );
 
     //
     // Now create the key
     //
 
-    NtStatus =
-        NtCreateKey(&hNewKey, KEY_WRITE | KEY_READ, &ObjectAttributes, 0, &Class, REG_OPTION_VOLATILE, &Disposition);
+    NtStatus = NtCreateKey(&hNewKey,
+                         KEY_WRITE | KEY_READ,
+                         &ObjectAttributes,
+                         0,
+                         &Class,
+                         REG_OPTION_VOLATILE,
+                         &Disposition);
 
-    if (Disposition == REG_OPENED_EXISTING_KEY)
-    {
+    if (Disposition == REG_OPENED_EXISTING_KEY) {
 
         //
         // Someone beat us to this, just get the value they put there
         //
 
-        NtStatus = GetNameFromValue(hKey, VOLATILE_COMPUTERNAME, lpBuffer, nSize);
+        NtStatus = GetNameFromValue(hKey, VOLATILE_COMPUTERNAME, lpBuffer,
+           nSize);
 
-        if (NtStatus == STATUS_OBJECT_NAME_NOT_FOUND)
-        {
+        if (NtStatus == STATUS_OBJECT_NAME_NOT_FOUND) {
 
             //
             // This should never happen!  It just told me it existed
@@ -1952,10 +2158,14 @@ Return Value:
 
     RtlInitUnicodeString(&ValueName, COMPUTERNAME_VALUE_NAME);
     ValueLength = (wcslen(lpBuffer) + 1) * sizeof(WCHAR);
-    NtStatus = NtSetValueKey(hNewKey, &ValueName, 0, REG_SZ, lpBuffer, ValueLength);
+    NtStatus = NtSetValueKey(hNewKey,
+                             &ValueName,
+                             0,
+                             REG_SZ,
+                             lpBuffer,
+                             ValueLength);
 
-    if (!NT_SUCCESS(NtStatus))
-    {
+    if (!NT_SUCCESS(NtStatus)) {
 
         goto ErrorReturn;
     }
@@ -1985,21 +2195,24 @@ GoodReturn:
 
 Cleanup:
 
-    if (hKey)
-    {
+    if (hKey) {
         NtClose(hKey);
     }
 
-    if (hNewKey)
-    {
+    if (hNewKey) {
         NtClose(hNewKey);
     }
 
-    return (ReturnValue);
+    return(ReturnValue);
 }
 
 
-BOOL WINAPI SetComputerNameW(LPCWSTR lpComputerName)
+
+BOOL
+WINAPI
+SetComputerNameW (
+    LPCWSTR lpComputerName
+    )
 
 /*++
 
@@ -2043,33 +2256,34 @@ Return Value:
     // The name length limitation should be based on ANSI. (LanMan compatibility)
     //
 
-    NtStatus =
-        RtlUnicodeToMultiByteSize(&AnsiComputerNameLength, (LPWSTR)lpComputerName, ComputerNameLength * sizeof(WCHAR));
+    NtStatus = RtlUnicodeToMultiByteSize(&AnsiComputerNameLength,
+                                         (LPWSTR)lpComputerName,
+                                         ComputerNameLength * sizeof(WCHAR));
 
-    if ((!NT_SUCCESS(NtStatus)) || (AnsiComputerNameLength == 0) || (AnsiComputerNameLength > MAX_COMPUTERNAME_LENGTH))
-    {
+    if ((!NT_SUCCESS(NtStatus)) ||
+        (AnsiComputerNameLength == 0 )||(AnsiComputerNameLength > MAX_COMPUTERNAME_LENGTH)) {
         SetLastError(ERROR_INVALID_PARAMETER);
-        return (FALSE);
+        return(FALSE);
     }
 
     //
     // Check for illegal characters; return an error if one is found
     //
 
-    if (wcscspn(lpComputerName, ILLEGAL_NAME_CHARS_STR) < ComputerNameLength)
-    {
+    if (wcscspn(lpComputerName, ILLEGAL_NAME_CHARS_STR) < ComputerNameLength) {
         SetLastError(ERROR_INVALID_PARAMETER);
-        return (FALSE);
+        return(FALSE);
     }
 
     //
     // Check for leading or trailing spaces
     //
 
-    if (lpComputerName[0] == L' ' || lpComputerName[ComputerNameLength - 1] == L' ')
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return (FALSE);
+    if (lpComputerName[0] == L' ' ||
+        lpComputerName[ComputerNameLength-1] == L' ') {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return(FALSE);
+
     }
     //
     // Open the ComputerName\ComputerName node
@@ -2077,12 +2291,16 @@ Return Value:
 
     RtlInitUnicodeString(&KeyName, NON_VOLATILE_COMPUTERNAME_NODE);
 
-    InitializeObjectAttributes(&ObjectAttributes, &KeyName, OBJ_CASE_INSENSITIVE, NULL, NULL);
+    InitializeObjectAttributes(&ObjectAttributes,
+                              &KeyName,
+                              OBJ_CASE_INSENSITIVE,
+                              NULL,
+                              NULL
+                              );
 
     NtStatus = NtOpenKey(&hKey, KEY_READ | KEY_WRITE, &ObjectAttributes);
 
-    if (NtStatus == STATUS_OBJECT_NAME_NOT_FOUND)
-    {
+    if (NtStatus == STATUS_OBJECT_NAME_NOT_FOUND) {
 
         //
         // This should never happen!  This key should have been created
@@ -2095,7 +2313,7 @@ Return Value:
         // entry here -- but we'd have to be sure to get the right ACLs etc, etc.
 
         SetLastError(ERROR_GEN_FAILURE);
-        return (FALSE);
+        return(FALSE);
     }
 
     //
@@ -2104,22 +2322,33 @@ Return Value:
 
     RtlInitUnicodeString(&ValueName, COMPUTERNAME_VALUE_NAME);
     ValueLength = (wcslen(lpComputerName) + 1) * sizeof(WCHAR);
-    NtStatus = NtSetValueKey(hKey, &ValueName, 0, REG_SZ, (LPWSTR)lpComputerName, ValueLength);
+    NtStatus = NtSetValueKey(hKey,
+                             &ValueName,
+                             0,
+                             REG_SZ,
+                             (LPWSTR)lpComputerName,
+                             ValueLength);
 
-    if (!NT_SUCCESS(NtStatus))
-    {
+    if (!NT_SUCCESS(NtStatus)) {
 
         BaseSetLastNTError(NtStatus);
         NtClose(hKey);
-        return (FALSE);
+        return(FALSE);
     }
 
     NtFlushKey(hKey);
     NtClose(hKey);
-    return (TRUE);
+    return(TRUE);
+
 }
 
-BOOL WINAPI GetComputerNameExW(IN COMPUTER_NAME_FORMAT NameType, OUT LPWSTR lpBuffer, IN OUT LPDWORD nSize)
+BOOL
+WINAPI
+GetComputerNameExW(
+    IN COMPUTER_NAME_FORMAT NameType,
+    OUT LPWSTR lpBuffer,
+    IN OUT LPDWORD nSize
+    )
 
 /*++
 
@@ -2154,276 +2383,314 @@ Return Value:
 
 --*/
 {
-    NTSTATUS Status;
-    DWORD ValueLength;
-    DWORD HostLength;
-    DWORD DomainLength;
-    BOOL DontSetReturn = FALSE;
-    COMPUTER_NAME_FORMAT HostNameFormat, DomainNameFormat;
+    NTSTATUS Status ;
+    DWORD ValueLength ;
+    DWORD HostLength ;
+    DWORD DomainLength ;
+    BOOL DontSetReturn = FALSE ;
+    COMPUTER_NAME_FORMAT HostNameFormat, DomainNameFormat ;
 
 
-    if (NameType >= ComputerNameMax)
+    if ( NameType >= ComputerNameMax )
     {
-        BaseSetLastNTError(STATUS_INVALID_PARAMETER);
-        return FALSE;
+        BaseSetLastNTError( STATUS_INVALID_PARAMETER );
+        return FALSE ;
     }
 
-    if ((nSize == NULL) || ((lpBuffer == NULL) && (*nSize > 0)))
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return (FALSE);
+    if ((nSize==NULL) || ((lpBuffer==NULL) && (*nSize>0))) {
+	SetLastError(ERROR_INVALID_PARAMETER);
+	return(FALSE);
     }
 
     //
     // For general names, allow clusters to override the physical name:
     //
 
-    if ((NameType >= ComputerNameNetBIOS) && (NameType <= ComputerNameDnsFullyQualified))
+    if ( (NameType >= ComputerNameNetBIOS) &&
+         (NameType <= ComputerNameDnsFullyQualified ) )
     {
-        ValueLength = GetEnvironmentVariableW(ClusterNameVars[NameType], lpBuffer, *nSize);
+        ValueLength = GetEnvironmentVariableW(
+                            ClusterNameVars[ NameType ],
+                            lpBuffer,
+                            *nSize );
 
-        if (ValueLength)
+        if ( ValueLength )
         {
             BOOL ReturnValue;
             //
             // ValueLength is the length+NULL of the env. string regardless of
             // how much was copied (gregjohn 1/30/01 note:  this isn't the behaivor
-            // of the rest of the function, which returns length+NULL on failure
-            // and length on success). Indicate how many characters are in the string
+	    // of the rest of the function, which returns length+NULL on failure
+	    // and length on success). Indicate how many characters are in the string
             // and if the user's buffer wasn't big enough, return FALSE
-            //
-            ReturnValue = (*nSize >= ValueLength ? TRUE : FALSE);
-            if (!ReturnValue)
-            {
-                SetLastError(ERROR_MORE_DATA);
+            // 
+            ReturnValue = ( *nSize >= ValueLength ? TRUE : FALSE );
+            if ( !ReturnValue ) {
+                SetLastError( ERROR_MORE_DATA );
             }
-            *nSize = ValueLength;
+            *nSize = ValueLength ;
             return ReturnValue;
         }
     }
 
-    if (lpBuffer && (*nSize > 0))
+    if ( lpBuffer && (*nSize > 0) )
     {
         lpBuffer[0] = L'\0';
     }
 
-    switch (NameType)
+    switch ( NameType )
     {
-    case ComputerNameNetBIOS:
-    case ComputerNamePhysicalNetBIOS:
-        Status = BasepGetNameFromReg(VOLATILE_COMPUTERNAME_NODE, COMPUTERNAME_VALUE_NAME, lpBuffer, nSize);
-
-        if (!NT_SUCCESS(Status))
-        {
-            if (Status != STATUS_BUFFER_OVERFLOW)
+        case ComputerNameNetBIOS:
+        case ComputerNamePhysicalNetBIOS:
+            Status = BasepGetNameFromReg(
+                        VOLATILE_COMPUTERNAME_NODE,
+                        COMPUTERNAME_VALUE_NAME,
+                        lpBuffer,
+                        nSize );
+     
+            if ( !NT_SUCCESS( Status ) )
             {
-                //
-                // Hmm, the value (or key) is missing.  Try the non-volatile
-                // one.
-                //
+                if ( Status != STATUS_BUFFER_OVERFLOW )
+                {
+                    //
+                    // Hmm, the value (or key) is missing.  Try the non-volatile
+                    // one.
+                    //
 
-                Status = BasepGetNameFromReg(NON_VOLATILE_COMPUTERNAME_NODE, COMPUTERNAME_VALUE_NAME, lpBuffer, nSize);
+                    Status = BasepGetNameFromReg(
+                                NON_VOLATILE_COMPUTERNAME_NODE,
+                                COMPUTERNAME_VALUE_NAME,
+                                lpBuffer,
+                                nSize );
+
+
+                }
             }
-        }
 
-        break;
+            break;
 
-    case ComputerNameDnsHostname:
-    case ComputerNamePhysicalDnsHostname:
-        Status = BasepGetNameFromReg(TCPIP_ROOT, TCPIP_HOSTNAME, lpBuffer, nSize);
+        case ComputerNameDnsHostname:
+        case ComputerNamePhysicalDnsHostname:
+            Status = BasepGetNameFromReg(
+                        TCPIP_ROOT,
+                        TCPIP_HOSTNAME,
+                        lpBuffer,
+                        nSize );
 
-        break;
+            break;
 
-    case ComputerNameDnsDomain:
-    case ComputerNamePhysicalDnsDomain:
+        case ComputerNameDnsDomain:
+        case ComputerNamePhysicalDnsDomain:
 
-        //
-        //  Allow policy to override the domain name from the
-        //  tcpip key.
-        //
+	    //
+	    //  Allow policy to override the domain name from the
+	    //  tcpip key.
+	    //
 
-        Status = BasepGetNameFromReg(TCPIP_POLICY_ROOT, TCPIP_POLICY_DOMAINNAME, lpBuffer, nSize);
+	    Status = BasepGetNameFromReg(
+		TCPIP_POLICY_ROOT,
+		TCPIP_POLICY_DOMAINNAME,
+		lpBuffer,
+		nSize );
 
-        //
-        // If no policy read from the tcpip key.
-        //
-
-        if (!NT_SUCCESS(Status))
-        {
-            Status = BasepGetNameFromReg(TCPIP_ROOT, TCPIP_DOMAINNAME, lpBuffer, nSize);
-        }
-
-        break;
-
-    case ComputerNameDnsFullyQualified:
-    case ComputerNamePhysicalDnsFullyQualified:
-
-        //
-        // This is the tricky case.  We have to construct the name from
-        // the two components for the caller.
-        //
-
-        //
-        // In general, don't set the last status, since we'll end up using
-        // the other calls to handle that for us.
-        //
-
-        DontSetReturn = TRUE;
-
-        Status = STATUS_UNSUCCESSFUL;
-
-        if (lpBuffer == NULL)
-        {
-            //
-            // If this is just the computation call, quickly do the
-            // two components
+	    //
+            // If no policy read from the tcpip key.
             //
 
-            HostLength = DomainLength = 0;
-
-            GetComputerNameExW(ComputerNameDnsHostname, NULL, &HostLength);
-
-            if (GetLastError() == ERROR_MORE_DATA)
+            if ( !NT_SUCCESS( Status ) )
             {
-                GetComputerNameExW(ComputerNameDnsDomain, NULL, &DomainLength);
-
-                if (GetLastError() == ERROR_MORE_DATA)
-                {
-                    //
-                    // Simply add.  Note that since both account for a
-                    // null terminator, the '.' that goes between them is
-                    // covered.
-                    //
-
-                    *nSize = HostLength + DomainLength;
-
-                    Status = STATUS_BUFFER_OVERFLOW;
-
-                    DontSetReturn = FALSE;
-                }
+                Status = BasepGetNameFromReg(
+                            TCPIP_ROOT,
+                            TCPIP_DOMAINNAME,
+                            lpBuffer,
+                            nSize );
             }
-        }
-        else
-        {
-            HostLength = *nSize;
 
-            if (GetComputerNameExW(ComputerNameDnsHostname, lpBuffer, &HostLength))
+            break;
+
+        case ComputerNameDnsFullyQualified:
+        case ComputerNamePhysicalDnsFullyQualified:
+
+            //
+            // This is the tricky case.  We have to construct the name from
+            // the two components for the caller.
+            //
+
+            //
+            // In general, don't set the last status, since we'll end up using
+            // the other calls to handle that for us.
+            //
+
+            DontSetReturn = TRUE ;
+
+            Status = STATUS_UNSUCCESSFUL ;
+
+            if ( lpBuffer == NULL )
             {
+                //
+                // If this is just the computation call, quickly do the
+                // two components
+                //
 
-                HostLength += 1; // Add in the zero character (or . depending on perspective)
-                lpBuffer[HostLength - 1] = L'.';
+                HostLength = DomainLength = 0 ;
 
-                DomainLength = *nSize - HostLength;
+                GetComputerNameExW( ComputerNameDnsHostname, NULL, &HostLength );
 
-                if (GetComputerNameExW(ComputerNameDnsDomain, &lpBuffer[HostLength], &DomainLength))
+		if ( GetLastError() == ERROR_MORE_DATA )
                 {
-                    Status = STATUS_SUCCESS;
+                    GetComputerNameExW( ComputerNameDnsDomain, NULL, &DomainLength );
 
-                    if (DomainLength == 0)
-                    {
-                        lpBuffer[HostLength - 1] = L'\0';
-                        HostLength--;
-                    }
-                    else if ((DomainLength == 1) && (lpBuffer[HostLength] == L'.'))
+                    if ( GetLastError() == ERROR_MORE_DATA )
                     {
                         //
-                        // Legally, the domain name can be a single
-                        // dot '.', indicating that this host is part
-                        // of the root domain.  An odd case, to be sure,
-                        // but needs to be handled.  Since we've already
-                        // stuck a dot separator in the result string,
-                        // get rid of this one, and adjust the values
-                        // accordingly.
+                        // Simply add.  Note that since both account for a
+                        // null terminator, the '.' that goes between them is
+                        // covered.
                         //
-                        lpBuffer[HostLength] = L'\0';
-                        DomainLength = 0;
+
+                        *nSize = HostLength + DomainLength ;
+
+                        Status = STATUS_BUFFER_OVERFLOW ;
+
+                        DontSetReturn = FALSE ;
                     }
-
-                    *nSize = HostLength + DomainLength;
-
-                    DontSetReturn = TRUE;
-                }
-                else if (GetLastError() == ERROR_MORE_DATA)
-                {
-                    //
-                    // Simply add.  Note that since both account for a
-                    // null terminator, the '.' that goes between them is
-                    // covered.
-                    //
-
-                    *nSize = HostLength + DomainLength;
-
-                    Status = STATUS_BUFFER_OVERFLOW;
-
-                    DontSetReturn = FALSE;
-                }
-                else
-                {
-                    //
-                    // Other error from trying to get the DNS Domain name.
-                    // Let the error from the call trickle back.
-                    //
-
-                    *nSize = 0;
-
-                    Status = STATUS_UNSUCCESSFUL;
-
-                    DontSetReturn = TRUE;
-                }
-            }
-            else if (GetLastError() == ERROR_MORE_DATA)
-            {
-                DomainLength = 0;
-                GetComputerNameExW(ComputerNameDnsDomain, NULL, &DomainLength);
-
-                if (GetLastError() == ERROR_MORE_DATA)
-                {
-                    //
-                    // Simply add.  Note that since both account for a
-                    // null terminator, the '.' that goes between them is
-                    // covered.
-                    //
-
-                    *nSize = HostLength + DomainLength;
-
-                    Status = STATUS_BUFFER_OVERFLOW;
-
-                    DontSetReturn = FALSE;
                 }
             }
             else
             {
+                HostLength = *nSize ;
 
-                //
-                // Other error from trying to get the DNS Hostname.
-                // Let the error from the call trickle back.
-                //
+                if ( GetComputerNameExW( ComputerNameDnsHostname,
+                                         lpBuffer,
+                                         &HostLength ) )
+                {
+                    
+                    HostLength += 1; // Add in the zero character (or . depending on perspective)
+                    lpBuffer[ HostLength - 1 ] = L'.';
 
-                *nSize = 0;
+                    DomainLength = *nSize - HostLength ;
 
-                Status = STATUS_UNSUCCESSFUL;
+                    if (GetComputerNameExW( ComputerNameDnsDomain,
+                                            &lpBuffer[ HostLength ],
+                                            &DomainLength ) )
+                    {
+                        Status = STATUS_SUCCESS ;
 
-                DontSetReturn = TRUE;
+                        if ( DomainLength == 0 )
+                        {
+                            lpBuffer[ HostLength - 1 ] = L'\0';
+                            HostLength-- ;
+                        }
+                        else if ( ( DomainLength == 1 ) && 
+                                  ( lpBuffer[ HostLength ] == L'.' ) )
+                        {
+                            //
+                            // Legally, the domain name can be a single
+                            // dot '.', indicating that this host is part
+                            // of the root domain.  An odd case, to be sure, 
+                            // but needs to be handled.  Since we've already
+                            // stuck a dot separator in the result string,
+                            // get rid of this one, and adjust the values
+                            // accordingly.
+                            //
+                            lpBuffer[ HostLength ] = L'\0' ;
+                            DomainLength = 0 ;
+                        }
+
+                        *nSize = HostLength + DomainLength ;
+
+                        DontSetReturn = TRUE ;
+                    }
+                    else if ( GetLastError() == ERROR_MORE_DATA )
+                    {
+                        //
+                        // Simply add.  Note that since both account for a
+                        // null terminator, the '.' that goes between them is
+                        // covered.
+                        //
+
+                        *nSize = HostLength + DomainLength ;
+
+                        Status = STATUS_BUFFER_OVERFLOW ;
+
+                        DontSetReturn = FALSE ;
+                    }
+                    else
+                    {
+                        //
+                        // Other error from trying to get the DNS Domain name.
+                        // Let the error from the call trickle back.
+                        //
+
+                        *nSize = 0 ;
+
+                        Status = STATUS_UNSUCCESSFUL ;
+
+                        DontSetReturn = TRUE ;
+                    }
+
+                }
+                else if ( GetLastError() == ERROR_MORE_DATA )
+                {
+                    DomainLength = 0;
+                    GetComputerNameExW( ComputerNameDnsDomain, NULL, &DomainLength );
+
+                    if ( GetLastError() == ERROR_MORE_DATA )
+                    {
+                        //
+                        // Simply add.  Note that since both account for a
+                        // null terminator, the '.' that goes between them is
+                        // covered.
+                        //
+
+                        *nSize = HostLength + DomainLength ;
+
+                        Status = STATUS_BUFFER_OVERFLOW ;
+
+                        DontSetReturn = FALSE ;
+                    }
+                }
+                else
+                {
+
+                    //
+                    // Other error from trying to get the DNS Hostname.
+                    // Let the error from the call trickle back.
+                    //
+
+                    *nSize = 0 ;
+
+                    Status = STATUS_UNSUCCESSFUL ;
+
+                    DontSetReturn = TRUE ;
+                }
             }
-        }
 
 
-        break;
+            break;
+
+
+
     }
 
-    if (!NT_SUCCESS(Status))
+    if ( !NT_SUCCESS( Status ) )
     {
-        if (!DontSetReturn)
+        if ( !DontSetReturn )
         {
-            BaseSetLastNTError(Status);
+            BaseSetLastNTError( Status );
         }
-        return FALSE;
+        return FALSE ;
     }
 
-    return TRUE;
+    return TRUE ;
 }
 
-BOOL WINAPI SetComputerNameExW(IN COMPUTER_NAME_FORMAT NameType, IN LPCWSTR lpBuffer)
+BOOL
+WINAPI
+SetComputerNameExW(
+    IN COMPUTER_NAME_FORMAT NameType,
+    IN LPCWSTR lpBuffer
+    )
 
 /*++
 
@@ -2448,58 +2715,69 @@ Return Value:
 
 --*/
 {
-    ULONG Length;
+    ULONG Length ;
 
     //
     // Validate name:
     //
 
-    if (!lpBuffer)
+    if ( !lpBuffer )
     {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE ;
     }
 
-    Length = wcslen(lpBuffer);
+    Length = wcslen( lpBuffer );
 
-    if (Length)
+    if ( Length )
     {
-        if ((lpBuffer[0] == L' ') || (lpBuffer[Length - 1] == L' '))
+        if ( ( lpBuffer[0] == L' ') ||
+             ( lpBuffer[ Length - 1 ] == L' ' ) )
         {
-            SetLastError(ERROR_INVALID_PARAMETER);
-            return FALSE;
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return FALSE ;
         }
+
     }
 
-    if (wcscspn(lpBuffer, ILLEGAL_NAME_CHARS_STR) < Length)
-    {
+    if (wcscspn(lpBuffer, ILLEGAL_NAME_CHARS_STR) < Length) {
         SetLastError(ERROR_INVALID_PARAMETER);
-        return (FALSE);
+        return(FALSE);
     }
 
-    switch (NameType)
+    switch ( NameType )
     {
-    case ComputerNamePhysicalNetBIOS:
-        return BaseSetNetbiosName(lpBuffer);
+        case ComputerNamePhysicalNetBIOS:
+            return BaseSetNetbiosName( lpBuffer );
 
-    case ComputerNamePhysicalDnsHostname:
-        return BaseSetDnsName(lpBuffer);
+        case ComputerNamePhysicalDnsHostname:
+            return BaseSetDnsName( lpBuffer );
 
-    case ComputerNamePhysicalDnsDomain:
-        return BaseSetDnsDomain(lpBuffer);
+        case ComputerNamePhysicalDnsDomain:
+            return BaseSetDnsDomain( lpBuffer );
 
-    default:
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
+        default:
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return FALSE ;
+
     }
+
 }
 
 
+
+
+
 //
 // ANSI APIs
 //
 
-BOOL WINAPI GetComputerNameA(LPSTR lpBuffer, LPDWORD nSize)
+BOOL
+WINAPI
+GetComputerNameA (
+    LPSTR lpBuffer,
+    LPDWORD nSize
+    )
 
 /*++
 
@@ -2538,18 +2816,17 @@ Return Value:
     // Work buffer needs to be twice the size of the user's buffer
     //
 
-    UnicodeBuffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), *nSize * sizeof(WCHAR));
-    if (!UnicodeBuffer)
-    {
+    UnicodeBuffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( TMP_TAG ), *nSize * sizeof(WCHAR));
+    if (!UnicodeBuffer) {
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-        return (FALSE);
+        return(FALSE);
     }
 
     //
     // Set up an ANSI_STRING that points to the user's buffer
     //
 
-    AnsiString.MaximumLength = (USHORT)*nSize;
+    AnsiString.MaximumLength = (USHORT) *nSize;
     AnsiString.Length = 0;
     AnsiString.Buffer = lpBuffer;
 
@@ -2557,12 +2834,11 @@ Return Value:
     // Call the UNICODE version to do the work
     //
 
-    UnicodeSize = *nSize;
+    UnicodeSize = *nSize ;
 
-    if (!GetComputerNameW(UnicodeBuffer, &UnicodeSize))
-    {
+    if (!GetComputerNameW(UnicodeBuffer, &UnicodeSize)) {
         RtlFreeHeap(RtlProcessHeap(), 0, UnicodeBuffer);
-        return (FALSE);
+        return(FALSE);
     }
 
     //
@@ -2572,16 +2848,15 @@ Return Value:
 
     RtlInitUnicodeString(&UnicodeString, UnicodeBuffer);
     AnsiSize = RtlUnicodeStringToAnsiSize(&UnicodeString);
-    if (AnsiSize > *nSize)
-    {
+    if (AnsiSize > *nSize) {
 
         RtlFreeHeap(RtlProcessHeap(), 0, UnicodeBuffer);
 
-        BaseSetLastNTError(STATUS_BUFFER_OVERFLOW);
+        BaseSetLastNTError( STATUS_BUFFER_OVERFLOW );
 
-        *nSize = AnsiSize + 1;
+        *nSize = AnsiSize + 1 ;
 
-        return (FALSE);
+        return(FALSE);
     }
 
 
@@ -2593,11 +2868,17 @@ Return Value:
 
     *nSize = AnsiString.Length;
     RtlFreeHeap(RtlProcessHeap(), 0, UnicodeBuffer);
-    return (TRUE);
+    return(TRUE);
+
 }
 
 
-BOOL WINAPI SetComputerNameA(LPCSTR lpComputerName)
+
+BOOL
+WINAPI
+SetComputerNameA (
+    LPCSTR lpComputerName
+    )
 
 /*++
 
@@ -2633,26 +2914,31 @@ Return Value:
     //
 
     ComputerNameLength = strlen(lpComputerName);
-    if ((ComputerNameLength == 0) || (ComputerNameLength > MAX_COMPUTERNAME_LENGTH))
-    {
+    if ((ComputerNameLength == 0 )||(ComputerNameLength > MAX_COMPUTERNAME_LENGTH)) {
         SetLastError(ERROR_INVALID_PARAMETER);
-        return (FALSE);
+        return(FALSE);
     }
 
     RtlInitAnsiString(&AnsiString, lpComputerName);
-    NtStatus = RtlAnsiStringToUnicodeString(&UnicodeString, &AnsiString, TRUE);
-    if (!NT_SUCCESS(NtStatus))
-    {
+    NtStatus = RtlAnsiStringToUnicodeString(&UnicodeString, &AnsiString,
+        TRUE);
+    if (!NT_SUCCESS(NtStatus)) {
         BaseSetLastNTError(NtStatus);
-        return (FALSE);
+        return(FALSE);
     }
 
     ReturnValue = SetComputerNameW((LPCWSTR)UnicodeString.Buffer);
     RtlFreeUnicodeString(&UnicodeString);
-    return (ReturnValue);
+    return(ReturnValue);
 }
 
-BOOL WINAPI GetComputerNameExA(IN COMPUTER_NAME_FORMAT NameType, OUT LPSTR lpBuffer, IN OUT LPDWORD nSize)
+BOOL
+WINAPI
+GetComputerNameExA(
+    IN COMPUTER_NAME_FORMAT NameType,
+    OUT LPSTR lpBuffer,
+    IN OUT LPDWORD nSize
+    )
 /*++
 
 Routine Description:
@@ -2690,51 +2976,62 @@ Return Value:
 
     //
     // Validate Input
-    //
+    // 
 
-    if ((nSize == NULL) || ((lpBuffer == NULL) && (*nSize > 0)))
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return (FALSE);
+    if ((nSize==NULL) || ((lpBuffer==NULL) && (*nSize>0))) {
+	SetLastError(ERROR_INVALID_PARAMETER);
+	return(FALSE);
     }
 
     //
     // Work buffer needs to be twice the size of the user's buffer
     //
 
-    UnicodeBuffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), *nSize * sizeof(WCHAR));
-    if (!UnicodeBuffer)
-    {
+    UnicodeBuffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( TMP_TAG ), *nSize * sizeof(WCHAR));
+    if (!UnicodeBuffer) {
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-        return (FALSE);
+        return(FALSE);
     }
-
+   
     //
     // Call the UNICODE version to do the work
     //
 
-    if (!GetComputerNameExW(NameType, UnicodeBuffer, nSize))
-    {
+    if ( !GetComputerNameExW(NameType, UnicodeBuffer, nSize) ) {
         RtlFreeHeap(RtlProcessHeap(), 0, UnicodeBuffer);
-        return (FALSE);
+        return(FALSE);
     }
 
     //
     // Now convert back to ANSI for the caller
-    // Note:  Since we passed the above if statement,
+    // Note:  Since we passed the above if statement, 
     // GetComputerNameExW succeeded, and set *nSize to the number of
     // characters in the string (like wcslen).  We need to convert
     // all these characters and the trailing NULL, so inc *nSize for
     // the conversion call.
     //
 
-    WideCharToMultiByte(CP_ACP, 0, UnicodeBuffer, *nSize + 1, lpBuffer, (*nSize + 1) * sizeof(CHAR), NULL, NULL);
+    WideCharToMultiByte(CP_ACP,
+			0,
+			UnicodeBuffer,
+			*nSize+1,
+			lpBuffer,
+			(*nSize+1) * sizeof(CHAR), 
+			NULL, 
+			NULL);
 
     RtlFreeHeap(RtlProcessHeap(), 0, UnicodeBuffer);
-    return (TRUE);
+    return(TRUE);
+
+
 }
 
-BOOL WINAPI SetComputerNameExA(IN COMPUTER_NAME_FORMAT NameType, IN LPCSTR lpBuffer)
+BOOL
+WINAPI
+SetComputerNameExA(
+    IN COMPUTER_NAME_FORMAT NameType,
+    IN LPCSTR lpBuffer
+    )
 /*++
 
 Routine Description:
@@ -2765,21 +3062,24 @@ Return Value:
 
 
     RtlInitAnsiString(&AnsiString, lpBuffer);
-    NtStatus = RtlAnsiStringToUnicodeString(&UnicodeString, &AnsiString, TRUE);
-    if (!NT_SUCCESS(NtStatus))
-    {
+    NtStatus = RtlAnsiStringToUnicodeString(&UnicodeString, &AnsiString,
+        TRUE);
+    if (!NT_SUCCESS(NtStatus)) {
         BaseSetLastNTError(NtStatus);
-        return (FALSE);
+        return(FALSE);
     }
 
-    ReturnValue = SetComputerNameExW(NameType, (LPCWSTR)UnicodeString.Buffer);
+    ReturnValue = SetComputerNameExW(NameType, (LPCWSTR)UnicodeString.Buffer );
     RtlFreeUnicodeString(&UnicodeString);
-    return (ReturnValue);
+    return(ReturnValue);
 }
 
 DWORD
 WINAPI
-AddLocalAlternateComputerNameW(LPCWSTR lpDnsFQHostname, ULONG ulFlags)
+AddLocalAlternateComputerNameW(
+    LPCWSTR lpDnsFQHostname,
+    ULONG   ulFlags
+    )
 /*++
 
 Routine Description:
@@ -2805,72 +3105,67 @@ Return Value:
     DWORD err = ERROR_SUCCESS;
     LPWSTR lpNetBiosCompName = NULL;
     ULONG ulNetBiosCompNameSize = 0;
-    LPWSTR lpHostname = BaseParseDnsName(lpDnsFQHostname, DNS_HOSTNAME);
+    LPWSTR lpHostname = BaseParseDnsName(lpDnsFQHostname,DNS_HOSTNAME);
 
     //
     // validate input
     //
 
-    if ((lpDnsFQHostname == NULL) || (!BaseValidateFlags(ulFlags)) || (!BaseValidateDnsNames(lpHostname)))
-    {
-        if (lpHostname)
-        {
-            RtlFreeHeap(RtlProcessHeap(), 0, lpHostname);
-        }
-        return ERROR_INVALID_PARAMETER;
+    if ((lpDnsFQHostname==NULL) || (!BaseValidateFlags(ulFlags)) || (!BaseValidateDnsNames(lpHostname))) {
+	if (lpHostname) {
+	    RtlFreeHeap(RtlProcessHeap(), 0, lpHostname);
+	}
+	return ERROR_INVALID_PARAMETER;
     }
 
     // get write lock?
 
-    status = BaseAddMultiNameInReg(DNSCACHE_ROOT, DNS_ALT_HOSTNAME, lpDnsFQHostname);
+    status = BaseAddMultiNameInReg(
+	DNSCACHE_ROOT,
+	DNS_ALT_HOSTNAME,  
+	lpDnsFQHostname);
 
     err = RtlNtStatusToDosError(status);
+    
+    if (err==ERROR_SUCCESS) {
+	// get NetBios name (use DNSHostNameToComputerNameW) and add that to reg for OptionalNames
+	if (!DnsHostnameToComputerNameW(
+	    lpDnsFQHostname,
+	    NULL,
+	    &ulNetBiosCompNameSize)) {
+	    err = GetLastError(); 
+	}
 
-    if (err == ERROR_SUCCESS)
-    {
-        // get NetBios name (use DNSHostNameToComputerNameW) and add that to reg for OptionalNames
-        if (!DnsHostnameToComputerNameW(lpDnsFQHostname, NULL, &ulNetBiosCompNameSize))
-        {
-            err = GetLastError();
-        }
+	if (err==ERROR_MORE_DATA) {
+	    // bug in DNSHostname, returns a size 1 character too small	(forgets null) 
+	    // update when bug is fixed...
+	    ulNetBiosCompNameSize += 1;
+	    lpNetBiosCompName = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( TMP_TAG ), ulNetBiosCompNameSize * sizeof(WCHAR));
+	    if (lpNetBiosCompName==NULL) {  
+		err = ERROR_NOT_ENOUGH_MEMORY;
+	    }
+	    else {  
+		if (!DnsHostnameToComputerNameW(lpDnsFQHostname, 
+						lpNetBiosCompName,
+						&ulNetBiosCompNameSize)) {
+		    err = GetLastError();
+		}
+		else {
+		    if (!BaseSetAltNetBiosName(lpNetBiosCompName)) {
+			err = GetLastError();
+		    }
+		}
+		RtlFreeHeap(RtlProcessHeap(), 0, lpNetBiosCompName);
+	    }
+	}
 
-        if (err == ERROR_MORE_DATA)
-        {
-            // bug in DNSHostname, returns a size 1 character too small	(forgets null)
-            // update when bug is fixed...
-            ulNetBiosCompNameSize += 1;
-            lpNetBiosCompName =
-                RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), ulNetBiosCompNameSize * sizeof(WCHAR));
-            if (lpNetBiosCompName == NULL)
-            {
-                err = ERROR_NOT_ENOUGH_MEMORY;
-            }
-            else
-            {
-                if (!DnsHostnameToComputerNameW(lpDnsFQHostname, lpNetBiosCompName, &ulNetBiosCompNameSize))
-                {
-                    err = GetLastError();
-                }
-                else
-                {
-                    if (!BaseSetAltNetBiosName(lpNetBiosCompName))
-                    {
-                        err = GetLastError();
-                    }
-                }
-                RtlFreeHeap(RtlProcessHeap(), 0, lpNetBiosCompName);
-            }
-        }
-
-        if (err != ERROR_SUCCESS)
-        {
-            // remove multi name in reg
-            // rollback?
-        }
+	if (err!=ERROR_SUCCESS) {
+	    // remove multi name in reg
+	    // rollback?
+	}
     }
-    if (lpHostname)
-    {
-        RtlFreeHeap(RtlProcessHeap(), 0, lpHostname);
+    if (lpHostname) {
+	RtlFreeHeap(RtlProcessHeap(), 0, lpHostname);
     }
     // release write lock?
     return RtlNtStatusToDosError(status);
@@ -2878,22 +3173,23 @@ Return Value:
 
 DWORD
 WINAPI
-AddLocalAlternateComputerNameA(LPCSTR lpDnsFQHostname, ULONG ulFlags)
+AddLocalAlternateComputerNameA(
+    LPCSTR lpDnsFQHostname,
+    ULONG  ulFlags
+    )
 {
 
     LPWSTR lpDnsFQHostnameW = NULL;
     DWORD err = ERROR_SUCCESS;
 
-    if (lpDnsFQHostname == NULL)
-    {
-        return ERROR_INVALID_PARAMETER;
+    if (lpDnsFQHostname==NULL) {
+	return ERROR_INVALID_PARAMETER;
     }
 
     err = BaseMultiByteToWideCharWithAlloc(lpDnsFQHostname, &lpDnsFQHostnameW);
 
-    if (err == ERROR_SUCCESS)
-    {
-        err = AddLocalAlternateComputerNameW(lpDnsFQHostnameW, ulFlags);
+    if (err==ERROR_SUCCESS) {
+	err = AddLocalAlternateComputerNameW(lpDnsFQHostnameW, ulFlags);
     }
 
     BaseConvertCharFree((VOID *)lpDnsFQHostnameW);
@@ -2902,7 +3198,10 @@ AddLocalAlternateComputerNameA(LPCSTR lpDnsFQHostname, ULONG ulFlags)
 
 DWORD
 WINAPI
-RemoveLocalAlternateComputerNameW(LPCWSTR lpAltDnsFQHostname, ULONG ulFlags)
+RemoveLocalAlternateComputerNameW(
+    LPCWSTR lpAltDnsFQHostname,
+    ULONG ulFlags
+    )
 /*++
 
 Routine Description:
@@ -2927,50 +3226,43 @@ Return Value:
     LPWSTR lpAltNetBiosCompName = NULL;
     ULONG cchAltNetBiosCompName = 0;
 
-    if ((!BaseValidateFlags(ulFlags)) || (lpAltDnsFQHostname == NULL))
-    {
-        return ERROR_INVALID_PARAMETER;
-    }
-
+    if ((!BaseValidateFlags(ulFlags)) || (lpAltDnsFQHostname==NULL)) {
+	return ERROR_INVALID_PARAMETER;
+    }    
+    
     // aquire a write lock?
 
     NtStatus = BaseRemoveMultiNameFromReg(DNSCACHE_ROOT, DNS_ALT_HOSTNAME, lpAltDnsFQHostname);
     err = RtlNtStatusToDosError(NtStatus);
 
-    if (err == ERROR_SUCCESS)
-    {
-        if (!DnsHostnameToComputerNameW(lpAltDnsFQHostname, NULL, &cchAltNetBiosCompName))
-        {
-            err = GetLastError();
-        }
-        if (err == ERROR_MORE_DATA)
-        {
-            // bug in DNSHostname, returns a size 1 character too small	(forgets null)
-            cchAltNetBiosCompName += 1;
-            lpAltNetBiosCompName =
-                RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), cchAltNetBiosCompName * sizeof(WCHAR));
-            if (lpAltNetBiosCompName == NULL)
-            {
-                err = ERROR_NOT_ENOUGH_MEMORY;
-            }
-            else
-            {
-                err = ERROR_SUCCESS;
-                if (!DnsHostnameToComputerNameW(lpAltDnsFQHostname, lpAltNetBiosCompName, &cchAltNetBiosCompName))
-                {
-                    err = GetLastError();
-                }
-                else if (BaseIsNetBiosNameInUse(lpAltNetBiosCompName))
-                {
-                    // do nothing, this name is still being used by another AltDnsHostname ...
-                }
-                else if (!BaseRemoveAltNetBiosName(lpAltNetBiosCompName))
-                {
-                    err = GetLastError();
-                }
-                RtlFreeHeap(RtlProcessHeap(), 0, lpAltNetBiosCompName);
-            }
-        }
+    if (err==ERROR_SUCCESS) {
+	if (!DnsHostnameToComputerNameW(
+	    lpAltDnsFQHostname,
+	    NULL,
+	    &cchAltNetBiosCompName)) {
+	    err = GetLastError(); 
+	}
+	if (err==ERROR_MORE_DATA) {
+	    // bug in DNSHostname, returns a size 1 character too small	(forgets null)
+	    cchAltNetBiosCompName += 1;
+	    lpAltNetBiosCompName = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( TMP_TAG ), cchAltNetBiosCompName * sizeof(WCHAR));
+	    if (lpAltNetBiosCompName==NULL) {  
+		err = ERROR_NOT_ENOUGH_MEMORY;
+	    }
+	    else {  
+		err = ERROR_SUCCESS;
+		if (!DnsHostnameToComputerNameW(lpAltDnsFQHostname, 
+						lpAltNetBiosCompName,
+						&cchAltNetBiosCompName)) {
+		    err = GetLastError();  
+		} else if (BaseIsNetBiosNameInUse(lpAltNetBiosCompName)) {
+		    // do nothing, this name is still being used by another AltDnsHostname ...  
+		} else if (!BaseRemoveAltNetBiosName(lpAltNetBiosCompName)) {
+		    err = GetLastError();
+		}  
+		RtlFreeHeap(RtlProcessHeap(), 0, lpAltNetBiosCompName);
+	    } 
+	}
     }
 
     // release write lock?
@@ -2978,23 +3270,24 @@ Return Value:
     return err;
 }
 
-DWORD
+DWORD 
 WINAPI
-RemoveLocalAlternateComputerNameA(LPCSTR lpAltDnsFQHostname, ULONG ulFlags)
+RemoveLocalAlternateComputerNameA(
+    LPCSTR lpAltDnsFQHostname,
+    ULONG  ulFlags
+    )
 {
     LPWSTR lpAltDnsFQHostnameW = NULL;
     DWORD err = ERROR_SUCCESS;
 
-    if (lpAltDnsFQHostname == NULL)
-    {
-        return ERROR_INVALID_PARAMETER;
+    if (lpAltDnsFQHostname==NULL) {
+	return ERROR_INVALID_PARAMETER;
     }
 
     err = BaseMultiByteToWideCharWithAlloc(lpAltDnsFQHostname, &lpAltDnsFQHostnameW);
 
-    if (err == ERROR_SUCCESS)
-    {
-        err = RemoveLocalAlternateComputerNameW(lpAltDnsFQHostnameW, ulFlags);
+    if (err==ERROR_SUCCESS) {
+	err = RemoveLocalAlternateComputerNameW(lpAltDnsFQHostnameW, ulFlags);
     }
 
     BaseConvertCharFree((VOID *)lpAltDnsFQHostnameW);
@@ -3003,7 +3296,10 @@ RemoveLocalAlternateComputerNameA(LPCSTR lpAltDnsFQHostname, ULONG ulFlags)
 
 DWORD
 WINAPI
-SetLocalPrimaryComputerNameW(LPCWSTR lpAltDnsFQHostname, ULONG ulFlags)
+SetLocalPrimaryComputerNameW(
+    LPCWSTR lpAltDnsFQHostname,
+    ULONG   ulFlags
+    )
 /*++
 
 Routine Description:
@@ -3031,144 +3327,120 @@ Return Value:
     LPWSTR lpCompName = NULL;
     LPWSTR lpHostname = BaseParseDnsName(lpAltDnsFQHostname, DNS_HOSTNAME);
     LPWSTR lpDomainName = BaseParseDnsName(lpAltDnsFQHostname, DNS_DOMAINNAME);
-
-    if ((lpAltDnsFQHostname == NULL) || (!BaseValidateFlags(ulFlags)))
-    {
-        return ERROR_INVALID_PARAMETER;
+  
+    if ((lpAltDnsFQHostname==NULL) || (!BaseValidateFlags(ulFlags))) {
+	return ERROR_INVALID_PARAMETER;
     }
-
+     
     // aquire a write lock?
 
     // check to see that the given name is a valid alternate dns hostname
-    if (!BaseIsAltDnsFQHostname(lpAltDnsFQHostname))
-    {
-        if (lpHostname)
-        {
-            RtlFreeHeap(RtlProcessHeap(), 0, lpHostname);
-        }
-        if (lpDomainName)
-        {
-            RtlFreeHeap(RtlProcessHeap(), 0, lpDomainName);
-        }
-        return ERROR_INVALID_PARAMETER;
+    if (!BaseIsAltDnsFQHostname(lpAltDnsFQHostname)) {
+	if (lpHostname) {
+	    RtlFreeHeap(RtlProcessHeap(), 0, lpHostname);
+	}
+	if (lpDomainName) {
+	    RtlFreeHeap(RtlProcessHeap(), 0, lpDomainName);
+	}
+	return ERROR_INVALID_PARAMETER;
     }
-
+    
     // get the current net bios name and add it to the alternate names
-    if (!GetComputerNameExW(ComputerNamePhysicalNetBIOS, NULL, &cchNetBiosName))
-    {
-        err = GetLastError();
+    if (!GetComputerNameExW(ComputerNamePhysicalNetBIOS, NULL, &cchNetBiosName)) {
+	err = GetLastError();
     }
-    if (err == ERROR_MORE_DATA)
-    {
-        lpNetBiosName = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), cchNetBiosName * sizeof(WCHAR));
-        if (lpNetBiosName == NULL)
-        {
-            err = ERROR_NOT_ENOUGH_MEMORY;
-        }
-        else if (!GetComputerNameExW(ComputerNamePhysicalNetBIOS, lpNetBiosName, &cchNetBiosName))
-        {
-            err = GetLastError();
-        }
-        else if (!BaseSetAltNetBiosName(lpNetBiosName))
-        {
-            err = GetLastError();
-        }
-        else
-        {
-            err = ERROR_SUCCESS;
-        }
-        if (lpNetBiosName)
-        {
-            RtlFreeHeap(RtlProcessHeap(), 0, lpNetBiosName);
-        }
+    if (err==ERROR_MORE_DATA) {
+	lpNetBiosName = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( TMP_TAG ), cchNetBiosName*sizeof(WCHAR));
+	if (lpNetBiosName==NULL) {
+	    err = ERROR_NOT_ENOUGH_MEMORY;
+	}
+	else if (!GetComputerNameExW(ComputerNamePhysicalNetBIOS, lpNetBiosName, &cchNetBiosName)) {
+		err = GetLastError();
+	}
+	else if (!BaseSetAltNetBiosName(lpNetBiosName)) {
+	    err = GetLastError();
+	} 
+	else {
+	    err = ERROR_SUCCESS;
+	}
+	if (lpNetBiosName) {
+	    RtlFreeHeap(RtlProcessHeap(), 0, lpNetBiosName);
+	}
     }
 
-    if (err == ERROR_SUCCESS)
-    {
-        // add the physical dnsname to the list of alternate hostnames...
-
-        if (!GetComputerNameExW(ComputerNamePhysicalDnsFullyQualified, NULL, &cchCompName))
-        {
-            err = GetLastError();
-        }
-        if (err == ERROR_MORE_DATA)
-        {
-            lpCompName = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), cchCompName * sizeof(WCHAR));
-            if (lpCompName == NULL)
-            {
-                err = ERROR_NOT_ENOUGH_MEMORY;
-            }
-            else if (!GetComputerNameExW(ComputerNamePhysicalDnsFullyQualified, lpCompName, &cchCompName))
-            {
-                err = GetLastError();
-            }
-            else if (!BaseSetAltDnsFQHostname(lpCompName))
-            {
-                err = GetLastError();
-            }
-            else
-            {
-                err = ERROR_SUCCESS;
-            }
-            if (lpCompName)
-            {
-                RtlFreeHeap(RtlProcessHeap(), 0, lpCompName);
-            }
-        }
+    if (err==ERROR_SUCCESS) {
+	// add the physical dnsname to the list of alternate hostnames...
+	
+	if (!GetComputerNameExW(ComputerNamePhysicalDnsFullyQualified, NULL, &cchCompName)) {
+	    err = GetLastError();
+	}
+	if (err==ERROR_MORE_DATA) {
+	    lpCompName = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( TMP_TAG ), cchCompName*sizeof(WCHAR));
+	    if (lpCompName==NULL) {
+		err = ERROR_NOT_ENOUGH_MEMORY;
+	    }
+	    else if (!GetComputerNameExW(ComputerNamePhysicalDnsFullyQualified, lpCompName, &cchCompName)) {
+		err = GetLastError(); 
+	    }
+	    else if (!BaseSetAltDnsFQHostname(lpCompName)) {
+		err = GetLastError(); 
+	    }
+	    else {
+		err = ERROR_SUCCESS;
+	    }
+	    if (lpCompName) {
+		RtlFreeHeap(RtlProcessHeap(), 0, lpCompName);
+	    }
+	}
     }
-
+ 
     // set the new physical dns hostname
-    if (err == ERROR_SUCCESS)
-    {
-        if (!SetComputerNameExW(ComputerNamePhysicalDnsHostname, lpHostname))
-        {
-            err = GetLastError();
-        }
+    if (err==ERROR_SUCCESS) { 
+	if (!SetComputerNameExW(ComputerNamePhysicalDnsHostname, lpHostname)) {
+	    err = GetLastError();
+	} 
     }
 
-    if (err == ERROR_SUCCESS)
-    {
-        if (!SetComputerNameExW(ComputerNamePhysicalDnsDomain, lpDomainName))
-        {
-            err = GetLastError();
-        }
+    if (err==ERROR_SUCCESS) { 
+	if (!SetComputerNameExW(ComputerNamePhysicalDnsDomain, lpDomainName)) {
+	    err = GetLastError();
+	} 
     }
 
     // remove the alternate name (now primary) from the alternate lists
-    if (err == ERROR_SUCCESS)
-    {
-        err = RemoveLocalAlternateComputerNameW(lpAltDnsFQHostname, 0);
+    if (err==ERROR_SUCCESS) {
+	err = RemoveLocalAlternateComputerNameW(lpAltDnsFQHostname, 0);
     }
 
-    if (lpHostname)
-    {
-        RtlFreeHeap(RtlProcessHeap(), 0, lpHostname);
+    if (lpHostname) {
+	RtlFreeHeap(RtlProcessHeap(), 0, lpHostname);
     }
-    if (lpDomainName)
-    {
-        RtlFreeHeap(RtlProcessHeap(), 0, lpDomainName);
+    if (lpDomainName) {
+	RtlFreeHeap(RtlProcessHeap(), 0, lpDomainName);
     }
     // release write lock?
 
     return err;
+    
 }
 
 DWORD
 WINAPI
-SetLocalPrimaryComputerNameA(LPCSTR lpAltDnsFQHostname, ULONG ulFlags)
+SetLocalPrimaryComputerNameA(
+    LPCSTR lpAltDnsFQHostname,
+    ULONG  ulFlags
+    )
 {
     LPWSTR lpAltDnsFQHostnameW = NULL;
     DWORD err = ERROR_SUCCESS;
 
-    if (lpAltDnsFQHostname == NULL)
-    {
-        return ERROR_INVALID_PARAMETER;
+    if (lpAltDnsFQHostname==NULL) {
+	return ERROR_INVALID_PARAMETER;
     }
 
     err = BaseMultiByteToWideCharWithAlloc(lpAltDnsFQHostname, &lpAltDnsFQHostnameW);
-    if (err == ERROR_SUCCESS)
-    {
-        err = SetLocalPrimaryComputerNameW(lpAltDnsFQHostnameW, ulFlags);
+    if (err == ERROR_SUCCESS) {
+	err = SetLocalPrimaryComputerNameW(lpAltDnsFQHostnameW, ulFlags);
     }
     BaseConvertCharFree((VOID *)lpAltDnsFQHostnameW);
 
@@ -3177,7 +3449,12 @@ SetLocalPrimaryComputerNameA(LPCSTR lpAltDnsFQHostname, ULONG ulFlags)
 
 DWORD
 WINAPI
-EnumerateLocalComputerNamesW(COMPUTER_NAME_TYPE NameType, ULONG ulFlags, LPWSTR lpDnsFQHostnames, LPDWORD nSize)
+EnumerateLocalComputerNamesW(
+    COMPUTER_NAME_TYPE       NameType,
+    ULONG                    ulFlags,
+    LPWSTR                   lpDnsFQHostnames,
+    LPDWORD                  nSize    
+    )
 /*++
 
 Routine Description: 
@@ -3209,80 +3486,67 @@ Return Value:
     DWORD SizeAlternate = 0;
     LPWSTR lpTempCompNames = NULL;
 
-    if ((!BaseValidateFlags(ulFlags)) || (NameType >= ComputerNameTypeMax) || (NameType < PrimaryComputerName))
-    {
-        return ERROR_INVALID_PARAMETER;
+    if ((!BaseValidateFlags(ulFlags)) || (NameType>=ComputerNameTypeMax) || (NameType<PrimaryComputerName)) { 
+	return ERROR_INVALID_PARAMETER;
     }
 
     // get read lock?
-    switch (NameType)
-    {
-    case PrimaryComputerName:
-        if (!GetComputerNameExW(ComputerNamePhysicalDnsFullyQualified, lpDnsFQHostnames, nSize))
-        {
-            err = GetLastError();
-        }
-        break;
+    switch(NameType) {
+    case PrimaryComputerName:  
+	if (!GetComputerNameExW(ComputerNamePhysicalDnsFullyQualified, lpDnsFQHostnames, nSize)) {
+	    err = GetLastError();
+	}
+	break;
     case AlternateComputerNames:
-        if ((nSize == NULL) || ((lpDnsFQHostnames == NULL) && (*nSize > 0)))
-        {
-            err = ERROR_INVALID_PARAMETER;
-        }
-        else
-        {
-            err = BaseEnumAltDnsFQHostnames(lpDnsFQHostnames, nSize);
-        }
-        break;
+	if ((nSize==NULL) || ((lpDnsFQHostnames==NULL) && (*nSize>0))) {
+	    err = ERROR_INVALID_PARAMETER;
+	}
+	else {
+	    err = BaseEnumAltDnsFQHostnames(lpDnsFQHostnames, nSize);
+	}
+	break;
     case AllComputerNames:
-        if ((nSize == NULL) || ((lpDnsFQHostnames == NULL) && (*nSize > 0)))
-        {
-            err = ERROR_INVALID_PARAMETER;
-        }
-        else
-        {
-            SizePrimary = *nSize;
-            lpTempCompNames = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), *nSize * sizeof(WCHAR));
-            if (lpTempCompNames == NULL)
-            {
-                err = ERROR_NOT_ENOUGH_MEMORY;
-                break;
-            }
-            // Get primary name
-            if (!GetComputerNameExW(ComputerNamePhysicalDnsFullyQualified, lpTempCompNames, &SizePrimary))
-            {
-                err = GetLastError();
-            }
+	if ((nSize==NULL) || ((lpDnsFQHostnames==NULL) && (*nSize>0))) {
+	    err = ERROR_INVALID_PARAMETER;
+	}
+	else {
+	    SizePrimary = *nSize;
+	    lpTempCompNames = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( TMP_TAG ), *nSize * sizeof(WCHAR));
+	    if (lpTempCompNames==NULL) {
+		err = ERROR_NOT_ENOUGH_MEMORY;
+		break;
+	    }
+	    // Get primary name
+	    if (!GetComputerNameExW(ComputerNamePhysicalDnsFullyQualified, lpTempCompNames, &SizePrimary)) {
+		err = GetLastError();
+	    }
 
-            // on success, holds the number of characters copied into lpTempCompNames NOT counting NULL
-            // on failure, holds the space needed to copy in, (num characters PLUS NULL)
-            if (err == ERROR_SUCCESS)
-            {
-                SizeAlternate = *nSize - (SizePrimary + 1);
-                err = BaseEnumAltDnsFQHostnames(lpTempCompNames + SizePrimary + 1, &SizeAlternate);
-                *nSize = SizePrimary + 1 + SizeAlternate;
-                if (err == ERROR_SUCCESS)
-                {
-                    memcpy(lpDnsFQHostnames, lpTempCompNames, (*nSize + 1) * sizeof(WCHAR));
-                }
-            }
-            else if (err == ERROR_MORE_DATA)
-            {
-                // return total size required
-                SizeAlternate = 0;
-                err = BaseEnumAltDnsFQHostnames(NULL, &SizeAlternate);
-                if (err == ERROR_SUCCESS)
-                {
-                    // no alt names exist, keep ERROR_MORE_DATA to return to client
-                    err = ERROR_MORE_DATA;
-                }
-                *nSize = SizePrimary + SizeAlternate;
-            }
-            RtlFreeHeap(RtlProcessHeap(), 0, lpTempCompNames);
-        }
-        break;
+	    // on success, holds the number of characters copied into lpTempCompNames NOT counting NULL
+	    // on failure, holds the space needed to copy in, (num characters PLUS NULL)
+	    if (err==ERROR_SUCCESS) { 
+		SizeAlternate = *nSize - (SizePrimary + 1); 
+		err = BaseEnumAltDnsFQHostnames(lpTempCompNames+SizePrimary+1, &SizeAlternate);  
+		*nSize = SizePrimary + 1 + SizeAlternate;
+		if (err==ERROR_SUCCESS) { 
+		    memcpy(lpDnsFQHostnames, lpTempCompNames, (*nSize+1)*sizeof(WCHAR));
+		}  
+	    }
+	    else if (err==ERROR_MORE_DATA) {
+		// return total size required
+		SizeAlternate = 0;
+		err = BaseEnumAltDnsFQHostnames(NULL, &SizeAlternate);
+		if (err==ERROR_SUCCESS) {
+		    // no alt names exist, keep ERROR_MORE_DATA to return to client
+		    err = ERROR_MORE_DATA;
+		}
+		*nSize = SizePrimary + SizeAlternate;
+	    }
+	    RtlFreeHeap(RtlProcessHeap(), 0, lpTempCompNames); 
+	}
+	break;
     default:
-        err = ERROR_INVALID_PARAMETER;
-        break;
+	err = ERROR_INVALID_PARAMETER;
+	break;
     }
     // release read lock?
     return err;
@@ -3290,51 +3554,55 @@ Return Value:
 
 DWORD
 WINAPI
-EnumerateLocalComputerNamesA(COMPUTER_NAME_TYPE NameType, ULONG ulFlags, LPSTR lpDnsFQHostnames, LPDWORD nSize)
+EnumerateLocalComputerNamesA(
+    COMPUTER_NAME_TYPE      NameType,
+    ULONG                   ulFlags,
+    LPSTR                   lpDnsFQHostnames,
+    LPDWORD                 nSize
+    )
 {
     DWORD err = ERROR_SUCCESS;
     LPWSTR lpDnsFQHostnamesW = NULL;
-
+    
     //
     // Validate Input
-    //
+    // 
 
-    if ((nSize == NULL) || ((lpDnsFQHostnames == NULL) && (*nSize > 0)))
-    {
-        return ERROR_INVALID_PARAMETER;
+    if ((nSize==NULL) || ((lpDnsFQHostnames==NULL) && (*nSize>0))) {
+	return ERROR_INVALID_PARAMETER;
+    }
+    
+    if (lpDnsFQHostnames!=NULL) {
+	lpDnsFQHostnamesW = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( TMP_TAG ), *nSize * sizeof(WCHAR));
+	if (lpDnsFQHostnamesW==NULL) {
+	    err = ERROR_NOT_ENOUGH_MEMORY;
+	}
     }
 
-    if (lpDnsFQHostnames != NULL)
-    {
-        lpDnsFQHostnamesW = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), *nSize * sizeof(WCHAR));
-        if (lpDnsFQHostnamesW == NULL)
-        {
-            err = ERROR_NOT_ENOUGH_MEMORY;
-        }
+    if (err==ERROR_SUCCESS) {
+	err = EnumerateLocalComputerNamesW(NameType, ulFlags, lpDnsFQHostnamesW, nSize);
     }
 
-    if (err == ERROR_SUCCESS)
-    {
-        err = EnumerateLocalComputerNamesW(NameType, ulFlags, lpDnsFQHostnamesW, nSize);
+    if (err==ERROR_SUCCESS) {
+	if (!WideCharToMultiByte(CP_ACP, 0, lpDnsFQHostnamesW, *nSize+1,
+				 lpDnsFQHostnames, (*nSize+1)* sizeof(CHAR), NULL, NULL)) {
+	    err = GetLastError();
+	}
     }
 
-    if (err == ERROR_SUCCESS)
-    {
-        if (!WideCharToMultiByte(CP_ACP, 0, lpDnsFQHostnamesW, *nSize + 1, lpDnsFQHostnames,
-                                 (*nSize + 1) * sizeof(CHAR), NULL, NULL))
-        {
-            err = GetLastError();
-        }
-    }
-
-    if (lpDnsFQHostnamesW)
-    {
-        RtlFreeHeap(RtlProcessHeap(), 0, lpDnsFQHostnamesW);
+    if (lpDnsFQHostnamesW) {
+	RtlFreeHeap(RtlProcessHeap(), 0, lpDnsFQHostnamesW);
     }
     return err;
+
 }
 
-BOOL WINAPI DnsHostnameToComputerNameW(IN LPCWSTR Hostname, OUT LPWSTR ComputerName, IN OUT LPDWORD nSize)
+BOOL
+WINAPI
+DnsHostnameToComputerNameW(
+    IN LPCWSTR Hostname,
+    OUT LPWSTR ComputerName,
+    IN OUT LPDWORD nSize)
 /*++
 
 Routine Description:
@@ -3358,55 +3626,65 @@ Return Value:
 --*/
 
 {
-    WCHAR CompName[MAX_COMPUTERNAME_LENGTH + 1];
-    DWORD Size = MAX_COMPUTERNAME_LENGTH + 1;
-    UNICODE_STRING CompName_U;
-    UNICODE_STRING Hostname_U;
-    NTSTATUS Status;
-    BOOL Ret;
+    WCHAR CompName[ MAX_COMPUTERNAME_LENGTH + 1 ];
+    DWORD Size = MAX_COMPUTERNAME_LENGTH + 1 ;
+    UNICODE_STRING CompName_U ;
+    UNICODE_STRING Hostname_U ;
+    NTSTATUS Status ;
+    BOOL Ret ;
 
     CompName[0] = L'\0';
-    CompName_U.Buffer = CompName;
-    CompName_U.Length = 0;
-    CompName_U.MaximumLength = (MAX_COMPUTERNAME_LENGTH + 1) * sizeof(WCHAR);
+    CompName_U.Buffer = CompName ;
+    CompName_U.Length = 0 ;
+    CompName_U.MaximumLength = (MAX_COMPUTERNAME_LENGTH + 1) * sizeof( WCHAR );
 
-    RtlInitUnicodeString(&Hostname_U, Hostname);
+    RtlInitUnicodeString( &Hostname_U, Hostname );
 
-    Status = RtlDnsHostNameToComputerName(&CompName_U, &Hostname_U, FALSE);
+    Status = RtlDnsHostNameToComputerName( &CompName_U,
+                                           &Hostname_U,
+                                           FALSE );
 
-    if (NT_SUCCESS(Status))
+    if ( NT_SUCCESS( Status ) )
     {
-        if (*nSize >= CompName_U.Length / sizeof(WCHAR) + 1)
+        if ( *nSize >= CompName_U.Length / sizeof(WCHAR) + 1 )
         {
-            RtlCopyMemory(ComputerName, CompName_U.Buffer, CompName_U.Length);
+            RtlCopyMemory( ComputerName,
+                           CompName_U.Buffer,
+                           CompName_U.Length );
 
-            ComputerName[CompName_U.Length / sizeof(WCHAR)] = L'\0';
+            ComputerName[ CompName_U.Length / sizeof( WCHAR ) ] = L'\0';
 
-            Ret = TRUE;
+            Ret = TRUE ;
         }
         else
         {
-            BaseSetLastNTError(STATUS_BUFFER_OVERFLOW);
-            Ret = FALSE;
+            BaseSetLastNTError( STATUS_BUFFER_OVERFLOW );
+            Ret = FALSE ;
         }
 
         //
         // returns the count of characters
         //
 
-        *nSize = CompName_U.Length / sizeof(WCHAR);
+        *nSize = CompName_U.Length / sizeof( WCHAR );
     }
     else
     {
-        BaseSetLastNTError(Status);
+        BaseSetLastNTError( Status );
 
-        Ret = FALSE;
+        Ret = FALSE ;
     }
 
-    return Ret;
+    return Ret ;
+
 }
 
-BOOL WINAPI DnsHostnameToComputerNameA(IN LPCSTR Hostname, OUT LPSTR ComputerName, IN OUT LPDWORD nSize)
+BOOL
+WINAPI
+DnsHostnameToComputerNameA(
+    IN LPCSTR Hostname,
+    OUT LPSTR ComputerName,
+    IN OUT LPDWORD nSize)
 /*++
 
 Routine Description:
@@ -3429,54 +3707,68 @@ Return Value:
 
 --*/
 {
-    WCHAR CompName[MAX_COMPUTERNAME_LENGTH + 1];
+    WCHAR CompName[ MAX_COMPUTERNAME_LENGTH + 1 ];
     DWORD Size = MAX_COMPUTERNAME_LENGTH + 1;
-    BOOL Ret;
-    UNICODE_STRING CompName_U;
-    UNICODE_STRING Hostname_U;
-    NTSTATUS Status;
-    ANSI_STRING CompName_A;
+    BOOL Ret ;
+    UNICODE_STRING CompName_U ;
+    UNICODE_STRING Hostname_U ;
+    NTSTATUS Status ;
+    ANSI_STRING CompName_A ;
 
 
-    Status = RtlCreateUnicodeStringFromAsciiz(&Hostname_U, Hostname);
+    Status = RtlCreateUnicodeStringFromAsciiz( &Hostname_U,
+                                               Hostname );
 
-    if (NT_SUCCESS(Status))
+    if ( NT_SUCCESS( Status ) )
     {
         CompName[0] = L'\0';
-        CompName_U.Buffer = CompName;
-        CompName_U.Length = 0;
-        CompName_U.MaximumLength = (MAX_COMPUTERNAME_LENGTH + 1) * sizeof(WCHAR);
+        CompName_U.Buffer = CompName ;
+        CompName_U.Length = 0 ;
+        CompName_U.MaximumLength = (MAX_COMPUTERNAME_LENGTH + 1) * sizeof( WCHAR );
 
-        Status = RtlDnsHostNameToComputerName(&CompName_U, &Hostname_U, FALSE);
+        Status = RtlDnsHostNameToComputerName( &CompName_U,
+                                               &Hostname_U,
+                                               FALSE );
 
-        if (NT_SUCCESS(Status))
+        if ( NT_SUCCESS( Status ) )
         {
-            CompName_A.Buffer = ComputerName;
-            CompName_A.Length = 0;
-            CompName_A.MaximumLength = (USHORT)*nSize;
+            CompName_A.Buffer = ComputerName ;
+            CompName_A.Length = 0 ;
+            CompName_A.MaximumLength = (USHORT) *nSize ;
 
-            Status = RtlUnicodeStringToAnsiString(&CompName_A, &CompName_U, FALSE);
+            Status = RtlUnicodeStringToAnsiString( &CompName_A, &CompName_U, FALSE );
 
-            if (NT_SUCCESS(Status))
+            if ( NT_SUCCESS( Status ) )
             {
-                *nSize = CompName_A.Length;
+                *nSize = CompName_A.Length ;
             }
+
         }
+
     }
 
-    if (!NT_SUCCESS(Status))
+    if ( !NT_SUCCESS( Status ) )
     {
-        BaseSetLastNTError(Status);
-        return FALSE;
+        BaseSetLastNTError( Status );
+        return FALSE ;
     }
 
-    return TRUE;
+    return TRUE ;
+
 }
 
 
+
+
+
 #include "dfsfsctl.h"
 DWORD
-BasepGetComputerNameFromNtPath(PUNICODE_STRING NtPathName, HANDLE hFile, LPWSTR lpBuffer, LPDWORD nSize)
+BasepGetComputerNameFromNtPath (
+    PUNICODE_STRING NtPathName,
+    HANDLE hFile,
+    LPWSTR lpBuffer,
+    LPDWORD nSize
+    )
 
 /*++
 
@@ -3515,44 +3807,44 @@ Return Value:
     NTSTATUS NtStatus = STATUS_SUCCESS;
 
     IO_STATUS_BLOCK IoStatusBlock;
-    WCHAR FileNameInfoBuffer[MAX_PATH + sizeof(FILE_NAME_INFORMATION)];
+    WCHAR FileNameInfoBuffer[MAX_PATH+sizeof(FILE_NAME_INFORMATION)];
     PFILE_NAME_INFORMATION FileNameInfo = (PFILE_NAME_INFORMATION)FileNameInfoBuffer;
-    WCHAR DfsServerPathName[MAX_PATH + 1];
+    WCHAR DfsServerPathName[ MAX_PATH + 1 ];
     WCHAR DosDevice[3] = { L"A:" };
-    WCHAR DosDeviceMapping[MAX_PATH + 1];
+    WCHAR DosDeviceMapping[ MAX_PATH + 1 ];
 
 
     UNICODE_STRING UnicodeComputerName;
 
-    const UNICODE_STRING NtUncPathNamePrefix = { 16, 18, L"\\??\\UNC\\" };
+    const UNICODE_STRING NtUncPathNamePrefix = { 16, 18, L"\\??\\UNC\\"};
     const ULONG cchNtUncPathNamePrefix = 8;
 
     const UNICODE_STRING NtDrivePathNamePrefix = { 8, 10, L"\\??\\" };
     const ULONG cchNtDrivePathNamePrefix = 4;
 
-    RtlInitUnicodeString(&UnicodeComputerName, NULL);
+    RtlInitUnicodeString( &UnicodeComputerName, NULL );
 
     // Is this a UNC path?
 
-    if (RtlPrefixString((PSTRING)&NtUncPathNamePrefix, (PSTRING)NtPathName, TRUE))
-    {
+    if( RtlPrefixString( (PSTRING)&NtUncPathNamePrefix, (PSTRING)NtPathName, TRUE )) {
 
         // Make sure there's some more to this path than just the prefix
-        if (NtPathName->Length <= NtUncPathNamePrefix.Length)
+        if( NtPathName->Length <= NtUncPathNamePrefix.Length )
             goto Exit;
 
         // It appears to be a valid UNC path.  Point to the beginning of the computer
         // name, and calculate how much room is left in NtPathName after that.
 
-        UnicodeComputerName.Buffer = &NtPathName->Buffer[NtUncPathNamePrefix.Length / sizeof(WCHAR)];
+        UnicodeComputerName.Buffer = &NtPathName->Buffer[ NtUncPathNamePrefix.Length/sizeof(WCHAR) ];
         AvailableLength = NtPathName->Length - NtUncPathNamePrefix.Length;
+
     }
 
     // If it's not a UNC path, then is it a drive-letter path?
 
-    else if (RtlPrefixString((PSTRING)&NtDrivePathNamePrefix, (PSTRING)NtPathName, TRUE) &&
-             NtPathName->Buffer[cchNtDrivePathNamePrefix + 1] == L':')
-    {
+    else if( RtlPrefixString( (PSTRING)&NtDrivePathNamePrefix, (PSTRING)NtPathName, TRUE )
+             &&
+             NtPathName->Buffer[ cchNtDrivePathNamePrefix + 1 ] == L':' ) {
 
         // It's a drive letter path, but it could still be local or remote
 
@@ -3564,8 +3856,8 @@ Return Value:
 
         // Get the correct, upper-cased, drive letter into DosDevice.
 
-        DosDevice[0] = NtPathName->Buffer[cchNtDrivePathNamePrefix];
-        if (L'a' <= DosDevice[0] && DosDevice[0] <= L'z')
+        DosDevice[0] = NtPathName->Buffer[ cchNtDrivePathNamePrefix ];
+        if( L'a' <= DosDevice[0] && DosDevice[0] <= L'z' )
             DosDevice[0] = L'A' + (DosDevice[0] - L'a');
 
         // Map the drive letter to its symbolic link under \??.  E.g., say C:, D: & R:
@@ -3575,46 +3867,48 @@ Return Value:
         //   D: => \Device\WinDfs\G
         //   R: => \Device\LanmanRedirector\;R:0\scratch\scratch
 
-        if (!QueryDosDeviceW(DosDevice, DosDeviceMapping, sizeof(DosDeviceMapping) / sizeof(DosDeviceMapping[0])))
-        {
+        if( !QueryDosDeviceW( DosDevice, DosDeviceMapping, sizeof(DosDeviceMapping)/sizeof(DosDeviceMapping[0]) )) {
             dwError = GetLastError();
             goto Exit;
         }
 
         // Now that we have the DosDeviceMapping, we can check ... Is this a rdr drive?
 
-        if ( // Does it begin with "\Device\LanmanRedirector\;" ?
-            DosDeviceMapping == wcsstr(DosDeviceMapping, RedirectorMappingPrefix) &&
+        if( // Does it begin with "\Device\LanmanRedirector\;" ?
+            DosDeviceMapping == wcsstr( DosDeviceMapping, RedirectorMappingPrefix )
+            &&
             // Are the next letters the correct drive letter, a colon, and a whack?
-            (DosDevice[0] == DosDeviceMapping[sizeof(RedirectorMappingPrefix) / sizeof(WCHAR) - 1] &&
-             L':' == DosDeviceMapping[sizeof(RedirectorMappingPrefix) / sizeof(WCHAR)] &&
-             (UnicodeComputerName.Buffer =
-                  wcschr(&DosDeviceMapping[sizeof(RedirectorMappingPrefix) / sizeof(WCHAR) + 1], L'\\'))))
-        {
+            ( DosDevice[0] == DosDeviceMapping[ sizeof(RedirectorMappingPrefix)/sizeof(WCHAR) - 1 ]
+              &&
+              L':' == DosDeviceMapping[ sizeof(RedirectorMappingPrefix)/sizeof(WCHAR) ]
+              &&
+              (UnicodeComputerName.Buffer = wcschr(&DosDeviceMapping[ sizeof(RedirectorMappingPrefix)/sizeof(WCHAR) + 1 ], L'\\'))
+            )) {
 
             // We have a valid rdr drive.  Point to the beginning of the computer
             // name, and calculate how much room is availble in DosDeviceMapping after that.
 
             UnicodeComputerName.Buffer += 1;
-            AvailableLength = sizeof(DosDeviceMapping) -
-                              sizeof(DosDeviceMapping[0]) * (ULONG)(UnicodeComputerName.Buffer - DosDeviceMapping);
+            AvailableLength = sizeof(DosDeviceMapping) - sizeof(DosDeviceMapping[0]) * (ULONG)(UnicodeComputerName.Buffer - DosDeviceMapping);
 
             // We know now that it's not a DFS path
             CheckForDfs = FALSE;
+
         }
 
         // If it's not a rdr drive, then maybe it's a local volume, floppy, or cdrom
 
-        else if (DosDeviceMapping == wcsstr(DosDeviceMapping, LocalVolumeMappingPrefix) ||
-                 DosDeviceMapping == wcsstr(DosDeviceMapping, CDRomMappingPrefix) ||
-                 DosDeviceMapping == wcsstr(DosDeviceMapping, FloppyMappingPrefix))
-        {
+        else if( DosDeviceMapping == wcsstr( DosDeviceMapping, LocalVolumeMappingPrefix )
+                 ||
+                 DosDeviceMapping == wcsstr( DosDeviceMapping, CDRomMappingPrefix )
+                 ||
+                 DosDeviceMapping == wcsstr( DosDeviceMapping, FloppyMappingPrefix ) ) {
 
             // We have a local drive, so just return the local computer name.
 
             CheckForDfs = FALSE;
 
-            if (!GetComputerNameW(lpBuffer, nSize))
+            if( !GetComputerNameW( lpBuffer, nSize))
                 dwError = GetLastError();
             else
                 dwError = ERROR_SUCCESS;
@@ -3623,16 +3917,19 @@ Return Value:
 
         // Finally, check to see if it's a DFS drive
 
-        else if (DosDeviceMapping == wcsstr(DosDeviceMapping, DfsMappingPrefix))
-        {
+        else if( DosDeviceMapping == wcsstr( DosDeviceMapping, DfsMappingPrefix )) {
 
             // Get the full UNC name of this DFS path.  Later, we'll call the DFS
             // driver to find out what the actual server name is.
 
-            NtStatus = NtQueryInformationFile(hFile, &IoStatusBlock, FileNameInfo, sizeof(FileNameInfoBuffer),
-                                              FileNameInformation);
-            if (!NT_SUCCESS(NtStatus))
-            {
+            NtStatus = NtQueryInformationFile(
+                        hFile,
+                        &IoStatusBlock,
+                        FileNameInfo,
+                        sizeof(FileNameInfoBuffer),
+                        FileNameInformation
+                        );
+            if( !NT_SUCCESS(NtStatus) ) {
                 dwError = RtlNtStatusToDosError(NtStatus);
                 goto Exit;
             }
@@ -3646,10 +3943,9 @@ Return Value:
         else
             goto Exit;
 
-    } // else if( RtlPrefixString( (PSTRING)&NtDrivePathNamePrefix, (PSTRING)NtPathName, TRUE ) ...
+    }   // else if( RtlPrefixString( (PSTRING)&NtDrivePathNamePrefix, (PSTRING)NtPathName, TRUE ) ...
 
-    else
-    {
+    else {
         dwError = ERROR_BAD_PATHNAME;
         goto Exit;
     }
@@ -3658,27 +3954,40 @@ Return Value:
     // If we couldn't determine above if whether or not this is a DFS path, let the
     // DFS driver decide now.
 
-    if (CheckForDfs && INVALID_HANDLE_VALUE != hFile)
-    {
+    if( CheckForDfs && INVALID_HANDLE_VALUE != hFile ) {
 
         HANDLE hDFS = INVALID_HANDLE_VALUE;
         UNICODE_STRING DfsDriverName;
         OBJECT_ATTRIBUTES ObjectAttributes;
 
-        WCHAR *DfsPathName = UnicodeComputerName.Buffer - 1; // Back up to the whack
+        WCHAR *DfsPathName = UnicodeComputerName.Buffer - 1;    // Back up to the whack
         ULONG DfsPathNameLength = AvailableLength + sizeof(WCHAR);
 
         // Open the DFS driver
 
-        RtlInitUnicodeString(&DfsDriverName, DFS_DRIVER_NAME);
-        InitializeObjectAttributes(&ObjectAttributes, &DfsDriverName, OBJ_CASE_INSENSITIVE, NULL, NULL);
+        RtlInitUnicodeString( &DfsDriverName, DFS_DRIVER_NAME );
+        InitializeObjectAttributes( &ObjectAttributes,
+                                    &DfsDriverName,
+                                    OBJ_CASE_INSENSITIVE,
+                                    NULL,
+                                    NULL
+                                );
 
-        NtStatus = NtCreateFile(&hDFS, SYNCHRONIZE, &ObjectAttributes, &IoStatusBlock, NULL, FILE_ATTRIBUTE_NORMAL,
-                                FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_OPEN_IF,
-                                FILE_CREATE_TREE_CONNECTION | FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0);
+        NtStatus = NtCreateFile(
+                        &hDFS,
+                        SYNCHRONIZE,
+                        &ObjectAttributes,
+                        &IoStatusBlock,
+                        NULL,
+                        FILE_ATTRIBUTE_NORMAL,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                        FILE_OPEN_IF,
+                        FILE_CREATE_TREE_CONNECTION | FILE_SYNCHRONOUS_IO_NONALERT,
+                        NULL,
+                        0
+                    );
 
-        if (!NT_SUCCESS(NtStatus))
-        {
+        if( !NT_SUCCESS(NtStatus) ) {
             dwError = RtlNtStatusToDosError(NtStatus);
             goto Exit;
         }
@@ -3686,38 +3995,44 @@ Return Value:
         // Query DFS's cache for the server name.  The name is guaranteed to
         // remain in the cache as long as the file is open.
 
-        if (L'\\' != DfsPathName[0])
-        {
+        if( L'\\' != DfsPathName[0] ) {
             NtClose(hDFS);
             dwError = ERROR_BAD_PATHNAME;
             goto Exit;
         }
 
-        NtStatus = NtFsControlFile(hDFS,
-                                   NULL, // Event,
-                                   NULL, // ApcRoutine,
-                                   NULL, // ApcContext,
-                                   &IoStatusBlock, FSCTL_DFS_GET_SERVER_NAME, DfsPathName, DfsPathNameLength,
-                                   DfsServerPathName, sizeof(DfsServerPathName));
-        NtClose(hDFS);
+        NtStatus = NtFsControlFile(
+                        hDFS,
+                        NULL,       // Event,
+                        NULL,       // ApcRoutine,
+                        NULL,       // ApcContext,
+                        &IoStatusBlock,
+                        FSCTL_DFS_GET_SERVER_NAME,
+                        DfsPathName,
+                        DfsPathNameLength,
+                        DfsServerPathName,
+                        sizeof(DfsServerPathName)
+                    );
+        NtClose( hDFS );
 
         // STATUS_OBJECT_NAME_NOT_FOUND means that it's not a DFS path
-        if (!NT_SUCCESS(NtStatus))
-        {
-            if (STATUS_OBJECT_NAME_NOT_FOUND != NtStatus)
-            {
+        if( !NT_SUCCESS(NtStatus) ) {
+            if( STATUS_OBJECT_NAME_NOT_FOUND != NtStatus  ) {
                 dwError = RtlNtStatusToDosError(NtStatus);
                 goto Exit;
             }
         }
-        else if (L'\0' != DfsServerPathName[0])
-        {
+        else if( L'\0' != DfsServerPathName[0] ) {
 
             // The previous DFS call returns the server-specific path to the file in UNC form.
             // Point UnicodeComputerName to just past the two whacks.
 
             AvailableLength = wcslen(DfsServerPathName) * sizeof(WCHAR);
-            if (3 * sizeof(WCHAR) > AvailableLength || L'\\' != DfsServerPathName[0] || L'\\' != DfsServerPathName[1])
+            if( 3*sizeof(WCHAR) > AvailableLength
+                ||
+                L'\\' != DfsServerPathName[0]
+                ||
+                L'\\' != DfsServerPathName[1] )
             {
                 dwError = ERROR_BAD_PATHNAME;
                 goto Exit;
@@ -3734,13 +4049,12 @@ Return Value:
 
     PathCharacter = UnicodeComputerName.Buffer;
 
-    while (((ULONG)((PCHAR)PathCharacter - (PCHAR)UnicodeComputerName.Buffer) < AvailableLength) &&
-           *PathCharacter != L'\\')
-    {
+    while( ( (ULONG) ((PCHAR)PathCharacter - (PCHAR)UnicodeComputerName.Buffer) < AvailableLength)
+           &&
+           *PathCharacter != L'\\' ) {
 
         // If we found a '.', we fail because this is probably a DNS or IP name.
-        if (L'.' == *PathCharacter)
-        {
+        if( L'.' == *PathCharacter ) {
             dwError = ERROR_BAD_PATHNAME;
             goto Exit;
         }
@@ -3750,35 +4064,35 @@ Return Value:
 
     // Set the computer name length
 
-    UnicodeComputerName.Length = UnicodeComputerName.MaximumLength =
-        (USHORT)((PCHAR)PathCharacter - (PCHAR)UnicodeComputerName.Buffer);
+    UnicodeComputerName.Length = UnicodeComputerName.MaximumLength
+        = (USHORT) ((PCHAR)PathCharacter - (PCHAR)UnicodeComputerName.Buffer);
 
     // Fail if the computer name exceeded the length of the input NtPathName,
     // or if the length exceeds that allowed.
 
-    if (UnicodeComputerName.Length >= AvailableLength ||
-        UnicodeComputerName.Length > MAX_COMPUTERNAME_LENGTH * sizeof(WCHAR))
-    {
+    if( UnicodeComputerName.Length >= AvailableLength
+        ||
+        UnicodeComputerName.Length > MAX_COMPUTERNAME_LENGTH*sizeof(WCHAR) ) {
         goto Exit;
     }
 
     // Copy the computer name into the caller's buffer, as long as there's enough
     // room for the name & a terminating '\0'.
 
-    if (UnicodeComputerName.Length + sizeof(WCHAR) > *nSize * sizeof(WCHAR))
-    {
+    if( UnicodeComputerName.Length + sizeof(WCHAR) > *nSize * sizeof(WCHAR) ) {
         dwError = ERROR_BUFFER_OVERFLOW;
         goto Exit;
     }
 
-    RtlCopyMemory(lpBuffer, UnicodeComputerName.Buffer, UnicodeComputerName.Length);
+    RtlCopyMemory( lpBuffer, UnicodeComputerName.Buffer, UnicodeComputerName.Length );
     *nSize = UnicodeComputerName.Length / sizeof(WCHAR);
-    lpBuffer[*nSize] = L'\0';
+    lpBuffer[ *nSize ] = L'\0';
 
     dwError = ERROR_SUCCESS;
 
 
 Exit:
 
-    return (dwError);
+    return( dwError );
+
 }

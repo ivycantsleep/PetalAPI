@@ -20,37 +20,52 @@ Revision History:
 
 #include "basedll.h"
 
-VOID WINAPI BasepIoCompletion(PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, DWORD Reserved);
+VOID
+WINAPI
+BasepIoCompletion(
+    PVOID ApcContext,
+    PIO_STATUS_BLOCK IoStatusBlock,
+    DWORD Reserved
+    );
 
-VOID WINAPI BasepIoCompletionSimple(PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, DWORD Reserved);
+VOID
+WINAPI
+BasepIoCompletionSimple(
+    PVOID ApcContext,
+    PIO_STATUS_BLOCK IoStatusBlock,
+    DWORD Reserved
+    );
 
 #define FIND_BUFFER_SIZE 4096
 
 PFINDFILE_HANDLE
-BasepInitializeFindFileHandle(IN HANDLE DirectoryHandle)
+BasepInitializeFindFileHandle(
+    IN HANDLE DirectoryHandle
+    )
 {
     PFINDFILE_HANDLE FindFileHandle;
 
-    FindFileHandle = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(FIND_TAG), sizeof(*FindFileHandle));
-    if (FindFileHandle)
-    {
+    FindFileHandle = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( FIND_TAG ), sizeof(*FindFileHandle));
+    if ( FindFileHandle ) {
         FindFileHandle->DirectoryHandle = DirectoryHandle;
         FindFileHandle->FindBufferBase = NULL;
         FindFileHandle->FindBufferNext = NULL;
         FindFileHandle->FindBufferLength = 0;
         FindFileHandle->FindBufferValidLength = 0;
-        if (!NT_SUCCESS(RtlInitializeCriticalSection(&FindFileHandle->FindBufferLock)))
-        {
-            RtlFreeHeap(RtlProcessHeap(), 0, FindFileHandle);
+        if ( !NT_SUCCESS(RtlInitializeCriticalSection(&FindFileHandle->FindBufferLock)) ){
+            RtlFreeHeap(RtlProcessHeap(), 0,FindFileHandle);
             FindFileHandle = NULL;
+            }
         }
-    }
     return FindFileHandle;
 }
 
 HANDLE
 APIENTRY
-FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
+FindFirstFileA(
+    LPCSTR lpFileName,
+    LPWIN32_FIND_DATAA lpFindFileData
+    )
 
 /*++
 
@@ -68,43 +83,52 @@ Routine Description:
     WIN32_FIND_DATAW FindFileData;
     ANSI_STRING AnsiString;
 
-    Unicode = Basep8BitStringToStaticUnicodeString(lpFileName);
-    if (Unicode == NULL)
-    {
+    Unicode = Basep8BitStringToStaticUnicodeString( lpFileName );
+    if (Unicode == NULL) {
         return INVALID_HANDLE_VALUE;
     }
+        
+    ReturnValue = FindFirstFileExW(
+                    (LPCWSTR)Unicode->Buffer,
+                    FindExInfoStandard,
+                    &FindFileData,
+                    FindExSearchNameMatch,
+                    NULL,
+                    0
+                    );
 
-    ReturnValue =
-        FindFirstFileExW((LPCWSTR)Unicode->Buffer, FindExInfoStandard, &FindFileData, FindExSearchNameMatch, NULL, 0);
-
-    if (ReturnValue == INVALID_HANDLE_VALUE)
-    {
+    if ( ReturnValue == INVALID_HANDLE_VALUE ) {
         return ReturnValue;
-    }
-    RtlMoveMemory(lpFindFileData, &FindFileData, (ULONG_PTR)&FindFileData.cFileName[0] - (ULONG_PTR)&FindFileData);
-    RtlInitUnicodeString(&UnicodeString, (PWSTR)FindFileData.cFileName);
+        }
+    RtlMoveMemory(
+        lpFindFileData,
+        &FindFileData,
+        (ULONG_PTR)&FindFileData.cFileName[0] - (ULONG_PTR)&FindFileData
+        );
+    RtlInitUnicodeString(&UnicodeString,(PWSTR)FindFileData.cFileName);
     AnsiString.Buffer = lpFindFileData->cFileName;
     AnsiString.MaximumLength = MAX_PATH;
-    Status = BasepUnicodeStringTo8BitString(&AnsiString, &UnicodeString, FALSE);
-    if (NT_SUCCESS(Status))
-    {
-        RtlInitUnicodeString(&UnicodeString, (PWSTR)FindFileData.cAlternateFileName);
+    Status = BasepUnicodeStringTo8BitString(&AnsiString,&UnicodeString,FALSE);
+    if (NT_SUCCESS(Status)) {
+        RtlInitUnicodeString(&UnicodeString,(PWSTR)FindFileData.cAlternateFileName);
         AnsiString.Buffer = lpFindFileData->cAlternateFileName;
         AnsiString.MaximumLength = 14;
-        Status = BasepUnicodeStringTo8BitString(&AnsiString, &UnicodeString, FALSE);
+        Status = BasepUnicodeStringTo8BitString(&AnsiString,&UnicodeString,FALSE);
     }
-    if (!NT_SUCCESS(Status))
-    {
+    if ( !NT_SUCCESS(Status) ) {
         FindClose(ReturnValue);
         BaseSetLastNTError(Status);
         return INVALID_HANDLE_VALUE;
-    }
+        }
     return ReturnValue;
 }
 
 HANDLE
 APIENTRY
-FindFirstFileW(LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData)
+FindFirstFileW(
+    LPCWSTR lpFileName,
+    LPWIN32_FIND_DATAW lpFindFileData
+    )
 
 /*++
 
@@ -173,11 +197,24 @@ Return Value:
 --*/
 
 {
-    return FindFirstFileExW(lpFileName, FindExInfoStandard, lpFindFileData, FindExSearchNameMatch, NULL, 0);
+    return FindFirstFileExW(
+                lpFileName,
+                FindExInfoStandard,
+                lpFindFileData,
+                FindExSearchNameMatch,
+                NULL,
+                0
+                );
 }
 
 
-BOOL APIENTRY FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
+
+BOOL
+APIENTRY
+FindNextFileA(
+    HANDLE hFindFile,
+    LPWIN32_FIND_DATAA lpFindFileData
+    )
 
 /*++
 
@@ -195,32 +232,38 @@ Routine Description:
     UNICODE_STRING UnicodeString;
     WIN32_FIND_DATAW FindFileData;
 
-    ReturnValue = FindNextFileW(hFindFile, &FindFileData);
-    if (!ReturnValue)
-    {
+    ReturnValue = FindNextFileW(hFindFile,&FindFileData);
+    if ( !ReturnValue ) {
         return ReturnValue;
-    }
-    RtlMoveMemory(lpFindFileData, &FindFileData, (ULONG_PTR)&FindFileData.cFileName[0] - (ULONG_PTR)&FindFileData);
-    RtlInitUnicodeString(&UnicodeString, (PWSTR)FindFileData.cFileName);
+        }
+    RtlMoveMemory(
+        lpFindFileData,
+        &FindFileData,
+        (ULONG_PTR)&FindFileData.cFileName[0] - (ULONG_PTR)&FindFileData
+        );
+    RtlInitUnicodeString(&UnicodeString,(PWSTR)FindFileData.cFileName);
     AnsiString.Buffer = lpFindFileData->cFileName;
     AnsiString.MaximumLength = MAX_PATH;
-    Status = BasepUnicodeStringTo8BitString(&AnsiString, &UnicodeString, FALSE);
-    if (NT_SUCCESS(Status))
-    {
-        RtlInitUnicodeString(&UnicodeString, (PWSTR)FindFileData.cAlternateFileName);
+    Status = BasepUnicodeStringTo8BitString(&AnsiString,&UnicodeString,FALSE);
+    if (NT_SUCCESS(Status)) {
+        RtlInitUnicodeString(&UnicodeString,(PWSTR)FindFileData.cAlternateFileName);
         AnsiString.Buffer = lpFindFileData->cAlternateFileName;
         AnsiString.MaximumLength = 14;
-        Status = BasepUnicodeStringTo8BitString(&AnsiString, &UnicodeString, FALSE);
+        Status = BasepUnicodeStringTo8BitString(&AnsiString,&UnicodeString,FALSE);
     }
-    if (!NT_SUCCESS(Status))
-    {
+    if ( !NT_SUCCESS(Status) ) {
         BaseSetLastNTError(Status);
         return FALSE;
-    }
+        }
     return ReturnValue;
 }
 
-BOOL APIENTRY FindNextFileW(HANDLE hFindFile, LPWIN32_FIND_DATAW lpFindFileData)
+BOOL
+APIENTRY
+FindNextFileW(
+    HANDLE hFindFile,
+    LPWIN32_FIND_DATAW lpFindFileData
+    )
 
 /*++
 
@@ -268,57 +311,60 @@ Return Value:
     BOOL ReturnValue;
     PFILE_BOTH_DIR_INFORMATION DirectoryInfo;
 
-    if (hFindFile == BASE_FIND_FIRST_DEVICE_HANDLE)
-    {
+    if ( hFindFile == BASE_FIND_FIRST_DEVICE_HANDLE ) {
         BaseSetLastNTError(STATUS_NO_MORE_FILES);
         return FALSE;
-    }
+        }
 
-    if (hFindFile == INVALID_HANDLE_VALUE)
-    {
+    if ( hFindFile == INVALID_HANDLE_VALUE ) {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
-    }
+        }
 
     ReturnValue = TRUE;
     FindFileHandle = (PFINDFILE_HANDLE)hFindFile;
     RtlEnterCriticalSection(&FindFileHandle->FindBufferLock);
-    try
-    {
+    try {
 
         //
         // If we haven't called find next yet, then
         // allocate the find buffer.
         //
 
-        if (!FindFileHandle->FindBufferBase)
-        {
-            FindFileHandle->FindBufferBase = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(FIND_TAG), FIND_BUFFER_SIZE);
-            if (FindFileHandle->FindBufferBase)
-            {
+        if ( !FindFileHandle->FindBufferBase ) {
+            FindFileHandle->FindBufferBase = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( FIND_TAG ), FIND_BUFFER_SIZE);
+            if (FindFileHandle->FindBufferBase) {
                 FindFileHandle->FindBufferNext = FindFileHandle->FindBufferBase;
                 FindFileHandle->FindBufferLength = FIND_BUFFER_SIZE;
                 FindFileHandle->FindBufferValidLength = 0;
-            }
-            else
-            {
+                }
+            else {
                 SetLastError(ERROR_NOT_ENOUGH_MEMORY);
                 ReturnValue = FALSE;
                 goto leavefinally;
+                }
             }
-        }
 
         //
         // Test to see if there is no data in the find file buffer
         //
 
         DirectoryInfo = (PFILE_BOTH_DIR_INFORMATION)FindFileHandle->FindBufferNext;
-        if (FindFileHandle->FindBufferBase == (PVOID)DirectoryInfo)
-        {
+        if ( FindFileHandle->FindBufferBase == (PVOID)DirectoryInfo ) {
 
-            Status = NtQueryDirectoryFile(FindFileHandle->DirectoryHandle, NULL, NULL, NULL, &IoStatusBlock,
-                                          DirectoryInfo, FindFileHandle->FindBufferLength, FileBothDirectoryInformation,
-                                          FALSE, NULL, FALSE);
+            Status = NtQueryDirectoryFile(
+                        FindFileHandle->DirectoryHandle,
+                        NULL,
+                        NULL,
+                        NULL,
+                        &IoStatusBlock,
+                        DirectoryInfo,
+                        FindFileHandle->FindBufferLength,
+                        FileBothDirectoryInformation,
+                        FALSE,
+                        NULL,
+                        FALSE
+                        );
 
             //
             //  ***** Do a kludge hack fix for now *****
@@ -326,8 +372,7 @@ Return Value:
             //  Forget about the last, partial, entry.
             //
 
-            if (Status == STATUS_BUFFER_OVERFLOW)
-            {
+            if ( Status == STATUS_BUFFER_OVERFLOW ) {
 
                 PULONG Ptr;
                 PULONG PriorPtr;
@@ -335,36 +380,30 @@ Return Value:
                 Ptr = (PULONG)DirectoryInfo;
                 PriorPtr = NULL;
 
-                while (*Ptr != 0)
-                {
+                while ( *Ptr != 0 ) {
 
                     PriorPtr = Ptr;
                     Ptr += (*Ptr / sizeof(ULONG));
                 }
 
-                if (PriorPtr != NULL)
-                {
-                    *PriorPtr = 0;
-                }
+                if (PriorPtr != NULL) { *PriorPtr = 0; }
                 Status = STATUS_SUCCESS;
             }
 
-            if (!NT_SUCCESS(Status))
-            {
+            if ( !NT_SUCCESS(Status) ) {
                 BaseSetLastNTError(Status);
                 ReturnValue = FALSE;
                 goto leavefinally;
+                }
             }
-        }
 
-        if (DirectoryInfo->NextEntryOffset)
-        {
-            FindFileHandle->FindBufferNext = (PVOID)((PUCHAR)DirectoryInfo + DirectoryInfo->NextEntryOffset);
-        }
-        else
-        {
+        if ( DirectoryInfo->NextEntryOffset ) {
+            FindFileHandle->FindBufferNext = (PVOID)(
+                (PUCHAR)DirectoryInfo + DirectoryInfo->NextEntryOffset);
+            }
+        else {
             FindFileHandle->FindBufferNext = FindFileHandle->FindBufferBase;
-        }
+            }
 
         //
         // Attributes are composed of the attributes returned by NT.
@@ -377,11 +416,15 @@ Return Value:
         lpFindFileData->nFileSizeHigh = DirectoryInfo->EndOfFile.HighPart;
         lpFindFileData->nFileSizeLow = DirectoryInfo->EndOfFile.LowPart;
 
-        RtlMoveMemory(lpFindFileData->cFileName, DirectoryInfo->FileName, DirectoryInfo->FileNameLength);
+        RtlMoveMemory( lpFindFileData->cFileName,
+                       DirectoryInfo->FileName,
+                       DirectoryInfo->FileNameLength );
 
         lpFindFileData->cFileName[DirectoryInfo->FileNameLength >> 1] = UNICODE_NULL;
 
-        RtlMoveMemory(lpFindFileData->cAlternateFileName, DirectoryInfo->ShortName, DirectoryInfo->ShortNameLength);
+        RtlMoveMemory( lpFindFileData->cAlternateFileName,
+                       DirectoryInfo->ShortName,
+                       DirectoryInfo->ShortNameLength );
 
         lpFindFileData->cAlternateFileName[DirectoryInfo->ShortNameLength >> 1] = UNICODE_NULL;
 
@@ -389,21 +432,22 @@ Return Value:
         // For NTFS reparse points we return the reparse point data tag in dwReserved0.
         //
 
-        if (DirectoryInfo->FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
-        {
+        if ( DirectoryInfo->FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT ) {
             lpFindFileData->dwReserved0 = DirectoryInfo->EaSize;
-        }
+            }
 
-    leavefinally:;
-    }
-    finally
-    {
+leavefinally:;
+        }
+    finally{
         RtlLeaveCriticalSection(&FindFileHandle->FindBufferLock);
-    }
+        }
     return ReturnValue;
 }
 
-BOOL FindClose(HANDLE hFindFile)
+BOOL
+FindClose(
+    HANDLE hFindFile
+    )
 
 /*++
 
@@ -443,19 +487,16 @@ Return Value:
     HANDLE DirectoryHandle;
     PVOID FindBufferBase;
 
-    if (hFindFile == BASE_FIND_FIRST_DEVICE_HANDLE)
-    {
+    if ( hFindFile == BASE_FIND_FIRST_DEVICE_HANDLE ) {
         return TRUE;
-    }
+        }
 
-    if (hFindFile == INVALID_HANDLE_VALUE)
-    {
+    if ( hFindFile == INVALID_HANDLE_VALUE ) {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
-    }
+        }
 
-    try
-    {
+    try {
 
         FindFileHandle = (PFINDFILE_HANDLE)hFindFile;
         RtlEnterCriticalSection(&FindFileHandle->FindBufferLock);
@@ -466,34 +507,36 @@ Return Value:
         RtlLeaveCriticalSection(&FindFileHandle->FindBufferLock);
 
         Status = NtClose(DirectoryHandle);
-        if (NT_SUCCESS(Status))
-        {
-            if (FindBufferBase)
-            {
-                RtlFreeHeap(RtlProcessHeap(), 0, FindBufferBase);
-            }
+        if ( NT_SUCCESS(Status) ) {
+            if (FindBufferBase) {
+                RtlFreeHeap(RtlProcessHeap(), 0,FindBufferBase);
+                }
             RtlDeleteCriticalSection(&FindFileHandle->FindBufferLock);
-            RtlFreeHeap(RtlProcessHeap(), 0, FindFileHandle);
+            RtlFreeHeap(RtlProcessHeap(), 0,FindFileHandle);
             return TRUE;
-        }
-        else
-        {
+            }
+        else {
             BaseSetLastNTError(Status);
             return FALSE;
+            }
         }
-    }
-    except(EXCEPTION_EXECUTE_HANDLER)
-    {
+    except ( EXCEPTION_EXECUTE_HANDLER ) {
         BaseSetLastNTError(GetExceptionCode());
         return FALSE;
-    }
+        }
     return FALSE;
 }
 
 HANDLE
 WINAPI
-FindFirstFileExA(LPCSTR lpFileName, FINDEX_INFO_LEVELS fInfoLevelId, LPVOID lpFindFileData, FINDEX_SEARCH_OPS fSearchOp,
-                 LPVOID lpSearchFilter, DWORD dwAdditionalFlags)
+FindFirstFileExA(
+    LPCSTR lpFileName,
+    FINDEX_INFO_LEVELS fInfoLevelId,
+    LPVOID lpFindFileData,
+    FINDEX_SEARCH_OPS fSearchOp,
+    LPVOID lpSearchFilter,
+    DWORD dwAdditionalFlags
+    )
 {
     HANDLE ReturnValue;
     PUNICODE_STRING Unicode;
@@ -509,45 +552,58 @@ FindFirstFileExA(LPCSTR lpFileName, FINDEX_INFO_LEVELS fInfoLevelId, LPVOID lpFi
     //
 
     lpFindFileDataA = (LPWIN32_FIND_DATAA)lpFindFileData;
-
-    Unicode = Basep8BitStringToStaticUnicodeString(lpFileName);
-    if (Unicode == NULL)
-    {
+    
+    Unicode = Basep8BitStringToStaticUnicodeString( lpFileName );
+    if (Unicode == NULL) {
         return INVALID_HANDLE_VALUE;
     }
+        
+    ReturnValue = FindFirstFileExW(
+                    (LPCWSTR)Unicode->Buffer,
+                    fInfoLevelId,
+                    (LPVOID)&FindFileData,
+                    fSearchOp,
+                    lpSearchFilter,
+                    dwAdditionalFlags
+                    );
 
-    ReturnValue = FindFirstFileExW((LPCWSTR)Unicode->Buffer, fInfoLevelId, (LPVOID)&FindFileData, fSearchOp,
-                                   lpSearchFilter, dwAdditionalFlags);
-
-    if (ReturnValue == INVALID_HANDLE_VALUE)
-    {
+    if ( ReturnValue == INVALID_HANDLE_VALUE ) {
         return ReturnValue;
-    }
-    RtlMoveMemory(lpFindFileData, &FindFileData, (ULONG_PTR)&FindFileData.cFileName[0] - (ULONG_PTR)&FindFileData);
-    RtlInitUnicodeString(&UnicodeString, (PWSTR)FindFileData.cFileName);
+        }
+    RtlMoveMemory(
+        lpFindFileData,
+        &FindFileData,
+        (ULONG_PTR)&FindFileData.cFileName[0] - (ULONG_PTR)&FindFileData
+        );
+    RtlInitUnicodeString(&UnicodeString,(PWSTR)FindFileData.cFileName);
     AnsiString.Buffer = lpFindFileDataA->cFileName;
     AnsiString.MaximumLength = MAX_PATH;
-    Status = BasepUnicodeStringTo8BitString(&AnsiString, &UnicodeString, FALSE);
-    if (NT_SUCCESS(Status))
-    {
-        RtlInitUnicodeString(&UnicodeString, (PWSTR)FindFileData.cAlternateFileName);
+    Status = BasepUnicodeStringTo8BitString(&AnsiString,&UnicodeString,FALSE);
+    if (NT_SUCCESS(Status)) {
+        RtlInitUnicodeString(&UnicodeString,(PWSTR)FindFileData.cAlternateFileName);
         AnsiString.Buffer = lpFindFileDataA->cAlternateFileName;
         AnsiString.MaximumLength = 14;
-        Status = BasepUnicodeStringTo8BitString(&AnsiString, &UnicodeString, FALSE);
+        Status = BasepUnicodeStringTo8BitString(&AnsiString,&UnicodeString,FALSE);
     }
-    if (!NT_SUCCESS(Status))
-    {
+    if ( !NT_SUCCESS(Status) ) {
         FindClose(ReturnValue);
         BaseSetLastNTError(Status);
         return INVALID_HANDLE_VALUE;
-    }
+        }
     return ReturnValue;
+
 }
 
 HANDLE
 WINAPI
-FindFirstFileExW(LPCWSTR lpFileName, FINDEX_INFO_LEVELS fInfoLevelId, LPVOID lpFindFileData,
-                 FINDEX_SEARCH_OPS fSearchOp, LPVOID lpSearchFilter, DWORD dwAdditionalFlags)
+FindFirstFileExW(
+    LPCWSTR lpFileName,
+    FINDEX_INFO_LEVELS fInfoLevelId,
+    LPVOID lpFindFileData,
+    FINDEX_SEARCH_OPS fSearchOp,
+    LPVOID lpSearchFilter,
+    DWORD dwAdditionalFlags
+    )
 
 /*++
 
@@ -645,11 +701,10 @@ Return Value:
     UNICODE_STRING PathName;
     IO_STATUS_BLOCK IoStatusBlock;
     PFILE_BOTH_DIR_INFORMATION DirectoryInfo;
-    struct SEARCH_BUFFER
-    {
+    struct SEARCH_BUFFER {
         FILE_BOTH_DIR_INFORMATION DirInfo;
         WCHAR Names[MAX_PATH];
-    } Buffer;
+        } Buffer;
     BOOLEAN TranslationStatus;
     RTL_RELATIVE_NAME RelativeName;
     PVOID FreeBuffer;
@@ -663,38 +718,40 @@ Return Value:
     // check parameters
     //
 
-    if (fInfoLevelId >= FindExInfoMaxInfoLevel || fSearchOp >= FindExSearchLimitToDevices ||
-        dwAdditionalFlags & FIND_FIRST_EX_INVALID_FLAGS)
-    {
+    if ( fInfoLevelId >= FindExInfoMaxInfoLevel ||
+         fSearchOp >= FindExSearchLimitToDevices ||
+        dwAdditionalFlags & FIND_FIRST_EX_INVALID_FLAGS ) {
         SetLastError(fSearchOp == FindExSearchLimitToDevices ? ERROR_NOT_SUPPORTED : ERROR_INVALID_PARAMETER);
         return INVALID_HANDLE_VALUE;
-    }
+        }
 
     FindFileData = (LPWIN32_FIND_DATAW)lpFindFileData;
 
-    RtlInitUnicodeString(&UnicodeInput, lpFileName);
+    RtlInitUnicodeString(&UnicodeInput,lpFileName);
 
     //
     // Bogus code to workaround ~* problem
     //
 
-    if (UnicodeInput.Buffer[(UnicodeInput.Length >> 1) - 1] == (WCHAR)'.')
-    {
+    if ( UnicodeInput.Buffer[(UnicodeInput.Length>>1)-1] == (WCHAR)'.' ) {
         EndsInDot = TRUE;
-    }
-    else
-    {
+        }
+    else {
         EndsInDot = FALSE;
-    }
+        }
 
 
-    TranslationStatus = RtlDosPathNameToNtPathName_U(lpFileName, &PathName, &FileName.Buffer, &RelativeName);
+    TranslationStatus = RtlDosPathNameToNtPathName_U(
+                            lpFileName,
+                            &PathName,
+                            &FileName.Buffer,
+                            &RelativeName
+                            );
 
-    if (!TranslationStatus)
-    {
+    if ( !TranslationStatus ) {
         SetLastError(ERROR_PATH_NOT_FOUND);
         return INVALID_HANDLE_VALUE;
-    }
+        }
 
     FreeBuffer = PathName.Buffer;
 
@@ -703,103 +760,108 @@ Return Value:
     //  of the name for a subsequent call to NtQueryDirectoryFile.
     //
 
-    if (FileName.Buffer)
-    {
-        FileName.Length = PathName.Length - (USHORT)((ULONG_PTR)FileName.Buffer - (ULONG_PTR)PathName.Buffer);
-    }
-    else
-    {
+    if (FileName.Buffer) {
+        FileName.Length =
+            PathName.Length - (USHORT)((ULONG_PTR)FileName.Buffer - (ULONG_PTR)PathName.Buffer);
+    } else {
         FileName.Length = 0;
-    }
+        }
 
     FileName.MaximumLength = FileName.Length;
-    if (RelativeName.RelativeName.Length && RelativeName.RelativeName.Buffer != (PUCHAR)FileName.Buffer)
-    {
+    if ( RelativeName.RelativeName.Length &&
+         RelativeName.RelativeName.Buffer != (PUCHAR)FileName.Buffer ) {
 
-        if (FileName.Buffer)
-        {
+        if (FileName.Buffer) {
             PathName.Length = (USHORT)((ULONG_PTR)FileName.Buffer - (ULONG_PTR)RelativeName.RelativeName.Buffer);
             PathName.MaximumLength = PathName.Length;
             PathName.Buffer = (PWSTR)RelativeName.RelativeName.Buffer;
+            }
+
         }
-    }
-    else
-    {
+    else {
         RelativeName.ContainingDirectory = NULL;
 
-        if (FileName.Buffer)
-        {
+        if (FileName.Buffer) {
             PathName.Length = (USHORT)((ULONG_PTR)FileName.Buffer - (ULONG_PTR)PathName.Buffer);
             PathName.MaximumLength = PathName.Length;
+            }
         }
-    }
-    if (PathName.Buffer[(PathName.Length >> 1) - 2] != (WCHAR)':' &&
-        PathName.Buffer[(PathName.Length >> 1) - 1] != (WCHAR)'\\')
-    {
+    if ( PathName.Buffer[(PathName.Length>>1)-2] != (WCHAR)':' &&
+         PathName.Buffer[(PathName.Length>>1)-1] != (WCHAR)'\\'   ) {
 
         PathName.Length -= sizeof(UNICODE_NULL);
         StrippedTrailingSlash = TRUE;
-    }
-    else
-    {
+        }
+    else {
         StrippedTrailingSlash = FALSE;
-    }
+        }
 
-    InitializeObjectAttributes(&Obja, &PathName,
-                               dwAdditionalFlags & FIND_FIRST_EX_CASE_SENSITIVE ? 0 : OBJ_CASE_INSENSITIVE,
-                               RelativeName.ContainingDirectory, NULL);
+    InitializeObjectAttributes(
+        &Obja,
+        &PathName,
+        dwAdditionalFlags & FIND_FIRST_EX_CASE_SENSITIVE ? 0 : OBJ_CASE_INSENSITIVE,
+        RelativeName.ContainingDirectory,
+        NULL
+        );
 
     //
     // Open the directory for list access
     //
 
-    Status = NtOpenFile(&hFindFile, FILE_LIST_DIRECTORY | SYNCHRONIZE, &Obja, &IoStatusBlock,
-                        FILE_SHARE_READ | FILE_SHARE_WRITE,
-                        FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT);
+    Status = NtOpenFile(
+                &hFindFile,
+                FILE_LIST_DIRECTORY | SYNCHRONIZE,
+                &Obja,
+                &IoStatusBlock,
+                FILE_SHARE_READ | FILE_SHARE_WRITE,
+                FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT
+                );
 
-    if ((Status == STATUS_INVALID_PARAMETER || Status == STATUS_NOT_A_DIRECTORY) && StrippedTrailingSlash)
-    {
+    if ( (Status == STATUS_INVALID_PARAMETER ||
+          Status == STATUS_NOT_A_DIRECTORY) && StrippedTrailingSlash ) {
         //
         // open of a pnp style path failed, so try putting back the trailing slash
         //
         PathName.Length += sizeof(UNICODE_NULL);
-        Status = NtOpenFile(&hFindFile, FILE_LIST_DIRECTORY | SYNCHRONIZE, &Obja, &IoStatusBlock,
-                            FILE_SHARE_READ | FILE_SHARE_WRITE,
-                            FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT);
+        Status = NtOpenFile(
+                    &hFindFile,
+                    FILE_LIST_DIRECTORY | SYNCHRONIZE,
+                    &Obja,
+                    &IoStatusBlock,
+                    FILE_SHARE_READ | FILE_SHARE_WRITE,
+                    FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT
+                    );
         PathName.Length -= sizeof(UNICODE_NULL);
-    }
+        }
 
-    if (!NT_SUCCESS(Status))
-    {
+    if ( !NT_SUCCESS(Status) ) {
         ULONG DeviceNameData;
         UNICODE_STRING DeviceName;
 
-        RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
+        RtlFreeHeap(RtlProcessHeap(), 0,FreeBuffer);
 
         //
         // The full path does not refer to a directory. This could
         // be a device. Check for a device name.
         //
 
-        if (DeviceNameData = RtlIsDosDeviceName_U(UnicodeInput.Buffer))
-        {
+        if ( DeviceNameData = RtlIsDosDeviceName_U(UnicodeInput.Buffer) ) {
             DeviceName.Length = (USHORT)(DeviceNameData & 0xffff);
             DeviceName.MaximumLength = (USHORT)(DeviceNameData & 0xffff);
-            DeviceName.Buffer = (PWSTR)((PUCHAR)UnicodeInput.Buffer + (DeviceNameData >> 16));
-            return BaseFindFirstDevice(&DeviceName, FindFileData);
-        }
+            DeviceName.Buffer = (PWSTR)
+                ((PUCHAR)UnicodeInput.Buffer + (DeviceNameData >> 16));
+            return BaseFindFirstDevice(&DeviceName,FindFileData);
+            }
 
-        if (Status == STATUS_OBJECT_NAME_NOT_FOUND)
-        {
+        if ( Status == STATUS_OBJECT_NAME_NOT_FOUND ) {
             Status = STATUS_OBJECT_PATH_NOT_FOUND;
-        }
-        if (Status == STATUS_OBJECT_TYPE_MISMATCH)
-        {
+            }
+        if ( Status == STATUS_OBJECT_TYPE_MISMATCH ) {
             Status = STATUS_OBJECT_PATH_NOT_FOUND;
-        }
+            }
         BaseSetLastNTError(Status);
         return INVALID_HANDLE_VALUE;
-    }
+        }
 
     //
     // Get an entry
@@ -810,13 +872,12 @@ Return Value:
     // then bail.
     //
 
-    if (!FileName.Length)
-    {
-        RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
+    if ( !FileName.Length ) {
+        RtlFreeHeap(RtlProcessHeap(), 0,FreeBuffer);
         NtClose(hFindFile);
         SetLastError(ERROR_FILE_NOT_FOUND);
         return INVALID_HANDLE_VALUE;
-    }
+        }
 
     DirectoryInfo = &Buffer.DirInfo;
 
@@ -831,57 +892,56 @@ Return Value:
     //  These transmogrifications are all done in place.
     //
 
-    if ((FileName.Length == 6) && (RtlCompareMemory(FileName.Buffer, L"*.*", 6) == 6))
-    {
+    if ( (FileName.Length == 6) &&
+         (RtlCompareMemory(FileName.Buffer, L"*.*", 6) == 6) ) {
 
         FileName.Length = 2;
-    }
-    else
-    {
+
+    } else {
 
         ULONG Index;
         WCHAR *NameChar;
 
-        for (Index = 0, NameChar = FileName.Buffer; Index < FileName.Length / sizeof(WCHAR); Index += 1, NameChar += 1)
-        {
+        for ( Index = 0, NameChar = FileName.Buffer;
+              Index < FileName.Length/sizeof(WCHAR);
+              Index += 1, NameChar += 1) {
 
-            if (Index && (*NameChar == L'.') && (*(NameChar - 1) == L'*'))
-            {
+            if (Index && (*NameChar == L'.') && (*(NameChar - 1) == L'*')) {
 
                 *(NameChar - 1) = DOS_STAR;
             }
 
-            if ((*NameChar == L'?') || (*NameChar == L'*'))
-            {
+            if ((*NameChar == L'?') || (*NameChar == L'*')) {
 
-                if (*NameChar == L'?')
-                {
-                    *NameChar = DOS_QM;
-                }
+                if (*NameChar == L'?') { *NameChar = DOS_QM; }
 
-                if (Index && *(NameChar - 1) == L'.')
-                {
-                    *(NameChar - 1) = DOS_DOT;
-                }
+                if (Index && *(NameChar-1) == L'.') { *(NameChar-1) = DOS_DOT; }
             }
         }
 
-        if (EndsInDot && *(NameChar - 1) == L'*')
-        {
-            *(NameChar - 1) = DOS_STAR;
-        }
+        if (EndsInDot && *(NameChar - 1) == L'*') { *(NameChar-1) = DOS_STAR; }
     }
 
-    Status = NtQueryDirectoryFile(hFindFile, NULL, NULL, NULL, &IoStatusBlock, DirectoryInfo, sizeof(Buffer),
-                                  FileBothDirectoryInformation, TRUE, &FileName, FALSE);
+    Status = NtQueryDirectoryFile(
+                hFindFile,
+                NULL,
+                NULL,
+                NULL,
+                &IoStatusBlock,
+                DirectoryInfo,
+                sizeof(Buffer),
+                FileBothDirectoryInformation,
+                TRUE,
+                &FileName,
+                FALSE
+                );
 
-    RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
-    if (!NT_SUCCESS(Status))
-    {
+    RtlFreeHeap(RtlProcessHeap(), 0,FreeBuffer);
+    if ( !NT_SUCCESS(Status) ) {
         NtClose(hFindFile);
         BaseSetLastNTError(Status);
         return INVALID_HANDLE_VALUE;
-    }
+        }
 
     //
     // Attributes are composed of the attributes returned by NT.
@@ -894,11 +954,15 @@ Return Value:
     FindFileData->nFileSizeHigh = DirectoryInfo->EndOfFile.HighPart;
     FindFileData->nFileSizeLow = DirectoryInfo->EndOfFile.LowPart;
 
-    RtlMoveMemory(FindFileData->cFileName, DirectoryInfo->FileName, DirectoryInfo->FileNameLength);
+    RtlMoveMemory( FindFileData->cFileName,
+                   DirectoryInfo->FileName,
+                   DirectoryInfo->FileNameLength );
 
     FindFileData->cFileName[DirectoryInfo->FileNameLength >> 1] = UNICODE_NULL;
 
-    RtlMoveMemory(FindFileData->cAlternateFileName, DirectoryInfo->ShortName, DirectoryInfo->ShortNameLength);
+    RtlMoveMemory( FindFileData->cAlternateFileName,
+                   DirectoryInfo->ShortName,
+                   DirectoryInfo->ShortNameLength );
 
     FindFileData->cAlternateFileName[DirectoryInfo->ShortNameLength >> 1] = UNICODE_NULL;
 
@@ -906,24 +970,26 @@ Return Value:
     // For NTFS reparse points we return the reparse point data tag in dwReserved0.
     //
 
-    if (DirectoryInfo->FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
-    {
+    if ( DirectoryInfo->FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT ) {
         FindFileData->dwReserved0 = DirectoryInfo->EaSize;
-    }
+        }
 
     FindFileHandle = BasepInitializeFindFileHandle(hFindFile);
-    if (!FindFileHandle)
-    {
+    if ( !FindFileHandle ) {
         NtClose(hFindFile);
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
         return INVALID_HANDLE_VALUE;
-    }
+        }
 
     return (HANDLE)FindFileHandle;
+
 }
 
 HANDLE
-BaseFindFirstDevice(PCUNICODE_STRING FileName, LPWIN32_FIND_DATAW lpFindFileData)
+BaseFindFirstDevice(
+    PCUNICODE_STRING FileName,
+    LPWIN32_FIND_DATAW lpFindFileData
+    )
 
 /*++
 
@@ -948,15 +1014,23 @@ Return Value:
 --*/
 
 {
-    RtlZeroMemory(lpFindFileData, sizeof(*lpFindFileData));
+    RtlZeroMemory(lpFindFileData,sizeof(*lpFindFileData));
     lpFindFileData->dwFileAttributes = FILE_ATTRIBUTE_ARCHIVE;
-    RtlMoveMemory(&lpFindFileData->cFileName[0], FileName->Buffer, FileName->MaximumLength);
+    RtlMoveMemory(
+        &lpFindFileData->cFileName[0],
+        FileName->Buffer,
+        FileName->MaximumLength
+        );
     return BASE_FIND_FIRST_DEVICE_HANDLE;
 }
 
 HANDLE
 APIENTRY
-FindFirstChangeNotificationA(LPCSTR lpPathName, BOOL bWatchSubtree, DWORD dwNotifyFilter)
+FindFirstChangeNotificationA(
+    LPCSTR lpPathName,
+    BOOL bWatchSubtree,
+    DWORD dwNotifyFilter
+    )
 
 /*++
 
@@ -972,21 +1046,23 @@ Routine Description:
     NTSTATUS Status;
 
     Unicode = &NtCurrentTeb()->StaticUnicodeString;
-    RtlInitAnsiString(&AnsiString, lpPathName);
-    Status = RtlAnsiStringToUnicodeString(Unicode, &AnsiString, FALSE);
-    if (!NT_SUCCESS(Status))
-    {
-        if (Status == STATUS_BUFFER_OVERFLOW)
-        {
+    RtlInitAnsiString(&AnsiString,lpPathName);
+    Status = RtlAnsiStringToUnicodeString(Unicode,&AnsiString,FALSE);
+    if ( !NT_SUCCESS(Status) ) {
+        if ( Status == STATUS_BUFFER_OVERFLOW ) {
             SetLastError(ERROR_FILENAME_EXCED_RANGE);
-        }
-        else
-        {
+            }
+        else {
             BaseSetLastNTError(Status);
-        }
+            }
         return FALSE;
-    }
-    return (FindFirstChangeNotificationW((LPCWSTR)Unicode->Buffer, bWatchSubtree, dwNotifyFilter));
+        }
+    return ( FindFirstChangeNotificationW(
+                (LPCWSTR)Unicode->Buffer,
+                bWatchSubtree,
+                dwNotifyFilter
+                )
+            );
 }
 
 //
@@ -999,7 +1075,11 @@ IO_STATUS_BLOCK staticIoStatusBlock;
 
 HANDLE
 APIENTRY
-FindFirstChangeNotificationW(LPCWSTR lpPathName, BOOL bWatchSubtree, DWORD dwNotifyFilter)
+FindFirstChangeNotificationW(
+    LPCWSTR lpPathName,
+    BOOL bWatchSubtree,
+    DWORD dwNotifyFilter
+    )
 
 /*++
 
@@ -1095,60 +1175,83 @@ Return Value:
     RTL_RELATIVE_NAME RelativeName;
     PVOID FreeBuffer;
 
-    TranslationStatus = RtlDosPathNameToNtPathName_U(lpPathName, &FileName, NULL, &RelativeName);
+    TranslationStatus = RtlDosPathNameToNtPathName_U(
+                            lpPathName,
+                            &FileName,
+                            NULL,
+                            &RelativeName
+                            );
 
-    if (!TranslationStatus)
-    {
+    if ( !TranslationStatus ) {
         SetLastError(ERROR_PATH_NOT_FOUND);
         return FALSE;
-    }
+        }
 
     FreeBuffer = FileName.Buffer;
 
-    if (RelativeName.RelativeName.Length)
-    {
+    if ( RelativeName.RelativeName.Length ) {
         FileName = *(PUNICODE_STRING)&RelativeName.RelativeName;
-    }
-    else
-    {
+        }
+    else {
         RelativeName.ContainingDirectory = NULL;
-    }
+        }
 
-    InitializeObjectAttributes(&Obja, &FileName, OBJ_CASE_INSENSITIVE, RelativeName.ContainingDirectory, NULL);
+    InitializeObjectAttributes(
+        &Obja,
+        &FileName,
+        OBJ_CASE_INSENSITIVE,
+        RelativeName.ContainingDirectory,
+        NULL
+        );
 
     //
     // Open the file
     //
 
-    Status = NtOpenFile(&Handle, (ACCESS_MASK)FILE_LIST_DIRECTORY | SYNCHRONIZE, &Obja, &IoStatusBlock,
-                        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                        FILE_DIRECTORY_FILE | FILE_OPEN_FOR_BACKUP_INTENT);
+    Status = NtOpenFile(
+                &Handle,
+                (ACCESS_MASK)FILE_LIST_DIRECTORY | SYNCHRONIZE,
+                &Obja,
+                &IoStatusBlock,
+                FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                FILE_DIRECTORY_FILE | FILE_OPEN_FOR_BACKUP_INTENT
+                );
 
-    RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
-    if (!NT_SUCCESS(Status))
-    {
+    RtlFreeHeap(RtlProcessHeap(), 0,FreeBuffer);
+    if ( !NT_SUCCESS(Status) ) {
         BaseSetLastNTError(Status);
         return INVALID_HANDLE_VALUE;
-    }
+        }
 
     //
     // call change notify
     //
 
-    Status = NtNotifyChangeDirectoryFile(Handle, NULL, NULL, NULL, &staticIoStatusBlock,
-                                         staticchangebuff, // should be NULL
-                                         sizeof(staticchangebuff), dwNotifyFilter, (BOOLEAN)bWatchSubtree);
+    Status = NtNotifyChangeDirectoryFile(
+                Handle,
+                NULL,
+                NULL,
+                NULL,
+                &staticIoStatusBlock,
+                staticchangebuff,   // should be NULL
+                sizeof(staticchangebuff),
+                dwNotifyFilter,
+                (BOOLEAN)bWatchSubtree
+                );
 
-    if (!NT_SUCCESS(Status))
-    {
+    if ( !NT_SUCCESS(Status) ) {
         BaseSetLastNTError(Status);
         NtClose(Handle);
         Handle = INVALID_HANDLE_VALUE;
-    }
+        }
     return Handle;
 }
 
-BOOL APIENTRY FindNextChangeNotification(HANDLE hChangeHandle)
+BOOL
+APIENTRY
+FindNextChangeNotification(
+    HANDLE hChangeHandle
+    )
 
 /*++
 
@@ -1201,23 +1304,33 @@ Return Value:
     // call change notify
     //
 
-    Status = NtNotifyChangeDirectoryFile(hChangeHandle, NULL, NULL, NULL, &staticIoStatusBlock,
-                                         staticchangebuff, // should be NULL
-                                         sizeof(staticchangebuff),
-                                         FILE_NOTIFY_CHANGE_NAME, // not needed bug workaround
-                                         TRUE                     // not needed bug workaround
-    );
+    Status = NtNotifyChangeDirectoryFile(
+                hChangeHandle,
+                NULL,
+                NULL,
+                NULL,
+                &staticIoStatusBlock,
+                staticchangebuff,           // should be NULL
+                sizeof(staticchangebuff),
+                FILE_NOTIFY_CHANGE_NAME,    // not needed bug workaround
+                TRUE                        // not needed bug workaround
+                );
 
-    if (!NT_SUCCESS(Status))
-    {
+    if ( !NT_SUCCESS(Status) ) {
         BaseSetLastNTError(Status);
         ReturnValue = FALSE;
-    }
+        }
     return ReturnValue;
 }
 
 
-BOOL APIENTRY FindCloseChangeNotification(HANDLE hChangeHandle)
+
+
+BOOL
+APIENTRY
+FindCloseChangeNotification(
+    HANDLE hChangeHandle
+    )
 
 /*++
 
@@ -1244,9 +1357,18 @@ Return Value:
     return CloseHandle(hChangeHandle);
 }
 
-BOOL WINAPI ReadDirectoryChangesW(HANDLE hDirectory, LPVOID lpBuffer, DWORD nBufferLength, BOOL bWatchSubtree,
-                                  DWORD dwNotifyFilter, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped,
-                                  LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
+BOOL
+WINAPI
+ReadDirectoryChangesW(
+    HANDLE hDirectory,
+    LPVOID lpBuffer,
+    DWORD nBufferLength,
+    BOOL bWatchSubtree,
+    DWORD dwNotifyFilter,
+    LPDWORD lpBytesReturned,
+    LPOVERLAPPED lpOverlapped,
+    LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine
+    )
 
 /*++
 
@@ -1499,11 +1621,9 @@ Return Value:
 
     ReturnValue = TRUE;
 
-    if (ARGUMENT_PRESENT(lpOverlapped))
-    {
+    if ( ARGUMENT_PRESENT(lpOverlapped) ) {
 
-        if (ARGUMENT_PRESENT(lpCompletionRoutine))
-        {
+        if ( ARGUMENT_PRESENT(lpCompletionRoutine) ) {
 
             //
             // completion is via APC routine
@@ -1513,27 +1633,23 @@ Return Value:
 
             Status = BasepAllocateActivationContextActivationBlock(
                 BASEP_ALLOCATE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK_FLAG_DO_NOT_FREE_AFTER_CALLBACK |
-                    BASEP_ALLOCATE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK_FLAG_DO_NOT_ALLOCATE_IF_PROCESS_DEFAULT,
-                lpCompletionRoutine, lpOverlapped, &ActivationBlock);
-            if (!NT_SUCCESS(Status))
-            {
+                BASEP_ALLOCATE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK_FLAG_DO_NOT_ALLOCATE_IF_PROCESS_DEFAULT,
+                lpCompletionRoutine,
+                lpOverlapped,
+                &ActivationBlock);
+            if (!NT_SUCCESS(Status)) {
                 BaseSetLastNTError(Status);
                 return FALSE;
             }
 
-            if (ActivationBlock != NULL)
-            {
+            if (ActivationBlock != NULL) {
                 ApcRoutine = &BasepIoCompletion;
-                ApcContext = (PVOID)ActivationBlock;
-            }
-            else
-            {
+                ApcContext = (PVOID) ActivationBlock;
+            } else {
                 ApcRoutine = &BasepIoCompletionSimple;
                 ApcContext = lpCompletionRoutine;
             }
-        }
-        else
-        {
+        } else {
             //
             // completion is via completion port or get overlapped result
             //
@@ -1545,51 +1661,63 @@ Return Value:
 
         lpOverlapped->Internal = (DWORD)STATUS_PENDING;
 
-        Status = NtNotifyChangeDirectoryFile(hDirectory, Event, ApcRoutine, ApcContext,
-                                             (PIO_STATUS_BLOCK)&lpOverlapped->Internal, lpBuffer, nBufferLength,
-                                             dwNotifyFilter, (BOOLEAN)bWatchSubtree);
+        Status = NtNotifyChangeDirectoryFile(
+                    hDirectory,
+                    Event,
+                    ApcRoutine,
+                    ApcContext,
+                    (PIO_STATUS_BLOCK)&lpOverlapped->Internal,
+                    lpBuffer,
+                    nBufferLength,
+                    dwNotifyFilter,
+                    (BOOLEAN)bWatchSubtree
+                    );
 
         //
         // Anything other than an error means that I/O completion will
         // occur and caller only gets return data via completion mechanism
         //
 
-        if (NT_ERROR(Status))
-        {
+        if ( NT_ERROR(Status) ) {
             if (ActivationBlock != NULL)
                 BasepFreeActivationContextActivationBlock(ActivationBlock);
 
             BaseSetLastNTError(Status);
             ReturnValue = FALSE;
+            }
         }
-    }
-    else
-    {
-        Status = NtNotifyChangeDirectoryFile(hDirectory, NULL, NULL, NULL, &IoStatusBlock, lpBuffer, nBufferLength,
-                                             dwNotifyFilter, (BOOLEAN)bWatchSubtree);
-        if (Status == STATUS_PENDING)
-        {
+    else {
+        Status = NtNotifyChangeDirectoryFile(
+                    hDirectory,
+                    NULL,
+                    NULL,
+                    NULL,
+                    &IoStatusBlock,
+                    lpBuffer,
+                    nBufferLength,
+                    dwNotifyFilter,
+                    (BOOLEAN)bWatchSubtree
+                    );
+        if ( Status == STATUS_PENDING) {
 
             //
             // Operation must complete before return & IoStatusBlock destroyed
             //
 
-            Status = NtWaitForSingleObject(hDirectory, FALSE, NULL);
-            if (NT_SUCCESS(Status))
-            {
+            Status = NtWaitForSingleObject( hDirectory, FALSE, NULL );
+            if ( NT_SUCCESS(Status)) {
                 Status = IoStatusBlock.Status;
+                }
             }
-        }
-        if (NT_SUCCESS(Status))
-        {
+        if ( NT_SUCCESS(Status) ) {
             *lpBytesReturned = (DWORD)IoStatusBlock.Information;
-        }
-        else
-        {
+            }
+        else {
             BaseSetLastNTError(Status);
             ReturnValue = FALSE;
+            }
         }
-    }
 
     return ReturnValue;
+
 }

@@ -21,19 +21,28 @@ Revision History:
 #include "basedll.h"
 
 
-BOOL WINAPI GetSystemPowerStatus(LPSYSTEM_POWER_STATUS lpStatus)
+BOOL
+WINAPI
+GetSystemPowerStatus(
+    LPSYSTEM_POWER_STATUS lpStatus
+    )
 {
-    SYSTEM_BATTERY_STATE BatteryState;
-    NTSTATUS Status;
+    SYSTEM_BATTERY_STATE    BatteryState;
+    NTSTATUS                Status;
 
     //
     // Get power policy managers Battery State
     //
 
-    Status = NtPowerInformation(SystemBatteryState, NULL, 0, &BatteryState, sizeof(BatteryState));
+    Status = NtPowerInformation (
+                SystemBatteryState,
+                NULL,
+                0,
+                &BatteryState,
+                sizeof (BatteryState)
+                );
 
-    if (!NT_SUCCESS(Status))
-    {
+    if (!NT_SUCCESS(Status)) {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -42,29 +51,24 @@ BOOL WINAPI GetSystemPowerStatus(LPSYSTEM_POWER_STATUS lpStatus)
     // Convert it to the legacy System Power State structure
     //
 
-    RtlZeroMemory(lpStatus, sizeof(*lpStatus));
+    RtlZeroMemory (lpStatus, sizeof(*lpStatus));
 
     lpStatus->ACLineStatus = AC_LINE_ONLINE;
-    if (BatteryState.BatteryPresent && !BatteryState.AcOnLine)
-    {
+    if (BatteryState.BatteryPresent && !BatteryState.AcOnLine) {
         lpStatus->ACLineStatus = AC_LINE_OFFLINE;
     }
 
-    if (BatteryState.Charging)
-    {
+    if (BatteryState.Charging) {
         lpStatus->BatteryFlag |= BATTERY_FLAG_CHARGING;
     }
 
-    if (!BatteryState.BatteryPresent)
-    {
+    if (!BatteryState.BatteryPresent) {
         lpStatus->BatteryFlag |= BATTERY_FLAG_NO_BATTERY;
     }
 
     lpStatus->BatteryLifePercent = BATTERY_PERCENTAGE_UNKNOWN;
-    if (BatteryState.MaxCapacity)
-    {
-        if (BatteryState.RemainingCapacity > BatteryState.MaxCapacity)
-        {
+    if (BatteryState.MaxCapacity) {
+        if (BatteryState.RemainingCapacity > BatteryState.MaxCapacity) {
 
             //
             // Values greater than 100% should not be returned
@@ -72,45 +76,46 @@ BOOL WINAPI GetSystemPowerStatus(LPSYSTEM_POWER_STATUS lpStatus)
             //
 
             lpStatus->BatteryLifePercent = 100;
-        }
-        else
-        {
-            lpStatus->BatteryLifePercent =
-                (UCHAR)(((BatteryState.RemainingCapacity * 100) + (BatteryState.MaxCapacity / 2)) /
-                        BatteryState.MaxCapacity);
+        } else {
+            lpStatus->BatteryLifePercent = (UCHAR)
+                (((BatteryState.RemainingCapacity * 100) +
+                  (BatteryState.MaxCapacity/2)) /
+                 BatteryState.MaxCapacity);
         }
 
-        if (lpStatus->BatteryLifePercent > 66)
-        {
+        if (lpStatus->BatteryLifePercent > 66) {
             lpStatus->BatteryFlag |= BATTERY_FLAG_HIGH;
         }
 
-        if (lpStatus->BatteryLifePercent < 33)
-        {
+        if (lpStatus->BatteryLifePercent < 33) {
             lpStatus->BatteryFlag |= BATTERY_FLAG_LOW;
         }
     }
 
     lpStatus->BatteryLifeTime = BATTERY_LIFE_UNKNOWN;
     lpStatus->BatteryFullLifeTime = BATTERY_LIFE_UNKNOWN;
-    if (BatteryState.EstimatedTime)
-    {
+    if (BatteryState.EstimatedTime) {
         lpStatus->BatteryLifeTime = BatteryState.EstimatedTime;
     }
 
     return TRUE;
 }
 
-BOOL WINAPI SetSystemPowerState(BOOL fSuspend, BOOL fForce)
+BOOL
+WINAPI
+SetSystemPowerState(
+    BOOL fSuspend,
+    BOOL fForce
+    )
 {
-    NTSTATUS Status;
+    NTSTATUS        Status;
 
-    Status = NtInitiatePowerAction(fSuspend ? PowerActionSleep : PowerActionHibernate,
-                                   fSuspend ? PowerSystemSleeping1 : PowerSystemHibernate,
-                                   fForce == TRUE ? 0 : POWER_ACTION_QUERY_ALLOWED, FALSE);
+    Status = NtInitiatePowerAction (fSuspend ? PowerActionSleep : PowerActionHibernate,
+                                    fSuspend ? PowerSystemSleeping1 : PowerSystemHibernate,
+                                    fForce == TRUE ? 0 : POWER_ACTION_QUERY_ALLOWED,
+                                    FALSE);
 
-    if (!NT_SUCCESS(Status))
-    {
+    if (!NT_SUCCESS(Status)) {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -121,28 +126,32 @@ BOOL WINAPI SetSystemPowerState(BOOL fSuspend, BOOL fForce)
 
 EXECUTION_STATE
 WINAPI
-SetThreadExecutionState(EXECUTION_STATE esFlags)
+SetThreadExecutionState(
+    EXECUTION_STATE esFlags
+    )
 {
-    NTSTATUS Status;
-    EXECUTION_STATE PreviousFlags;
+    NTSTATUS            Status;
+    EXECUTION_STATE     PreviousFlags;
 
-    Status = NtSetThreadExecutionState(esFlags, &PreviousFlags);
-    if (!NT_SUCCESS(Status))
-    {
+    Status = NtSetThreadExecutionState (esFlags, &PreviousFlags);
+    if (!NT_SUCCESS(Status)) {
         BaseSetLastNTError(Status);
-        return (EXECUTION_STATE)0;
+        return (EXECUTION_STATE) 0;
     }
 
     return PreviousFlags;
 }
 
-BOOL WINAPI RequestWakeupLatency(LATENCY_TIME latency)
+BOOL
+WINAPI
+RequestWakeupLatency (
+    LATENCY_TIME    latency
+    )
 {
-    NTSTATUS Status;
+    NTSTATUS        Status;
 
-    Status = NtRequestWakeupLatency(latency);
-    if (!NT_SUCCESS(Status))
-    {
+    Status = NtRequestWakeupLatency (latency);
+    if (!NT_SUCCESS(Status)) {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -150,69 +159,84 @@ BOOL WINAPI RequestWakeupLatency(LATENCY_TIME latency)
     return TRUE;
 }
 
-BOOL WINAPI GetDevicePowerState(HANDLE h, OUT BOOL *pfOn)
+BOOL
+WINAPI
+GetDevicePowerState(
+    HANDLE  h,
+    OUT BOOL *pfOn
+    )
 {
     NTSTATUS Status;
     DEVICE_POWER_STATE PowerState;
 
     Status = NtGetDevicePowerState(h, &PowerState);
-    if (!NT_SUCCESS(Status))
-    {
+    if (!NT_SUCCESS(Status)) {
         BaseSetLastNTError(Status);
-        return (FALSE);
+        return(FALSE);
     }
-    if ((PowerState == PowerDeviceD0) || (PowerState == PowerDeviceUnspecified))
-    {
+    if ((PowerState == PowerDeviceD0) ||
+        (PowerState == PowerDeviceUnspecified)) {
         *pfOn = TRUE;
-    }
-    else
-    {
+    } else {
         *pfOn = FALSE;
     }
     return TRUE;
 }
 
-BOOL WINAPI IsSystemResumeAutomatic(VOID)
+BOOL
+WINAPI
+IsSystemResumeAutomatic(
+    VOID
+    )
 {
-    return (NtIsSystemResumeAutomatic());
+    return(NtIsSystemResumeAutomatic());
 }
 
-BOOL WINAPI RequestDeviceWakeup(HANDLE h)
+BOOL
+WINAPI
+RequestDeviceWakeup (
+    HANDLE  h
+    )
 {
     NTSTATUS Status;
 
     Status = NtRequestDeviceWakeup(h);
-    if (!NT_SUCCESS(Status))
-    {
+    if (!NT_SUCCESS(Status)) {
         BaseSetLastNTError(Status);
         return FALSE;
-    }
-    else
-    {
-        return (TRUE);
+    } else {
+        return(TRUE);
     }
 }
 
 
-BOOL WINAPI CancelDeviceWakeupRequest(HANDLE h)
+BOOL
+WINAPI
+CancelDeviceWakeupRequest(
+    HANDLE  h
+    )
 {
     NTSTATUS Status;
 
     Status = NtCancelDeviceWakeupRequest(h);
-    if (!NT_SUCCESS(Status))
-    {
+    if (!NT_SUCCESS(Status)) {
         BaseSetLastNTError(Status);
         return FALSE;
-    }
-    else
-    {
-        return (TRUE);
+    } else {
+        return(TRUE);
     }
 }
 
 
-BOOL WINAPI SetMessageWaitingIndicator(IN HANDLE hMsgIndicator, IN ULONG ulMsgCount)
+
+BOOL
+WINAPI
+SetMessageWaitingIndicator (
+    IN HANDLE hMsgIndicator,
+    IN ULONG ulMsgCount
+    )
 {
     BaseSetLastNTError(STATUS_NOT_IMPLEMENTED);
     return FALSE;
 }
+

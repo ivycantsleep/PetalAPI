@@ -22,19 +22,18 @@ Revision History:
 // Initialization of minimum times
 //
 
-#define MAX_LONG 0x7FFFFFFFL
+#define MAX_LONG  0x7FFFFFFFL
 #define MAX_ULONG 0xFFFFFFFFL
 
 //
 // Timer calibration
 //
 
-#define NUM_ITERATIONS 2000                // Number of iterations
-#define MIN_ACCEPTABLEOVERHEAD 10          // Minimum overhead allowed
-#define NAP_CALIBRATION_SERVICE_NUMBER -1L // Calibration Routine Number
+#define NUM_ITERATIONS		      2000  // Number of iterations
+#define MIN_ACCEPTABLEOVERHEAD		10  // Minimum overhead allowed
+#define NAP_CALIBRATION_SERVICE_NUMBER	-1L // Calibration Routine Number
 
-typedef struct _NAPCONTROL
-{
+typedef struct _NAPCONTROL {
 
     //
     // The following assures the area will be initialized only once.
@@ -54,20 +53,21 @@ typedef struct _NAPCONTROL
 } NAPCONTROL, *PNAPCONTROL;
 
 
+
 extern PCHAR NapNames[];
 
 //
 // Called internally
 //
 
-VOID NapDllInit(VOID);
-VOID NapRecordInfo(IN ULONG, IN LARGE_INTEGER[]);
-NTSTATUS NapCreateDataSection(PNAPCONTROL *);
+VOID	 NapDllInit		(VOID);
+VOID	 NapRecordInfo		(IN ULONG, IN LARGE_INTEGER[]);
+NTSTATUS NapCreateDataSection	(PNAPCONTROL *);
 
 //
 // Called by us
 //
 
-extern VOID NapCalibrate(VOID);
-extern VOID NapSpinOnSpinLock(ULONG *);
-extern VOID NapReleaseSpinLock(ULONG *);
+extern VOID NapCalibrate	(VOID);
+extern VOID NapSpinOnSpinLock  (ULONG *);
+extern VOID NapReleaseSpinLock	(ULONG *);

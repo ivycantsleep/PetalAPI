@@ -7,26 +7,28 @@
 #include <string.h>
 
 
-#define ONEK 1000
-#define FIVEK 5000
-#define TENK 10000
+#define ONEK    1000
+#define FIVEK   5000
+#define TENK    10000
 #define ONEHUNK 100000
-#define ONEMIL 1000000
+#define ONEMIL  1000000
 
 
 //
 // Define local types.
 //
 
-typedef struct _PERFINFO
-{
+typedef struct _PERFINFO {
     DWORD StartTime;
     DWORD StopTime;
     LPSTR Title;
     DWORD Iterations;
 } PERFINFO, *PPERFINFO;
 
-VOID FinishBenchMark(IN PPERFINFO PerfInfo)
+VOID
+FinishBenchMark (
+    IN PPERFINFO PerfInfo
+    )
 
 {
 
@@ -52,8 +54,13 @@ VOID FinishBenchMark(IN PPERFINFO PerfInfo)
     printf("*** End of Test ***\n\n");
     return;
 }
-
-VOID StartBenchMark(IN PCHAR Title, IN DWORD Iterations, IN PPERFINFO PerfInfo)
+
+VOID
+StartBenchMark (
+    IN PCHAR Title,
+    IN DWORD Iterations,
+    IN PPERFINFO PerfInfo
+    )
 
 {
 
@@ -70,7 +77,9 @@ VOID StartBenchMark(IN PCHAR Title, IN DWORD Iterations, IN PPERFINFO PerfInfo)
 
 HANDLE
 APIENTRY
-FastFindOpenDir(LPCWSTR lpFileName)
+FastFindOpenDir(
+    LPCWSTR lpFileName
+    )
 
 {
 
@@ -86,49 +95,66 @@ FastFindOpenDir(LPCWSTR lpFileName)
     UNICODE_STRING UnicodeInput;
     BOOLEAN EndsInDot;
 
-    RtlInitUnicodeString(&UnicodeInput, lpFileName);
+    RtlInitUnicodeString(&UnicodeInput,lpFileName);
 
     //
     // Bogus code to workaround ~* problem
     //
 
-    if (UnicodeInput.Buffer[(UnicodeInput.Length >> 1) - 1] == (WCHAR)'.')
-    {
+    if ( UnicodeInput.Buffer[(UnicodeInput.Length>>1)-1] == (WCHAR)'.' ) {
         EndsInDot = TRUE;
-    }
-    else
-    {
+        }
+    else {
         EndsInDot = FALSE;
-    }
+        }
 
 
-    TranslationStatus = RtlDosPathNameToNtPathName_U(lpFileName, &PathName, &FileName.Buffer, &RelativeName);
+    TranslationStatus = RtlDosPathNameToNtPathName_U(
+                            lpFileName,
+                            &PathName,
+                            &FileName.Buffer,
+                            &RelativeName
+                            );
 
-    if (!TranslationStatus)
-    {
+    if ( !TranslationStatus ) {
         return NULL;
-    }
+        }
 
     FreeBuffer = PathName.Buffer;
 
-    InitializeObjectAttributes(&Obja, &PathName, OBJ_CASE_INSENSITIVE, NULL, NULL);
+    InitializeObjectAttributes(
+        &Obja,
+        &PathName,
+        OBJ_CASE_INSENSITIVE,
+        NULL,
+        NULL
+        );
 
     //
     // Open the directory for list access
     //
 
-    Status = NtOpenFile(&hFindFile, FILE_LIST_DIRECTORY | SYNCHRONIZE, &Obja, &IoStatusBlock,
-                        FILE_SHARE_READ | FILE_SHARE_WRITE,
-                        FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT);
+    Status = NtOpenFile(
+                &hFindFile,
+                FILE_LIST_DIRECTORY | SYNCHRONIZE,
+                &Obja,
+                &IoStatusBlock,
+                FILE_SHARE_READ | FILE_SHARE_WRITE,
+                FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT
+                );
 
-    if (!NT_SUCCESS(Status))
-    {
+    if ( !NT_SUCCESS(Status) ) {
         return NULL;
-    }
+        }
     return hFindFile;
 }
 
-BOOL FastFind(HANDLE hFindFile, LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData)
+BOOL
+FastFind(
+    HANDLE hFindFile,
+    LPCWSTR lpFileName,
+    LPWIN32_FIND_DATAW lpFindFileData
+    )
 {
     NTSTATUS Status;
     OBJECT_ATTRIBUTES Obja;
@@ -141,18 +167,28 @@ BOOL FastFind(HANDLE hFindFile, LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFil
     UNICODE_STRING UnicodeInput;
     BOOLEAN EndsInDot;
     PFILE_BOTH_DIR_INFORMATION DirectoryInfo;
-    CHAR Buffer[MAX_PATH * 2 + sizeof(FILE_BOTH_DIR_INFORMATION)];
+    CHAR Buffer[MAX_PATH*2 + sizeof(FILE_BOTH_DIR_INFORMATION)];
 
-    RtlInitUnicodeString(&FileName, lpFileName);
+    RtlInitUnicodeString(&FileName,lpFileName);
     DirectoryInfo = (PFILE_BOTH_DIR_INFORMATION)Buffer;
 
-    Status = NtQueryDirectoryFile(hFindFile, NULL, NULL, NULL, &IoStatusBlock, DirectoryInfo, sizeof(Buffer),
-                                  FileBothDirectoryInformation, TRUE, &FileName, TRUE);
+    Status = NtQueryDirectoryFile(
+                hFindFile,
+                NULL,
+                NULL,
+                NULL,
+                &IoStatusBlock,
+                DirectoryInfo,
+                sizeof(Buffer),
+                FileBothDirectoryInformation,
+                TRUE,
+                &FileName,
+                TRUE
+                );
 
-    if (!NT_SUCCESS(Status))
-    {
+    if ( !NT_SUCCESS(Status) ) {
         return FALSE;
-    }
+        }
 
     //
     // Attributes are composed of the attributes returned by NT.
@@ -165,11 +201,15 @@ BOOL FastFind(HANDLE hFindFile, LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFil
     lpFindFileData->nFileSizeHigh = DirectoryInfo->EndOfFile.HighPart;
     lpFindFileData->nFileSizeLow = DirectoryInfo->EndOfFile.LowPart;
 
-    RtlMoveMemory(lpFindFileData->cFileName, DirectoryInfo->FileName, DirectoryInfo->FileNameLength);
+    RtlMoveMemory( lpFindFileData->cFileName,
+                   DirectoryInfo->FileName,
+                   DirectoryInfo->FileNameLength );
 
     lpFindFileData->cFileName[DirectoryInfo->FileNameLength >> 1] = UNICODE_NULL;
 
-    RtlMoveMemory(lpFindFileData->cAlternateFileName, DirectoryInfo->ShortName, DirectoryInfo->ShortNameLength);
+    RtlMoveMemory( lpFindFileData->cAlternateFileName,
+                   DirectoryInfo->ShortName,
+                   DirectoryInfo->ShortNameLength );
 
     lpFindFileData->cAlternateFileName[DirectoryInfo->ShortNameLength >> 1] = UNICODE_NULL;
 
@@ -177,9 +217,11 @@ BOOL FastFind(HANDLE hFindFile, LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFil
 }
 
 
-VOID FastFindTest(VOID
+VOID
+FastFindTest(
+    VOID
 
-)
+    )
 {
     PERFINFO PerfInfo;
     int i;
@@ -190,59 +232,58 @@ VOID FastFindTest(VOID
 
     hFind = FastFindOpenDir(L"d:\\testdir\\client1\\bench");
 
-    if (!hFind)
-    {
+    if ( !hFind ) {
         printf("Failed\n");
         return;
-    }
+        }
 
-    StartBenchMark("FastFind Test", ONEK, &PerfInfo);
+    StartBenchMark(
+        "FastFind Test",
+        ONEK,
+        &PerfInfo
+        );
 
-    for (i = 0; i < 5 * ONEK; i++)
-    {
+    for ( i=0;i<5*ONEK;i++) {
 
         //
         // do 5 calls 3 work, 2 don't
         //
 
-        b = FastFind(hFind, L"a", &FindFileData);
-        if (!b)
-        {
+        b = FastFind(hFind,L"a",&FindFileData);
+        if ( !b ) {
             printf("Test Failure a\n");
             ExitProcess(0);
-        }
-        b = FastFind(hFind, L"ab", &FindFileData);
-        if (b)
-        {
+            }
+        b = FastFind(hFind,L"ab",&FindFileData);
+        if ( b ) {
             printf("Test Failure ab\n");
             ExitProcess(0);
-        }
-        b = FastFind(hFind, L"abc", &FindFileData);
-        if (!b)
-        {
+            }
+        b = FastFind(hFind,L"abc",&FindFileData);
+        if ( !b ) {
             printf("Test Failure abc\n");
             ExitProcess(0);
-        }
-        b = FastFind(hFind, L"da", &FindFileData);
-        if (b)
-        {
+            }
+        b = FastFind(hFind,L"da",&FindFileData);
+        if ( b ) {
             printf("Test Failure da\n");
             ExitProcess(0);
-        }
-        b = FastFind(hFind, L"dxxa", &FindFileData);
-        if (!b)
-        {
+            }
+        b = FastFind(hFind,L"dxxa",&FindFileData);
+        if ( !b ) {
             printf("Test Failure dxxa\n");
             ExitProcess(0);
+            }
         }
-    }
 
     FinishBenchMark(&PerfInfo);
 }
 
-VOID FindFirstTest(VOID
+VOID
+FindFirstTest(
+    VOID
 
-)
+    )
 {
     PERFINFO PerfInfo;
     int i;
@@ -251,60 +292,66 @@ VOID FindFirstTest(VOID
     BOOL b;
 
 
-    StartBenchMark("Stock FindFirst Test", ONEK, &PerfInfo);
+    StartBenchMark(
+        "Stock FindFirst Test",
+        ONEK,
+        &PerfInfo
+        );
 
-    for (i = 0; i < 5 * ONEK; i++)
-    {
+    for ( i=0;i<5*ONEK;i++) {
 
         //
         // do 5 calls 3 work, 2 don't
         //
 
-        hFind = FindFirstFileW(L"d:\\testdir\\client1\\bench\\a", &FindFileData);
-        if (hFind == INVALID_HANDLE_VALUE)
-        {
+        hFind = FindFirstFileW(L"d:\\testdir\\client1\\bench\\a",&FindFileData);
+        if ( hFind == INVALID_HANDLE_VALUE ) {
             printf("Test Failure a\n");
             ExitProcess(0);
-        }
+            }
         FindClose(hFind);
 
-        hFind = FindFirstFileW(L"d:\\testdir\\client1\\bench\\ab", &FindFileData);
-        if (hFind != INVALID_HANDLE_VALUE)
-        {
+        hFind = FindFirstFileW(L"d:\\testdir\\client1\\bench\\ab",&FindFileData);
+        if ( hFind != INVALID_HANDLE_VALUE ) {
             printf("Test Failure ab\n");
             ExitProcess(0);
-        }
+            }
 
-        hFind = FindFirstFileW(L"d:\\testdir\\client1\\bench\\abc", &FindFileData);
-        if (hFind == INVALID_HANDLE_VALUE)
-        {
+        hFind = FindFirstFileW(L"d:\\testdir\\client1\\bench\\abc",&FindFileData);
+        if ( hFind == INVALID_HANDLE_VALUE ) {
             printf("Test Failure abc\n");
             ExitProcess(0);
-        }
+            }
         FindClose(hFind);
 
 
-        hFind = FindFirstFileW(L"d:\\testdir\\client1\\bench\\da", &FindFileData);
-        if (hFind != INVALID_HANDLE_VALUE)
-        {
+        hFind = FindFirstFileW(L"d:\\testdir\\client1\\bench\\da",&FindFileData);
+        if ( hFind != INVALID_HANDLE_VALUE ) {
             printf("Test Failure da\n");
             ExitProcess(0);
-        }
+            }
 
 
-        hFind = FindFirstFileW(L"d:\\testdir\\client1\\bench\\dxxa", &FindFileData);
-        if (hFind == INVALID_HANDLE_VALUE)
-        {
+        hFind = FindFirstFileW(L"d:\\testdir\\client1\\bench\\dxxa",&FindFileData);
+        if ( hFind == INVALID_HANDLE_VALUE ) {
             printf("Test Failure dxxa\n");
             ExitProcess(0);
-        }
+            }
         FindClose(hFind);
-    }
+
+        }
 
     FinishBenchMark(&PerfInfo);
 }
 
-VOID APIENTRY CreateOpenDirObja(LPCWSTR lpFileName, POBJECT_ATTRIBUTES Obja, PUNICODE_STRING PathName, LPCWSTR DirName)
+VOID
+APIENTRY
+CreateOpenDirObja(
+    LPCWSTR lpFileName,
+    POBJECT_ATTRIBUTES Obja,
+    PUNICODE_STRING PathName,
+    LPCWSTR DirName
+    )
 
 {
 
@@ -316,58 +363,84 @@ VOID APIENTRY CreateOpenDirObja(LPCWSTR lpFileName, POBJECT_ATTRIBUTES Obja, PUN
     HANDLE hDir;
     NTSTATUS Status;
 
-    if (ARGUMENT_PRESENT(DirName))
-    {
+    if ( ARGUMENT_PRESENT(DirName) ) {
 
 
-        TranslationStatus = RtlDosPathNameToNtPathName_U(DirName, PathName, &FileName.Buffer, &RelativeName);
+        TranslationStatus = RtlDosPathNameToNtPathName_U(
+                                DirName,
+                                PathName,
+                                &FileName.Buffer,
+                                &RelativeName
+                                );
 
-        if (TranslationStatus)
-        {
+        if ( TranslationStatus ) {
 
 
             //
             // Open the directory for list access
             //
 
-            InitializeObjectAttributes(Obja, PathName, OBJ_CASE_INSENSITIVE, NULL, NULL);
+            InitializeObjectAttributes(
+                Obja,
+                PathName,
+                OBJ_CASE_INSENSITIVE,
+                NULL,
+                NULL
+                );
 
-            Status = NtOpenFile(&hDir, FILE_LIST_DIRECTORY | SYNCHRONIZE, Obja, &IoStatusBlock,
-                                FILE_SHARE_READ | FILE_SHARE_WRITE,
-                                FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT);
+            Status = NtOpenFile(
+                        &hDir,
+                        FILE_LIST_DIRECTORY | SYNCHRONIZE,
+                        Obja,
+                        &IoStatusBlock,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE,
+                        FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT
+                        );
 
-            if (!NT_SUCCESS(Status))
-            {
-                printf("Open faild %x\n", Status);
+            if ( !NT_SUCCESS(Status) ) {
+                printf("Open faild %x\n",Status);
                 ExitProcess(1);
+                }
             }
+
         }
-    }
-    else
-    {
+    else {
         hDir = NULL;
-    }
+        }
 
-    TranslationStatus = RtlDosPathNameToNtPathName_U(lpFileName, PathName, &FileName.Buffer, &RelativeName);
+    TranslationStatus = RtlDosPathNameToNtPathName_U(
+                            lpFileName,
+                            PathName,
+                            &FileName.Buffer,
+                            &RelativeName
+                            );
 
-    if (!TranslationStatus)
-    {
+    if ( !TranslationStatus ) {
         return;
-    }
+        }
 
-    if (hDir)
-    {
+    if ( hDir ) {
         PathName->Buffer = PathName->Buffer + 15;
         PathName->Length -= 30;
         PathName->MaximumLength -= 30;
-    }
+        }
 
     FreeBuffer = PathName->Buffer;
 
-    InitializeObjectAttributes(Obja, PathName, OBJ_CASE_INSENSITIVE, hDir, NULL);
+    InitializeObjectAttributes(
+        Obja,
+        PathName,
+        OBJ_CASE_INSENSITIVE,
+        hDir,
+        NULL
+        );
 }
 
-VOID APIENTRY OpenCloseDir(POBJECT_ATTRIBUTES Obja)
+VOID
+APIENTRY
+OpenCloseDir(
+    POBJECT_ATTRIBUTES Obja
+    )
 
 {
 
@@ -379,21 +452,27 @@ VOID APIENTRY OpenCloseDir(POBJECT_ATTRIBUTES Obja)
     // Open the directory for list access
     //
 
-    Status =
-        NtOpenFile(&hDir, FILE_LIST_DIRECTORY | SYNCHRONIZE, Obja, &IoStatusBlock, FILE_SHARE_READ | FILE_SHARE_WRITE,
-                   FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT);
+    Status = NtOpenFile(
+                &hDir,
+                FILE_LIST_DIRECTORY | SYNCHRONIZE,
+                Obja,
+                &IoStatusBlock,
+                FILE_SHARE_READ | FILE_SHARE_WRITE,
+                FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT
+                );
 
-    if (!NT_SUCCESS(Status))
-    {
-        printf("Open faild %x\n", Status);
+    if ( !NT_SUCCESS(Status) ) {
+        printf("Open faild %x\n",Status);
         ExitProcess(1);
-    }
+        }
     NtClose(hDir);
 }
 
-VOID OpenDirTest(VOID
+VOID
+OpenDirTest(
+    VOID
 
-)
+    )
 {
     PERFINFO PerfInfo;
     int i;
@@ -459,44 +538,65 @@ VOID OpenDirTest(VOID
     FinishBenchMark(&PerfInfo);
 #endif
 
-    CreateOpenDirObja(L"d:\\testdir\\client1\\bench", &Obja, &PathName, L"d:\\");
+    CreateOpenDirObja(
+        L"d:\\testdir\\client1\\bench",
+        &Obja,
+        &PathName,
+        L"d:\\"
+        );
 
-    StartBenchMark("VOL Rel Open Dir NTFS d:\\testdir\\client1\\bench", FIVEK, &PerfInfo);
+    StartBenchMark(
+        "VOL Rel Open Dir NTFS d:\\testdir\\client1\\bench",
+        FIVEK,
+        &PerfInfo
+        );
 
-    for (i = 0; i < FIVEK; i++)
-    {
+    for ( i=0;i<FIVEK;i++) {
 
         OpenCloseDir(&Obja);
-    }
+        }
 
     FinishBenchMark(&PerfInfo);
 
 
-    CreateOpenDirObja(L"c:\\testdir\\client1\\bench", &Obja, &PathName, L"c:\\");
+    CreateOpenDirObja(
+        L"c:\\testdir\\client1\\bench",
+        &Obja,
+        &PathName,
+        L"c:\\"
+        );
 
-    StartBenchMark("Vol Rel Open Dir FAT c:\\testdir\\client1\\bench", FIVEK, &PerfInfo);
+    StartBenchMark(
+        "Vol Rel Open Dir FAT c:\\testdir\\client1\\bench",
+        FIVEK,
+        &PerfInfo
+        );
 
-    for (i = 0; i < FIVEK; i++)
-    {
+    for ( i=0;i<FIVEK;i++) {
 
         OpenCloseDir(&Obja);
-    }
+        }
 
     FinishBenchMark(&PerfInfo);
 }
 
 DWORD
-_cdecl main(int argc, char *argv[], char *envp[])
+_cdecl
+main(
+    int argc,
+    char *argv[],
+    char *envp[]
+    )
 {
 
     DWORD CryptoKey;
     PDWORD p;
 
-    printf("sixeof teb %x\n", sizeof(TEB));
+    printf("sixeof teb %x\n",sizeof(TEB));
 
     CryptoKey = USER_SHARED_DATA->CryptoExponent;
 
-    printf("Key %x\n", CryptoKey);
+    printf("Key %x\n",CryptoKey);
 
     p = &(USER_SHARED_DATA->CryptoExponent);
     *p = 1;

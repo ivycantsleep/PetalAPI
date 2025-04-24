@@ -30,11 +30,13 @@ Revision History:
 #include <string.h>
 #include <malloc.h>
 
-VOID func(ULONG N)
+VOID
+func (
+    ULONG N
+    )
 
 {
-    if (N != 0)
-    {
+    if (N != 0) {
         throw N;
     }
 
@@ -45,24 +47,26 @@ VOID func(ULONG N)
 // Main program.
 //
 
-int __cdecl main(int argc, char *argv[], char *envp[])
+int
+__cdecl
+main(
+    int argc,
+    char *argv[],
+    char *envp[]
+    )
 
 {
-    try
-    {
+    try {
         func(5);
         printf("resuming, should never happen\n");
-    }
-    catch (ULONG)
-    {
+
+    } catch(ULONG) {
         printf("caught ULONG exception\n");
-    }
-    catch (CHAR *)
-    {
+
+    } catch(CHAR *) {
         printf("caught CHAR * exception\n");
-    }
-    catch (...)
-    {
+
+    } catch(...) {
         printf("caught typeless exception\n");
     }
 

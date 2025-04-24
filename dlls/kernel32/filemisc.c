@@ -22,13 +22,27 @@ Revision History:
 
 
 DWORD
-BasepGetComputerNameFromNtPath(PUNICODE_STRING NtPathName, HANDLE hFile, LPWSTR lpBuffer, LPDWORD nSize);
+BasepGetComputerNameFromNtPath (
+    PUNICODE_STRING NtPathName,
+    HANDLE hFile,
+    LPWSTR lpBuffer,
+    LPDWORD nSize
+    );
 
 NTSTATUS
-BasepMoveFileDelayed(IN PUNICODE_STRING OldFileName, IN PUNICODE_STRING NewFileName, IN ULONG Index,
-                     IN BOOL OkayToCreateNewValue);
+BasepMoveFileDelayed(
+    IN PUNICODE_STRING OldFileName,
+    IN PUNICODE_STRING NewFileName,
+    IN ULONG Index,
+    IN BOOL OkayToCreateNewValue
+    );
 
-BOOL APIENTRY SetFileAttributesA(LPCSTR lpFileName, DWORD dwFileAttributes)
+BOOL
+APIENTRY
+SetFileAttributesA(
+    LPCSTR lpFileName,
+    DWORD dwFileAttributes
+    )
 
 /*++
 
@@ -41,17 +55,25 @@ Routine Description:
 {
     PUNICODE_STRING Unicode;
 
-    Unicode = Basep8BitStringToStaticUnicodeString(lpFileName);
-    if (Unicode == NULL)
-    {
+    Unicode = Basep8BitStringToStaticUnicodeString( lpFileName );
+    if (Unicode == NULL) {
         return FALSE;
     }
 
-    return (SetFileAttributesW((LPCWSTR)Unicode->Buffer, dwFileAttributes));
+    return ( SetFileAttributesW(
+                (LPCWSTR)Unicode->Buffer,
+                dwFileAttributes
+                )
+            );
 }
 
 
-BOOL APIENTRY SetFileAttributesW(LPCWSTR lpFileName, DWORD dwFileAttributes)
+BOOL
+APIENTRY
+SetFileAttributesW(
+    LPCWSTR lpFileName,
+    DWORD dwFileAttributes
+    )
 
 /*++
 
@@ -105,66 +127,80 @@ Return Value:
     RTL_RELATIVE_NAME RelativeName;
     PVOID FreeBuffer;
 
-    TranslationStatus = RtlDosPathNameToNtPathName_U(lpFileName, &FileName, NULL, &RelativeName);
+    TranslationStatus = RtlDosPathNameToNtPathName_U(
+                            lpFileName,
+                            &FileName,
+                            NULL,
+                            &RelativeName
+                            );
 
-    if (!TranslationStatus)
-    {
+    if ( !TranslationStatus ) {
         SetLastError(ERROR_PATH_NOT_FOUND);
         return FALSE;
-    }
+        }
 
     FreeBuffer = FileName.Buffer;
 
-    if (RelativeName.RelativeName.Length)
-    {
+    if ( RelativeName.RelativeName.Length ) {
         FileName = *(PUNICODE_STRING)&RelativeName.RelativeName;
-    }
-    else
-    {
+        }
+    else {
         RelativeName.ContainingDirectory = NULL;
-    }
+        }
 
-    InitializeObjectAttributes(&Obja, &FileName, OBJ_CASE_INSENSITIVE, RelativeName.ContainingDirectory, NULL);
+    InitializeObjectAttributes(
+        &Obja,
+        &FileName,
+        OBJ_CASE_INSENSITIVE,
+        RelativeName.ContainingDirectory,
+        NULL
+        );
 
     //
     // Open the file inhibiting the reparse behavior.
     //
 
-    Status = NtOpenFile(&Handle, (ACCESS_MASK)FILE_WRITE_ATTRIBUTES | SYNCHRONIZE, &Obja, &IoStatusBlock,
-                        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                        FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT | FILE_OPEN_REPARSE_POINT);
+    Status = NtOpenFile(
+                &Handle,
+                (ACCESS_MASK)FILE_WRITE_ATTRIBUTES | SYNCHRONIZE,
+                &Obja,
+                &IoStatusBlock,
+                FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT | FILE_OPEN_REPARSE_POINT
+                );
 
-    if (!NT_SUCCESS(Status))
-    {
+    if ( !NT_SUCCESS(Status) ) {
         //
         // Back level file systems may not support reparse points.
         // We infer this is the case when the Status is STATUS_INVALID_PARAMETER.
         //
 
-        if (Status == STATUS_INVALID_PARAMETER)
-        {
+        if ( Status == STATUS_INVALID_PARAMETER ) {
             //
             // Open the file without inhibiting the reparse behavior.
             //
 
-            Status = NtOpenFile(&Handle, (ACCESS_MASK)FILE_WRITE_ATTRIBUTES | SYNCHRONIZE, &Obja, &IoStatusBlock,
-                                FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                                FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT);
+            Status = NtOpenFile(
+                        &Handle,
+                        (ACCESS_MASK)FILE_WRITE_ATTRIBUTES | SYNCHRONIZE,
+                        &Obja,
+                        &IoStatusBlock,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                        FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT
+                        );
 
-            if (!NT_SUCCESS(Status))
-            {
+            if ( !NT_SUCCESS(Status) ) {
                 RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
                 BaseSetLastNTError(Status);
                 return FALSE;
+                }
             }
-        }
-        else
-        {
+        else {
             RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
             BaseSetLastNTError(Status);
             return FALSE;
+            }
         }
-    }
 
     RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
 
@@ -172,27 +208,34 @@ Return Value:
     // Set the attributes
     //
 
-    RtlZeroMemory(&BasicInfo, sizeof(BasicInfo));
+    RtlZeroMemory(&BasicInfo,sizeof(BasicInfo));
     BasicInfo.FileAttributes = (dwFileAttributes & FILE_ATTRIBUTE_VALID_SET_FLAGS) | FILE_ATTRIBUTE_NORMAL;
 
-    Status = NtSetInformationFile(Handle, &IoStatusBlock, &BasicInfo, sizeof(BasicInfo), FileBasicInformation);
+    Status = NtSetInformationFile(
+                Handle,
+                &IoStatusBlock,
+                &BasicInfo,
+                sizeof(BasicInfo),
+                FileBasicInformation
+                );
 
     NtClose(Handle);
-    if (NT_SUCCESS(Status))
-    {
+    if ( NT_SUCCESS(Status) ) {
         return TRUE;
-    }
-    else
-    {
+        }
+    else {
         BaseSetLastNTError(Status);
         return FALSE;
-    }
+        }
 }
+
 
 
 DWORD
 APIENTRY
-GetFileAttributesA(LPCSTR lpFileName)
+GetFileAttributesA(
+    LPCSTR lpFileName
+    )
 
 /*++
 
@@ -206,18 +249,19 @@ Routine Description:
 
     PUNICODE_STRING Unicode;
 
-    Unicode = Basep8BitStringToStaticUnicodeString(lpFileName);
-    if (Unicode == NULL)
-    {
+    Unicode = Basep8BitStringToStaticUnicodeString( lpFileName );
+    if (Unicode == NULL) {
         return (DWORD)-1;
     }
 
-    return (GetFileAttributesW((LPCWSTR)Unicode->Buffer));
+    return ( GetFileAttributesW((LPCWSTR)Unicode->Buffer) );
 }
 
 DWORD
 APIENTRY
-GetFileAttributesW(LPCWSTR lpFileName)
+GetFileAttributesW(
+    LPCWSTR lpFileName
+    )
 
 /*++
 
@@ -268,54 +312,68 @@ Return Value:
     RTL_RELATIVE_NAME RelativeName;
     PVOID FreeBuffer;
 
-    TranslationStatus = RtlDosPathNameToNtPathName_U(lpFileName, &FileName, NULL, &RelativeName);
+    TranslationStatus = RtlDosPathNameToNtPathName_U(
+                            lpFileName,
+                            &FileName,
+                            NULL,
+                            &RelativeName
+                            );
 
-    if (!TranslationStatus)
-    {
+    if ( !TranslationStatus ) {
         SetLastError(ERROR_PATH_NOT_FOUND);
         return (DWORD)-1;
-    }
+        }
 
     FreeBuffer = FileName.Buffer;
 
-    if (RelativeName.RelativeName.Length)
-    {
+    if ( RelativeName.RelativeName.Length ) {
         FileName = *(PUNICODE_STRING)&RelativeName.RelativeName;
-    }
-    else
-    {
+        }
+    else {
         RelativeName.ContainingDirectory = NULL;
-    }
+        }
 
-    InitializeObjectAttributes(&Obja, &FileName, OBJ_CASE_INSENSITIVE, RelativeName.ContainingDirectory, NULL);
+    InitializeObjectAttributes(
+        &Obja,
+        &FileName,
+        OBJ_CASE_INSENSITIVE,
+        RelativeName.ContainingDirectory,
+        NULL
+        );
 
     //
     // Open the file
     //
 
-    Status = NtQueryAttributesFile(&Obja, &BasicInfo);
+    Status = NtQueryAttributesFile(
+                 &Obja,
+                 &BasicInfo
+                 );
     RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
-    if (NT_SUCCESS(Status))
-    {
+    if ( NT_SUCCESS(Status) ) {
         return BasicInfo.FileAttributes;
-    }
-    else
-    {
+        }
+    else {
 
         //
         // Check for a device name.
         //
 
-        if (RtlIsDosDeviceName_U((PWSTR)lpFileName))
-        {
+        if ( RtlIsDosDeviceName_U((PWSTR)lpFileName) ) {
             return FILE_ATTRIBUTE_ARCHIVE;
-        }
+            }
         BaseSetLastNTError(Status);
         return (DWORD)-1;
-    }
+        }
 }
 
-BOOL APIENTRY GetFileAttributesExA(LPCSTR lpFileName, GET_FILEEX_INFO_LEVELS fInfoLevelId, LPVOID lpFileInformation)
+BOOL
+APIENTRY
+GetFileAttributesExA(
+    LPCSTR lpFileName,
+    GET_FILEEX_INFO_LEVELS fInfoLevelId,
+    LPVOID lpFileInformation
+    )
 
 /*++
 
@@ -329,16 +387,21 @@ Routine Description:
 
     PUNICODE_STRING Unicode;
 
-    Unicode = Basep8BitStringToStaticUnicodeString(lpFileName);
-    if (Unicode == NULL)
-    {
+    Unicode = Basep8BitStringToStaticUnicodeString( lpFileName );
+    if (Unicode == NULL) {
         return FALSE;
     }
 
-    return (GetFileAttributesExW((LPCWSTR)Unicode->Buffer, fInfoLevelId, lpFileInformation));
+    return ( GetFileAttributesExW((LPCWSTR)Unicode->Buffer,fInfoLevelId,lpFileInformation) );
 }
 
-BOOL APIENTRY GetFileAttributesExW(LPCWSTR lpFileName, GET_FILEEX_INFO_LEVELS fInfoLevelId, LPVOID lpFileInformation)
+BOOL
+APIENTRY
+GetFileAttributesExW(
+    LPCWSTR lpFileName,
+    GET_FILEEX_INFO_LEVELS fInfoLevelId,
+    LPVOID lpFileInformation
+    )
 
 /*++
 
@@ -382,41 +445,47 @@ Return Value:
     // so there's no special code here to determine what to do.
     //
 
-    if (fInfoLevelId >= GetFileExMaxInfoLevel || fInfoLevelId < GetFileExInfoStandard)
-    {
+    if ( fInfoLevelId >= GetFileExMaxInfoLevel || fInfoLevelId < GetFileExInfoStandard ) {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
-    }
+        }
 
-    TranslationStatus = RtlDosPathNameToNtPathName_U(lpFileName, &FileName, NULL, &RelativeName);
+    TranslationStatus = RtlDosPathNameToNtPathName_U(
+                            lpFileName,
+                            &FileName,
+                            NULL,
+                            &RelativeName
+                            );
 
-    if (!TranslationStatus)
-    {
+    if ( !TranslationStatus ) {
         SetLastError(ERROR_PATH_NOT_FOUND);
         return FALSE;
-    }
+        }
 
     FreeBuffer = FileName.Buffer;
 
-    if (RelativeName.RelativeName.Length)
-    {
+    if ( RelativeName.RelativeName.Length ) {
         FileName = *(PUNICODE_STRING)&RelativeName.RelativeName;
-    }
-    else
-    {
+        }
+    else {
         RelativeName.ContainingDirectory = NULL;
-    }
+        }
 
-    InitializeObjectAttributes(&Obja, &FileName, OBJ_CASE_INSENSITIVE, RelativeName.ContainingDirectory, NULL);
+    InitializeObjectAttributes(
+        &Obja,
+        &FileName,
+        OBJ_CASE_INSENSITIVE,
+        RelativeName.ContainingDirectory,
+        NULL
+        );
 
     //
     // Query the information about the file using the path-based NT service.
     //
 
-    Status = NtQueryFullAttributesFile(&Obja, &NetworkInfo);
+    Status = NtQueryFullAttributesFile( &Obja, &NetworkInfo );
     RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
-    if (NT_SUCCESS(Status))
-    {
+    if ( NT_SUCCESS(Status) ) {
         AttributeData = (LPWIN32_FILE_ATTRIBUTE_DATA)lpFileInformation;
         AttributeData->dwFileAttributes = NetworkInfo.FileAttributes;
         AttributeData->ftCreationTime = *(PFILETIME)&NetworkInfo.CreationTime;
@@ -425,15 +494,18 @@ Return Value:
         AttributeData->nFileSizeHigh = NetworkInfo.EndOfFile.HighPart;
         AttributeData->nFileSizeLow = (DWORD)NetworkInfo.EndOfFile.LowPart;
         return TRUE;
-    }
-    else
-    {
+        }
+    else {
         BaseSetLastNTError(Status);
         return FALSE;
-    }
+        }
 }
 
-BOOL APIENTRY DeleteFileA(LPCSTR lpFileName)
+BOOL
+APIENTRY
+DeleteFileA(
+    LPCSTR lpFileName
+    )
 
 /*++
 
@@ -446,16 +518,19 @@ Routine Description:
 {
     PUNICODE_STRING Unicode;
 
-    Unicode = Basep8BitStringToStaticUnicodeString(lpFileName);
-    if (Unicode == NULL)
-    {
+    Unicode = Basep8BitStringToStaticUnicodeString( lpFileName );
+    if (Unicode == NULL) {
         return FALSE;
     }
 
-    return (DeleteFileW((LPCWSTR)Unicode->Buffer));
+    return ( DeleteFileW((LPCWSTR)Unicode->Buffer) );
 }
 
-BOOL APIENTRY DeleteFileW(LPCWSTR lpFileName)
+BOOL
+APIENTRY
+DeleteFileW(
+    LPCWSTR lpFileName
+    )
 
 /*++
 
@@ -492,114 +567,134 @@ Return Value:
     PVOID FreeBuffer;
     BOOLEAN fIsSymbolicLink = FALSE;
 
-    TranslationStatus = RtlDosPathNameToNtPathName_U(lpFileName, &FileName, NULL, &RelativeName);
+    TranslationStatus = RtlDosPathNameToNtPathName_U(
+                            lpFileName,
+                            &FileName,
+                            NULL,
+                            &RelativeName
+                            );
 
-    if (!TranslationStatus)
-    {
+    if ( !TranslationStatus ) {
         SetLastError(ERROR_PATH_NOT_FOUND);
         return FALSE;
-    }
+        }
 
     FreeBuffer = FileName.Buffer;
 
-    if (RelativeName.RelativeName.Length)
-    {
+    if ( RelativeName.RelativeName.Length ) {
         FileName = *(PUNICODE_STRING)&RelativeName.RelativeName;
-    }
-    else
-    {
+        }
+    else {
         RelativeName.ContainingDirectory = NULL;
-    }
+        }
 
-    InitializeObjectAttributes(&Obja, &FileName, OBJ_CASE_INSENSITIVE, RelativeName.ContainingDirectory, NULL);
+    InitializeObjectAttributes(
+        &Obja,
+        &FileName,
+        OBJ_CASE_INSENSITIVE,
+        RelativeName.ContainingDirectory,
+        NULL
+        );
 
     //
     // Open the file for delete access.
     // Inhibit the reparse behavior using FILE_OPEN_REPARSE_POINT.
     //
 
-    Status = NtOpenFile(&Handle, (ACCESS_MASK)DELETE | FILE_READ_ATTRIBUTES, &Obja, &IoStatusBlock,
-                        FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
-                        FILE_NON_DIRECTORY_FILE | FILE_OPEN_FOR_BACKUP_INTENT | FILE_OPEN_REPARSE_POINT);
-    if (!NT_SUCCESS(Status))
-    {
+    Status = NtOpenFile(
+                 &Handle,
+                 (ACCESS_MASK)DELETE | FILE_READ_ATTRIBUTES,
+                 &Obja,
+                 &IoStatusBlock,
+                 FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+                 FILE_NON_DIRECTORY_FILE | FILE_OPEN_FOR_BACKUP_INTENT | FILE_OPEN_REPARSE_POINT
+                 );
+    if ( !NT_SUCCESS(Status) ) {
         //
         // Back level file systems may not support reparse points and thus not
         // support symbolic links.
         // We infer this is the case when the Status is STATUS_INVALID_PARAMETER.
         //
 
-        if (Status == STATUS_INVALID_PARAMETER)
-        {
+        if ( Status == STATUS_INVALID_PARAMETER ) {
             //
             // Open without inhibiting the reparse behavior and not needing to
             // read the attributes.
             //
 
-            Status = NtOpenFile(&Handle, (ACCESS_MASK)DELETE, &Obja, &IoStatusBlock,
-                                FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
-                                FILE_NON_DIRECTORY_FILE | FILE_OPEN_FOR_BACKUP_INTENT);
-            if (!NT_SUCCESS(Status))
-            {
+            Status = NtOpenFile(
+                         &Handle,
+                         (ACCESS_MASK)DELETE,
+                         &Obja,
+                         &IoStatusBlock,
+                         FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+                         FILE_NON_DIRECTORY_FILE | FILE_OPEN_FOR_BACKUP_INTENT
+                         );
+            if ( !NT_SUCCESS(Status) ) {
                 RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
                 BaseSetLastNTError(Status);
                 return FALSE;
+                }
             }
-        }
-        else
-        {
+        else {
             //
-            // A second case of interest is when the caller does not have rights
+            // A second case of interest is when the caller does not have rights 
             // to read attributes yet it does have rights to delete the file.
             // In this case Status is to be STATUS_ACCESS_DENIED.
             //
-
-            if (Status != STATUS_ACCESS_DENIED)
-            {
+            
+            if ( Status != STATUS_ACCESS_DENIED ) {
                 RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
                 BaseSetLastNTError(Status);
                 return FALSE;
-            }
-
-            //
+                }
+            
+            // 
             // Re-open inhibiting reparse point and not requiring read attributes.
             //
 
-            Status = NtOpenFile(&Handle, (ACCESS_MASK)DELETE, &Obja, &IoStatusBlock,
-                                FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
-                                FILE_NON_DIRECTORY_FILE | FILE_OPEN_FOR_BACKUP_INTENT | FILE_OPEN_REPARSE_POINT);
-            if (!NT_SUCCESS(Status))
-            {
+            Status = NtOpenFile(
+                         &Handle,
+                         (ACCESS_MASK)DELETE,
+                         &Obja,
+                         &IoStatusBlock,
+                         FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+                         FILE_NON_DIRECTORY_FILE | FILE_OPEN_FOR_BACKUP_INTENT | FILE_OPEN_REPARSE_POINT
+                         );
+            if ( !NT_SUCCESS(Status) ) {
                 RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
                 BaseSetLastNTError(Status);
                 return FALSE;
-            }
+                }
 
             //
             // If we are here, Handle is valid.
             //
             // Moreover, Handle is to a file for which the caller has DELETE right yet
-            // does not have FILE_READ_ATTRIBUTES rights.
+            // does not have FILE_READ_ATTRIBUTES rights. 
             //
-            // The underlying file may or not be a reparse point.
+            // The underlying file may or not be a reparse point. 
             // As the caller does not have rights to read the attributes this code
-            // will delete this file without giving the opportunity to the
-            // appropriate manager of these reparse points to clean-up its internal
+            // will delete this file without giving the opportunity to the 
+            // appropriate manager of these reparse points to clean-up its internal 
             // state at this time.
             //
+            }
         }
-    }
-    else
-    {
+    else {
         //
         // If we found a reparse point that is not a symbolic link, we re-open
         // without inhibiting the reparse behavior.
         //
 
-        Status = NtQueryInformationFile(Handle, &IoStatusBlock, (PVOID)&FileTagInformation, sizeof(FileTagInformation),
-                                        FileAttributeTagInformation);
-        if (!NT_SUCCESS(Status))
-        {
+        Status = NtQueryInformationFile(
+                     Handle,
+                     &IoStatusBlock,
+                     (PVOID) &FileTagInformation,
+                     sizeof(FileTagInformation),
+                     FileAttributeTagInformation
+                     );
+        if ( !NT_SUCCESS(Status) ) {
             //
             // Not all File Systems implement all information classes.
             // The value STATUS_INVALID_PARAMETER is returned when a non-supported
@@ -611,63 +706,68 @@ Return Value:
             // the file at hand is not a reparse point.
             //
 
-            if ((Status != STATUS_NOT_IMPLEMENTED) && (Status != STATUS_INVALID_PARAMETER))
-            {
+            if ( (Status != STATUS_NOT_IMPLEMENTED) &&
+                 (Status != STATUS_INVALID_PARAMETER) ) {
                 RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
                 NtClose(Handle);
                 BaseSetLastNTError(Status);
                 return FALSE;
+                }
             }
-        }
 
-        if (NT_SUCCESS(Status) && (FileTagInformation.FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT))
-        {
-            if (FileTagInformation.ReparseTag == IO_REPARSE_TAG_MOUNT_POINT)
-            {
+        if ( NT_SUCCESS(Status) &&
+             (FileTagInformation.FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) ) {
+            if ( FileTagInformation.ReparseTag == IO_REPARSE_TAG_MOUNT_POINT ) {
                 fIsSymbolicLink = TRUE;
+                }
             }
-        }
 
-        if (NT_SUCCESS(Status) && (FileTagInformation.FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
-            !fIsSymbolicLink)
-        {
+        if ( NT_SUCCESS(Status) &&
+             (FileTagInformation.FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
+             !fIsSymbolicLink) {
             //
             // Re-open without inhibiting the reparse behavior and not needing to
             // read the attributes.
             //
 
             NtClose(Handle);
-            Status = NtOpenFile(&Handle, (ACCESS_MASK)DELETE, &Obja, &IoStatusBlock,
-                                FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
-                                FILE_NON_DIRECTORY_FILE | FILE_OPEN_FOR_BACKUP_INTENT);
+            Status = NtOpenFile(
+                         &Handle,
+                         (ACCESS_MASK)DELETE,
+                         &Obja,
+                         &IoStatusBlock,
+                         FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+                         FILE_NON_DIRECTORY_FILE | FILE_OPEN_FOR_BACKUP_INTENT
+                         );
 
-            if (!NT_SUCCESS(Status))
-            {
+            if ( !NT_SUCCESS(Status) ) {
                 //
                 // When the FS Filter is absent, delete it any way.
                 //
 
-                if (Status == STATUS_IO_REPARSE_TAG_NOT_HANDLED)
-                {
+                if ( Status == STATUS_IO_REPARSE_TAG_NOT_HANDLED ) {
                     //
                     // We re-open (possible 3rd open) for delete access inhibiting the reparse behavior.
                     //
 
-                    Status =
-                        NtOpenFile(&Handle, (ACCESS_MASK)DELETE, &Obja, &IoStatusBlock,
-                                   FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                                   FILE_NON_DIRECTORY_FILE | FILE_OPEN_FOR_BACKUP_INTENT | FILE_OPEN_REPARSE_POINT);
-                }
+                    Status = NtOpenFile(
+                                 &Handle,
+                                 (ACCESS_MASK)DELETE,
+                                 &Obja,
+                                 &IoStatusBlock,
+                                 FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                                 FILE_NON_DIRECTORY_FILE | FILE_OPEN_FOR_BACKUP_INTENT | FILE_OPEN_REPARSE_POINT
+                                 );
+                    }
 
-                if (!NT_SUCCESS(Status))
-                {
+                if ( !NT_SUCCESS(Status) ) {
                     RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
                     BaseSetLastNTError(Status);
                     return FALSE;
+                    }
                 }
             }
         }
-    }
 
     RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
 
@@ -677,19 +777,22 @@ Return Value:
 #undef DeleteFile
     Disposition.DeleteFile = TRUE;
 
-    Status =
-        NtSetInformationFile(Handle, &IoStatusBlock, &Disposition, sizeof(Disposition), FileDispositionInformation);
+    Status = NtSetInformationFile(
+                 Handle,
+                 &IoStatusBlock,
+                 &Disposition,
+                 sizeof(Disposition),
+                 FileDispositionInformation
+                 );
 
     NtClose(Handle);
-    if (NT_SUCCESS(Status))
-    {
+    if ( NT_SUCCESS(Status) ) {
         return TRUE;
-    }
-    else
-    {
+        }
+    else {
         BaseSetLastNTError(Status);
         return FALSE;
-    }
+        }
 }
 
 
@@ -697,21 +800,46 @@ Return Value:
 //  Ascii versions that thunk to the common code
 //
 
-BOOL APIENTRY MoveFileA(LPCSTR lpExistingFileName, LPCSTR lpNewFileName)
+BOOL
+APIENTRY
+MoveFileA(
+    LPCSTR lpExistingFileName,
+    LPCSTR lpNewFileName
+    )
 {
-    return MoveFileWithProgressA(lpExistingFileName, lpNewFileName, (LPPROGRESS_ROUTINE)NULL, NULL,
-                                 MOVEFILE_COPY_ALLOWED);
+    return MoveFileWithProgressA( lpExistingFileName,
+                                  lpNewFileName,
+                                  (LPPROGRESS_ROUTINE)NULL,
+                                  NULL,
+                                  MOVEFILE_COPY_ALLOWED );
 }
 
-BOOL APIENTRY MoveFileExA(LPCSTR lpExistingFileName, LPCSTR lpNewFileName, DWORD dwFlags)
+BOOL
+APIENTRY
+MoveFileExA(
+    LPCSTR lpExistingFileName,
+    LPCSTR lpNewFileName,
+    DWORD dwFlags
+    )
 
 {
-    return MoveFileWithProgressA(lpExistingFileName, lpNewFileName, (LPPROGRESS_ROUTINE)NULL, NULL, dwFlags);
+    return MoveFileWithProgressA( lpExistingFileName,
+                                  lpNewFileName,
+                                  (LPPROGRESS_ROUTINE)NULL,
+                                  NULL,
+                                  dwFlags );
 }
 
 
-BOOL APIENTRY MoveFileWithProgressA(LPCSTR lpExistingFileName, LPCSTR lpNewFileName,
-                                    LPPROGRESS_ROUTINE lpProgressRoutine, LPVOID lpData OPTIONAL, DWORD dwFlags)
+BOOL
+APIENTRY
+MoveFileWithProgressA(
+    LPCSTR lpExistingFileName,
+    LPCSTR lpNewFileName,
+    LPPROGRESS_ROUTINE lpProgressRoutine,
+    LPVOID lpData OPTIONAL,
+    DWORD dwFlags
+    )
 
 /*++
 
@@ -727,26 +855,27 @@ Routine Description:
     UNICODE_STRING UnicodeNewFileName;
     BOOL ReturnValue;
 
-    if (!Basep8BitStringToDynamicUnicodeString(&UnicodeOldFileName, lpExistingFileName))
-    {
+    if ( !Basep8BitStringToDynamicUnicodeString(&UnicodeOldFileName, lpExistingFileName) ) {
         return FALSE;
-    }
+        }
 
-    if (ARGUMENT_PRESENT(lpNewFileName))
-    {
-        if (!Basep8BitStringToDynamicUnicodeString(&UnicodeNewFileName, lpNewFileName))
-        {
+    if ( ARGUMENT_PRESENT(lpNewFileName) ) {
+        if ( !Basep8BitStringToDynamicUnicodeString(&UnicodeNewFileName, lpNewFileName) ) {
             RtlFreeUnicodeString(&UnicodeOldFileName);
             return FALSE;
+            }
         }
-    }
-    else
-    {
+    else {
         UnicodeNewFileName.Buffer = NULL;
-    }
+        }
 
-    ReturnValue = MoveFileWithProgressW((LPCWSTR)UnicodeOldFileName.Buffer, (LPCWSTR)UnicodeNewFileName.Buffer,
-                                        lpProgressRoutine, lpData, dwFlags);
+    ReturnValue =
+        MoveFileWithProgressW( (LPCWSTR)UnicodeOldFileName.Buffer,
+                               (LPCWSTR)UnicodeNewFileName.Buffer,
+                               lpProgressRoutine,
+                               lpData,
+                               dwFlags
+                               );
 
     RtlFreeUnicodeString(&UnicodeOldFileName);
     RtlFreeUnicodeString(&UnicodeNewFileName);
@@ -754,8 +883,7 @@ Routine Description:
     return ReturnValue;
 }
 
-typedef struct _HELPER_CONTEXT
-{
+typedef struct _HELPER_CONTEXT {
     DWORD dwFlags;
     LPPROGRESS_ROUTINE lpProgressRoutine;
     LPVOID lpData;
@@ -763,9 +891,17 @@ typedef struct _HELPER_CONTEXT
 
 DWORD
 APIENTRY
-BasepMoveFileCopyProgress(LARGE_INTEGER TotalFileSize, LARGE_INTEGER TotalBytesTransferred, LARGE_INTEGER StreamSize,
-                          LARGE_INTEGER StreamBytesTransferred, DWORD dwStreamNumber, DWORD dwCallbackReason,
-                          HANDLE SourceFile, HANDLE DestinationFile, LPVOID lpData OPTIONAL)
+BasepMoveFileCopyProgress(
+    LARGE_INTEGER TotalFileSize,
+    LARGE_INTEGER TotalBytesTransferred,
+    LARGE_INTEGER StreamSize,
+    LARGE_INTEGER StreamBytesTransferred,
+    DWORD dwStreamNumber,
+    DWORD dwCallbackReason,
+    HANDLE SourceFile,
+    HANDLE DestinationFile,
+    LPVOID lpData OPTIONAL
+    )
 /*++
 
 Routine Description:
@@ -810,11 +946,12 @@ Return Value:
     //  actually made it out to disk.
     //
 
-    if ((Context->dwFlags & MOVEFILE_WRITE_THROUGH) != 0 && dwCallbackReason == CALLBACK_CHUNK_FINISHED &&
-        StreamBytesTransferred.QuadPart == StreamSize.QuadPart)
-    {
+    if ((Context->dwFlags & MOVEFILE_WRITE_THROUGH) != 0
+        && dwCallbackReason == CALLBACK_CHUNK_FINISHED
+        && StreamBytesTransferred.QuadPart == StreamSize.QuadPart ) {
 
         FlushFileBuffers(DestinationFile);
+
     }
 
 
@@ -822,60 +959,76 @@ Return Value:
     //  If a callback routine was specified, call through him
     //
 
-    if (Context->lpProgressRoutine == NULL)
-    {
+    if (Context->lpProgressRoutine == NULL) {
         return PROGRESS_CONTINUE;
     }
 
-    return (Context->lpProgressRoutine)(TotalFileSize, TotalBytesTransferred, StreamSize, StreamBytesTransferred,
-                                        dwStreamNumber, dwCallbackReason, SourceFile, DestinationFile, Context->lpData);
+    return (Context->lpProgressRoutine) (
+                TotalFileSize,
+                TotalBytesTransferred,
+                StreamSize,
+                StreamBytesTransferred,
+                dwStreamNumber,
+                dwCallbackReason,
+                SourceFile,
+                DestinationFile,
+                Context->lpData );
 }
 
 
+
 NTSTATUS
-BasepNotifyTrackingService(PHANDLE SourceFile, POBJECT_ATTRIBUTES SourceFileObjAttributes, HANDLE DestFile,
-                           PUNICODE_STRING NewFileName)
+BasepNotifyTrackingService( PHANDLE SourceFile,
+                            POBJECT_ATTRIBUTES SourceFileObjAttributes,
+                            HANDLE DestFile,
+                            PUNICODE_STRING NewFileName
+                            )
 {
     NTSTATUS Status = STATUS_SUCCESS;
     FILE_BASIC_INFORMATION BasicInformation;
     IO_STATUS_BLOCK IoStatusBlock;
     ULONG FileAttributes;
     ULONG cchComputerName;
-    WCHAR ComputerName[MAX_COMPUTERNAME_LENGTH + 1];
+    WCHAR ComputerName[ MAX_COMPUTERNAME_LENGTH + 1 ];
     DWORD dwError;
 
-    BYTE FTIBuffer[sizeof(FILE_TRACKING_INFORMATION) + MAX_COMPUTERNAME_LENGTH + 1];
-    PFILE_TRACKING_INFORMATION pfti = (PFILE_TRACKING_INFORMATION)&FTIBuffer[0];
+    BYTE FTIBuffer[ sizeof(FILE_TRACKING_INFORMATION) + MAX_COMPUTERNAME_LENGTH + 1 ];
+    PFILE_TRACKING_INFORMATION pfti = (PFILE_TRACKING_INFORMATION) &FTIBuffer[0];
 
     try
     {
         cchComputerName = MAX_COMPUTERNAME_LENGTH + 1;
-        dwError = BasepGetComputerNameFromNtPath(NewFileName, DestFile, ComputerName, &cchComputerName);
+        dwError = BasepGetComputerNameFromNtPath( NewFileName,
+                                                  DestFile,
+                                                  ComputerName,
+                                                  &cchComputerName );
 
-        if (ERROR_SUCCESS != dwError)
-        {
+        if (ERROR_SUCCESS != dwError) {
             pfti->ObjectInformationLength = 0;
-        }
-        else
-        {
-
-            CHAR ComputerNameOemBuffer[MAX_PATH];
-            OEM_STRING ComputerNameOemString = { 0, sizeof(ComputerNameOemBuffer), ComputerNameOemBuffer };
+        } else {
+            
+            CHAR ComputerNameOemBuffer[ MAX_PATH ];
+            OEM_STRING ComputerNameOemString = { 0,
+                                                 sizeof(ComputerNameOemBuffer),
+                                                 ComputerNameOemBuffer };
             UNICODE_STRING ComputerNameUnicodeString;
 
-            RtlInitUnicodeString(&ComputerNameUnicodeString, ComputerName);
+            RtlInitUnicodeString( &ComputerNameUnicodeString,
+                                  ComputerName );
 
 
-            Status = RtlUnicodeStringToOemString(&ComputerNameOemString, &ComputerNameUnicodeString,
-                                                 FALSE); // Don't allocate
-            if (!NT_SUCCESS(Status))
-            {
+            Status = RtlUnicodeStringToOemString( &ComputerNameOemString,
+                                                  &ComputerNameUnicodeString,
+                                                  FALSE );  // Don't allocate
+            if( !NT_SUCCESS(Status) ) {
                 leave;
             }
 
-            memcpy(pfti->ObjectInformation, ComputerNameOemString.Buffer, ComputerNameOemString.Length);
-            pfti->ObjectInformation[ComputerNameOemString.Length] = '\0';
-
+            memcpy( pfti->ObjectInformation,
+                    ComputerNameOemString.Buffer,
+                    ComputerNameOemString.Length );
+            pfti->ObjectInformation[ ComputerNameOemString.Length ] = '\0';
+                
             // Fill in the rest of the fti buffer, and set the file information
 
             pfti->ObjectInformationLength = ComputerNameOemString.Length + 1;
@@ -883,15 +1036,19 @@ BasepNotifyTrackingService(PHANDLE SourceFile, POBJECT_ATTRIBUTES SourceFileObjA
 
         pfti->DestinationFile = DestFile;
 
-        Status = NtSetInformationFile(*SourceFile, &IoStatusBlock, pfti, sizeof(FTIBuffer), FileTrackingInformation);
+        Status = NtSetInformationFile(
+                                     *SourceFile,
+                                     &IoStatusBlock,
+                                     pfti,
+                                     sizeof( FTIBuffer ),
+                                     FileTrackingInformation );
 
         //
         // Check to see if tracking failed because
         // the source has a read-only attribute set.
         //
 
-        if (Status != STATUS_ACCESS_DENIED)
-        {
+        if (Status != STATUS_ACCESS_DENIED) {
             leave;
         }
 
@@ -902,22 +1059,29 @@ BasepNotifyTrackingService(PHANDLE SourceFile, POBJECT_ATTRIBUTES SourceFileObjA
 
         CloseHandle(*SourceFile);
 
-        Status = NtOpenFile(SourceFile, SYNCHRONIZE | FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES,
-                            SourceFileObjAttributes, &IoStatusBlock,
-                            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_SYNCHRONOUS_IO_NONALERT);
+        Status = NtOpenFile(
+                           SourceFile,
+                           SYNCHRONIZE | FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES,
+                           SourceFileObjAttributes,
+                           &IoStatusBlock,
+                           FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                           FILE_SYNCHRONOUS_IO_NONALERT
+                           );
 
-        if (!NT_SUCCESS(Status))
-        {
+        if (!NT_SUCCESS(Status)) {
             *SourceFile = INVALID_HANDLE_VALUE;
             leave;
         }
 
 
-        Status = NtQueryInformationFile(*SourceFile, &IoStatusBlock, &BasicInformation, sizeof(BasicInformation),
-                                        FileBasicInformation);
+        Status = NtQueryInformationFile(
+                                       *SourceFile,
+                                       &IoStatusBlock,
+                                       &BasicInformation,
+                                       sizeof(BasicInformation),
+                                       FileBasicInformation );
 
-        if (!NT_SUCCESS(Status))
-        {
+        if (!NT_SUCCESS(Status)) {
             leave;
         }
 
@@ -929,11 +1093,14 @@ BasepNotifyTrackingService(PHANDLE SourceFile, POBJECT_ATTRIBUTES SourceFileObjA
         RtlZeroMemory(&BasicInformation, sizeof(BasicInformation));
         BasicInformation.FileAttributes = FileAttributes & ~FILE_ATTRIBUTE_READONLY;
 
-        Status = NtSetInformationFile(*SourceFile, &IoStatusBlock, &BasicInformation, sizeof(BasicInformation),
-                                      FileBasicInformation);
+        Status = NtSetInformationFile(
+                                     *SourceFile,
+                                     &IoStatusBlock,
+                                     &BasicInformation,
+                                     sizeof(BasicInformation),
+                                     FileBasicInformation);
 
-        if (!NT_SUCCESS(Status))
-        {
+        if (!NT_SUCCESS(Status)) {
 
             //
             // If this fails, we can't track the file.
@@ -947,15 +1114,19 @@ BasepNotifyTrackingService(PHANDLE SourceFile, POBJECT_ATTRIBUTES SourceFileObjA
         // retry the tracking notification.
         //
 
-        else
-        {
+        else {
             HANDLE hSourceRw;
 
-            Status = NtOpenFile(&hSourceRw, SYNCHRONIZE | GENERIC_WRITE, SourceFileObjAttributes, &IoStatusBlock,
-                                FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_SYNCHRONOUS_IO_NONALERT);
+            Status = NtOpenFile(
+                               &hSourceRw,
+                               SYNCHRONIZE | GENERIC_WRITE,
+                               SourceFileObjAttributes,
+                               &IoStatusBlock,
+                               FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                               FILE_SYNCHRONOUS_IO_NONALERT
+                               );
 
-            if (NT_SUCCESS(Status))
-            {
+            if (NT_SUCCESS(Status)) {
                 NtClose(*SourceFile);
                 *SourceFile = hSourceRw;
 
@@ -963,14 +1134,16 @@ BasepNotifyTrackingService(PHANDLE SourceFile, POBJECT_ATTRIBUTES SourceFileObjA
                 // Send the source machine a tracking notification.
                 //
 
-                Status =
-                    NtSetInformationFile(*SourceFile, &IoStatusBlock, pfti, sizeof(FTIBuffer), FileTrackingInformation);
+                Status = NtSetInformationFile( *SourceFile,
+                                               &IoStatusBlock,
+                                               pfti,
+                                               sizeof( FTIBuffer ),
+                                               FileTrackingInformation );
             }
         }
 
 
-        if (!NT_SUCCESS(Status))
-        {
+        if (!NT_SUCCESS(Status)) {
 
             //
             // Try to put back the r/o bit -- don't assign Status here
@@ -980,8 +1153,12 @@ BasepNotifyTrackingService(PHANDLE SourceFile, POBJECT_ATTRIBUTES SourceFileObjA
             //
 
             BasicInformation.FileAttributes |= FILE_ATTRIBUTE_READONLY;
-            NtSetInformationFile(*SourceFile, &IoStatusBlock, &BasicInformation, sizeof(BasicInformation),
-                                 FileBasicInformation);
+            NtSetInformationFile(
+                                *SourceFile,
+                                &IoStatusBlock,
+                                &BasicInformation,
+                                sizeof(BasicInformation),
+                                FileBasicInformation);
         }
     }
     finally
@@ -989,25 +1166,53 @@ BasepNotifyTrackingService(PHANDLE SourceFile, POBJECT_ATTRIBUTES SourceFileObjA
     }
 
 
-    return (Status);
+    return( Status );
+
 }
 
 
-BOOL APIENTRY MoveFileW(LPCWSTR lpExistingFileName, LPCWSTR lpNewFileName)
+
+
+
+BOOL
+APIENTRY
+MoveFileW(
+    LPCWSTR lpExistingFileName,
+    LPCWSTR lpNewFileName
+    )
 {
-    return MoveFileWithProgressW(lpExistingFileName, lpNewFileName, (LPPROGRESS_ROUTINE)NULL, NULL,
-                                 MOVEFILE_COPY_ALLOWED);
+    return MoveFileWithProgressW( lpExistingFileName,
+                                  lpNewFileName,
+                                  (LPPROGRESS_ROUTINE)NULL,
+                                  NULL,
+                                  MOVEFILE_COPY_ALLOWED );
 }
 
-BOOL APIENTRY MoveFileExW(LPCWSTR lpExistingFileName, LPCWSTR lpNewFileName, DWORD dwFlags)
+BOOL
+APIENTRY
+MoveFileExW(
+    LPCWSTR lpExistingFileName,
+    LPCWSTR lpNewFileName,
+    DWORD dwFlags
+    )
 
 {
-    return MoveFileWithProgressW(lpExistingFileName, lpNewFileName, (LPPROGRESS_ROUTINE)NULL, NULL, dwFlags);
+    return MoveFileWithProgressW( lpExistingFileName,
+                                  lpNewFileName,
+                                  (LPPROGRESS_ROUTINE)NULL,
+                                  NULL,
+                                  dwFlags );
 }
 
-BOOL APIENTRY MoveFileWithProgressW(LPCWSTR lpExistingFileName, LPCWSTR lpNewFileName,
-                                    LPPROGRESS_ROUTINE lpProgressRoutine OPTIONAL, LPVOID lpData OPTIONAL,
-                                    DWORD dwFlags)
+BOOL
+APIENTRY
+MoveFileWithProgressW(
+    LPCWSTR lpExistingFileName,
+    LPCWSTR lpNewFileName,
+    LPPROGRESS_ROUTINE lpProgressRoutine OPTIONAL,
+    LPVOID lpData OPTIONAL,
+    DWORD dwFlags
+    )
 
 /*++
 
@@ -1096,29 +1301,30 @@ Return Value:
     NewFileName.Buffer = NULL;
     OldFileName.Buffer = NULL;
 
-    try
-    {
+    try {
 
         //
         // if the target is a device, do not allow the rename !
         //
 
-        if (lpNewFileName)
-        {
-            if (RtlIsDosDeviceName_U((PWSTR)lpNewFileName))
-            {
-                BaseSetLastNTError(STATUS_OBJECT_NAME_COLLISION);
+        if ( lpNewFileName ) {
+            if ( RtlIsDosDeviceName_U((PWSTR)lpNewFileName) ) {
+                BaseSetLastNTError( STATUS_OBJECT_NAME_COLLISION );
                 leave;
             }
         }
 
         ReplaceIfExists = (dwFlags & MOVEFILE_REPLACE_EXISTING) != 0;
 
-        TranslationStatus = RtlDosPathNameToNtPathName_U(lpExistingFileName, &OldFileName, NULL, &RelativeName);
+        TranslationStatus = RtlDosPathNameToNtPathName_U(
+                                lpExistingFileName,
+                                &OldFileName,
+                                NULL,
+                                &RelativeName
+                                );
 
-        if (!TranslationStatus)
-        {
-            BaseSetLastNTError(STATUS_OBJECT_PATH_NOT_FOUND);
+        if ( !TranslationStatus ) {
+            BaseSetLastNTError( STATUS_OBJECT_PATH_NOT_FOUND );
             leave;
         }
 
@@ -1126,9 +1332,9 @@ Return Value:
         //  Cannot perform delayed-move-by-creating-hardlink
         //
 
-        if ((dwFlags & MOVEFILE_DELAY_UNTIL_REBOOT) != 0 && (dwFlags & MOVEFILE_CREATE_HARDLINK) != 0)
-        {
-            BaseSetLastNTError(STATUS_INVALID_PARAMETER);
+        if ((dwFlags & MOVEFILE_DELAY_UNTIL_REBOOT) != 0 &&
+            (dwFlags & MOVEFILE_CREATE_HARDLINK) != 0) {
+            BaseSetLastNTError( STATUS_INVALID_PARAMETER );
             leave;
         }
 
@@ -1138,18 +1344,20 @@ Return Value:
         //  access to the file.
         //
 
-        if (RelativeName.RelativeName.Length)
-        {
+        if ( RelativeName.RelativeName.Length ) {
             RelativeOldName = *(PUNICODE_STRING)&RelativeName.RelativeName;
-        }
-        else
-        {
+        } else {
             RelativeOldName = OldFileName;
             RelativeName.ContainingDirectory = NULL;
         }
 
-        InitializeObjectAttributes(&Obja, &RelativeOldName, OBJ_CASE_INSENSITIVE, RelativeName.ContainingDirectory,
-                                   NULL);
+        InitializeObjectAttributes(
+                                  &Obja,
+                                  &RelativeOldName,
+                                  OBJ_CASE_INSENSITIVE,
+                                  RelativeName.ContainingDirectory,
+                                  NULL
+                                  );
 
         //
         //  Establish whether we are renaming a symbolic link or not by:
@@ -1160,16 +1368,20 @@ Return Value:
         //  point behavior.
         //
 
-        OpenFlags = FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT |
+        OpenFlags = FILE_SYNCHRONOUS_IO_NONALERT |
+                    FILE_OPEN_FOR_BACKUP_INTENT  |
                     ((dwFlags & MOVEFILE_WRITE_THROUGH) ? FILE_WRITE_THROUGH : 0);
 
-        Status =
-            NtOpenFile(&Handle, FILE_READ_ATTRIBUTES | DELETE | SYNCHRONIZE, &Obja, &IoStatusBlock,
-                       FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_OPEN_REPARSE_POINT | OpenFlags);
+        Status = NtOpenFile( &Handle,
+                             FILE_READ_ATTRIBUTES | DELETE | SYNCHRONIZE,
+                             &Obja,
+                             &IoStatusBlock,
+                             FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                             FILE_OPEN_REPARSE_POINT | OpenFlags
+                             );
 
 
-        if (!NT_SUCCESS(Status))
-        {
+        if (!NT_SUCCESS( Status )) {
 
             //
             //  The Open may fail for a number of reasons.  If we're
@@ -1178,15 +1390,14 @@ Return Value:
             //  or a non-existent path.
             //
 
-            if (((dwFlags & MOVEFILE_DELAY_UNTIL_REBOOT) != 0) &&
-                (Status == STATUS_SHARING_VIOLATION || Status == STATUS_OBJECT_NAME_NOT_FOUND ||
-                 Status == STATUS_OBJECT_PATH_NOT_FOUND))
-            {
+            if (((dwFlags & MOVEFILE_DELAY_UNTIL_REBOOT) != 0)
+                && (Status == STATUS_SHARING_VIOLATION
+                    || Status == STATUS_OBJECT_NAME_NOT_FOUND
+                    || Status == STATUS_OBJECT_PATH_NOT_FOUND)) {
 
                 Handle = INVALID_HANDLE_VALUE;
-            }
-            else
-            {
+
+            } else {
 
                 //
                 //  Back level file systems may not support reparse points and thus not
@@ -1195,38 +1406,44 @@ Return Value:
                 //  We infer this is the case when the Status is STATUS_INVALID_PARAMETER.
                 //
 
-                if (Status == STATUS_INVALID_PARAMETER)
-                {
+                if ( Status == STATUS_INVALID_PARAMETER ) {
 
                     //
                     //  Retry the open without reparse behaviour.  This should be compatible
                     //  with older file systems.
                     //
 
-                    Status = NtOpenFile(&Handle, DELETE | SYNCHRONIZE, &Obja, &IoStatusBlock,
-                                        FILE_SHARE_READ | FILE_SHARE_WRITE, OpenFlags);
+                    Status = NtOpenFile(
+                                       &Handle,
+                                       DELETE | SYNCHRONIZE,
+                                       &Obja,
+                                       &IoStatusBlock,
+                                       FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                       OpenFlags
+                                       );
                 }
 
-                if (!NT_SUCCESS(Status))
-                {
-                    BaseSetLastNTError(Status);
+                if ( !NT_SUCCESS( Status ) ) {
+                    BaseSetLastNTError( Status );
                     leave;
                 }
             }
-        }
-        else
-        {
+        } else {
 
             //
             //  The open succeeded. If we do not find a symbolic link or a mount point,
             //  re-open without inhibiting the reparse behavior.
             //
 
-            Status = NtQueryInformationFile(Handle, &IoStatusBlock, (PVOID)&FileTagInformation,
-                                            sizeof(FileTagInformation), FileAttributeTagInformation);
+            Status = NtQueryInformationFile(
+                                           Handle,
+                                           &IoStatusBlock,
+                                           (PVOID) &FileTagInformation,
+                                           sizeof(FileTagInformation),
+                                           FileAttributeTagInformation
+                                           );
 
-            if (!NT_SUCCESS(Status))
-            {
+            if ( !NT_SUCCESS( Status ) ) {
 
                 //
                 //  Not all File Systems implement all information classes.
@@ -1239,53 +1456,60 @@ Return Value:
                 //  the file at hand is not a reparse point.
                 //
 
-                if ((Status != STATUS_NOT_IMPLEMENTED) && (Status != STATUS_INVALID_PARAMETER))
-                {
-                    BaseSetLastNTError(Status);
+                if ( (Status != STATUS_NOT_IMPLEMENTED) &&
+                     (Status != STATUS_INVALID_PARAMETER) ) {
+                    BaseSetLastNTError( Status );
                     leave;
                 }
             }
 
-            if (NT_SUCCESS(Status) && (FileTagInformation.FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
-                FileTagInformation.ReparseTag != IO_REPARSE_TAG_MOUNT_POINT)
-            {
+            if ( NT_SUCCESS(Status) &&
+                 (FileTagInformation.FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
+                 FileTagInformation.ReparseTag != IO_REPARSE_TAG_MOUNT_POINT ) {
 
                 //
                 //  Open without inhibiting the reparse behavior and not needing to
                 //  read the attributes.
                 //
 
-                NtClose(Handle);
+                NtClose( Handle );
                 Handle = INVALID_HANDLE_VALUE;
 
-                Status = NtOpenFile(&Handle, DELETE | SYNCHRONIZE, &Obja, &IoStatusBlock,
-                                    FILE_SHARE_READ | FILE_SHARE_WRITE, OpenFlags);
+                Status = NtOpenFile(
+                                   &Handle,
+                                   DELETE | SYNCHRONIZE,
+                                   &Obja,
+                                   &IoStatusBlock,
+                                   FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                   OpenFlags
+                                   );
 
-                if (!NT_SUCCESS(Status))
-                {
-                    BaseSetLastNTError(Status);
+                if ( !NT_SUCCESS( Status ) ) {
+                    BaseSetLastNTError( Status );
                     leave;
                 }
             }
         }
 
-        if (!(dwFlags & MOVEFILE_DELAY_UNTIL_REBOOT) || (lpNewFileName != NULL))
-        {
-            TranslationStatus = RtlDosPathNameToNtPathName_U(lpNewFileName, &NewFileName, NULL, NULL);
+        if (!(dwFlags & MOVEFILE_DELAY_UNTIL_REBOOT) ||
+            (lpNewFileName != NULL)) {
+            TranslationStatus = RtlDosPathNameToNtPathName_U(
+                                                            lpNewFileName,
+                                                            &NewFileName,
+                                                            NULL,
+                                                            NULL
+                                                            );
 
-            if (!TranslationStatus)
-            {
-                BaseSetLastNTError(STATUS_OBJECT_PATH_NOT_FOUND);
+            if ( !TranslationStatus ) {
+                BaseSetLastNTError( STATUS_OBJECT_PATH_NOT_FOUND );
                 leave;
             }
-        }
-        else
-        {
-            RtlInitUnicodeString(&NewFileName, NULL);
+
+        } else {
+            RtlInitUnicodeString( &NewFileName, NULL );
         }
 
-        if (dwFlags & MOVEFILE_DELAY_UNTIL_REBOOT)
-        {
+        if (dwFlags & MOVEFILE_DELAY_UNTIL_REBOOT) {
 
             //
             // (typical stevewo hack, preserved for sentimental value)
@@ -1295,14 +1519,14 @@ Return Value:
             // along to the session manager.
             //
 
-            if (ReplaceIfExists && NewFileName.Length != 0)
-            {
+            if (ReplaceIfExists && NewFileName.Length != 0) {
                 PWSTR NewBuffer;
 
-                NewBuffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), NewFileName.Length + sizeof(WCHAR));
-                if (NewBuffer == NULL)
-                {
-                    BaseSetLastNTError(STATUS_NO_MEMORY);
+                NewBuffer = RtlAllocateHeap( RtlProcessHeap(),
+                                             MAKE_TAG( TMP_TAG ),
+                                             NewFileName.Length + sizeof(WCHAR) );
+                if (NewBuffer == NULL) {
+                    BaseSetLastNTError( STATUS_NO_MEMORY );
                     leave;
                 }
 
@@ -1324,8 +1548,7 @@ Return Value:
             // why the caller is using the delay until reboot option !
             //
 
-            if (RtlDetermineDosPathNameType_U(lpExistingFileName) == RtlPathTypeUncAbsolute)
-            {
+            if ( RtlDetermineDosPathNameType_U(lpExistingFileName) == RtlPathTypeUncAbsolute ) {
                 Status = STATUS_INVALID_PARAMETER;
             }
 
@@ -1333,26 +1556,29 @@ Return Value:
             // copy allowed is not permitted on delayed renames
             //
 
-            else if (dwFlags & MOVEFILE_COPY_ALLOWED)
-            {
+            else if ( dwFlags & MOVEFILE_COPY_ALLOWED ) {
                 Status = STATUS_INVALID_PARAMETER;
-            }
-            else
-            {
-                Status = BasepMoveFileDelayed(&OldFileName, &NewFileName, 2, FALSE);
-                if (Status == STATUS_OBJECT_NAME_NOT_FOUND)
-                {
-                    Status = BasepMoveFileDelayed(&OldFileName, &NewFileName, 1, TRUE);
-                    if (Status == STATUS_INSUFFICIENT_RESOURCES)
-                    {
-                        Status = BasepMoveFileDelayed(&OldFileName, &NewFileName, 2, TRUE);
-                    }
-                }
+            } else {
+	        Status = BasepMoveFileDelayed( &OldFileName,
+					       &NewFileName,
+					       2,
+					       FALSE );
+		if (Status == STATUS_OBJECT_NAME_NOT_FOUND) {
+		    Status = BasepMoveFileDelayed( &OldFileName,
+						   &NewFileName,
+						   1,
+						   TRUE );
+		    if (Status == STATUS_INSUFFICIENT_RESOURCES) {
+                        Status = BasepMoveFileDelayed( &OldFileName,
+						       &NewFileName,
+						       2,
+						       TRUE );
+		    }
+		}
             }
 
-            if (!NT_SUCCESS(Status))
-            {
-                BaseSetLastNTError(Status);
+            if (!NT_SUCCESS( Status )) {
+                BaseSetLastNTError( Status );
                 leave;
             }
 
@@ -1364,39 +1590,42 @@ Return Value:
         //  We must to the real move now.
         //
 
-        NewName = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), NewFileName.Length + sizeof(*NewName));
+        NewName = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( TMP_TAG ), NewFileName.Length+sizeof(*NewName));
 
-        if (NewName == NULL)
-        {
-            BaseSetLastNTError(STATUS_NO_MEMORY);
+        if (NewName == NULL) {
+            BaseSetLastNTError( STATUS_NO_MEMORY );
             leave;
         }
 
-        RtlMoveMemory(NewName->FileName, NewFileName.Buffer, NewFileName.Length);
+        RtlMoveMemory( NewName->FileName, NewFileName.Buffer, NewFileName.Length );
 
         NewName->ReplaceIfExists = ReplaceIfExists;
         NewName->RootDirectory = NULL;
         NewName->FileNameLength = NewFileName.Length;
 
-        Status =
-            NtSetInformationFile(Handle, &IoStatusBlock, NewName, NewFileName.Length + sizeof(*NewName),
-                                 (dwFlags & MOVEFILE_CREATE_HARDLINK) ? FileLinkInformation : FileRenameInformation);
+        Status = NtSetInformationFile(
+                    Handle,
+                    &IoStatusBlock,
+                    NewName,
+                    NewFileName.Length+sizeof(*NewName),
+                    (dwFlags & MOVEFILE_CREATE_HARDLINK) ?
+                        FileLinkInformation :
+                        FileRenameInformation
+                    );
 
         RtlFreeHeap(RtlProcessHeap(), 0, NewName);
 
-        if (NT_SUCCESS(Status))
-        {
+        if (NT_SUCCESS( Status )) {
             b = TRUE;
             leave;
         }
 
-        if (Status != STATUS_NOT_SAME_DEVICE || (dwFlags & MOVEFILE_COPY_ALLOWED) == 0)
-        {
-            BaseSetLastNTError(Status);
+        if (Status != STATUS_NOT_SAME_DEVICE || (dwFlags & MOVEFILE_COPY_ALLOWED) == 0) {
+            BaseSetLastNTError( Status );
             leave;
         }
 
-        NtClose(Handle);
+        NtClose( Handle );
         Handle = INVALID_HANDLE_VALUE;
 
         //
@@ -1411,44 +1640,51 @@ Return Value:
             Context.lpProgressRoutine = lpProgressRoutine;
             Context.lpData = lpData;
 
-            b = (BOOLEAN)BasepCopyFileExW(lpExistingFileName, lpNewFileName, BasepMoveFileCopyProgress, &Context, NULL,
-                                          (ReplaceIfExists ? 0 : COPY_FILE_FAIL_IF_EXISTS) |
-                                              COPY_FILE_OPEN_SOURCE_FOR_WRITE,
-                                          0, // PrivCopyFile flags
-                                          &hSource, &hDest);
+            b = (BOOLEAN)BasepCopyFileExW(
+                            lpExistingFileName,
+                            lpNewFileName,
+                            BasepMoveFileCopyProgress,
+                            &Context,
+                            NULL,
+                            (ReplaceIfExists ? 0 : COPY_FILE_FAIL_IF_EXISTS) | COPY_FILE_OPEN_SOURCE_FOR_WRITE,
+                            0, // PrivCopyFile flags
+                            &hSource,
+                            &hDest
+                            );
 
-            if (b && hSource != INVALID_HANDLE_VALUE && hDest != INVALID_HANDLE_VALUE)
-            {
+            if ( b && hSource != INVALID_HANDLE_VALUE && hDest != INVALID_HANDLE_VALUE) {
 
                 //
                 // attempt to do tracking
                 //
 
-                Status = BasepNotifyTrackingService(&hSource, &Obja, hDest, &NewFileName);
+                Status = BasepNotifyTrackingService( &hSource,
+                                                     &Obja,
+                                                     hDest,
+                                                     &NewFileName );
 
 
-                if (!NT_SUCCESS(Status) && (dwFlags & MOVEFILE_FAIL_IF_NOT_TRACKABLE))
-                {
+                if ( !NT_SUCCESS(Status) &&
+                    (dwFlags & MOVEFILE_FAIL_IF_NOT_TRACKABLE)) {
 
                     if (hDest != INVALID_HANDLE_VALUE)
-                        CloseHandle(hDest);
+                        CloseHandle( hDest );
 
                     hDest = INVALID_HANDLE_VALUE;
-                    DeleteFileW(lpNewFileName);
+                    DeleteFileW( lpNewFileName );
                     b = FALSE;
 
-                    BaseSetLastNTError(Status);
+                    BaseSetLastNTError( Status );
+
                 }
             }
 
-            if (hSource != INVALID_HANDLE_VALUE)
-            {
+            if (hSource != INVALID_HANDLE_VALUE) {
                 CloseHandle(hSource);
                 hSource = INVALID_HANDLE_VALUE;
             }
 
-            if (hDest != INVALID_HANDLE_VALUE)
-            {
+            if (hDest != INVALID_HANDLE_VALUE) {
                 CloseHandle(hDest);
                 hDest = INVALID_HANDLE_VALUE;
             }
@@ -1458,36 +1694,37 @@ Return Value:
             // if it fails, try a set attributes and then a delete
             //
 
-            if (b && !DeleteFileW(lpExistingFileName))
-            {
+            if (b && !DeleteFileW( lpExistingFileName ) ) {
 
                 //
                 // If the delete fails, we will return true, but possibly
                 // leave the source dangling
                 //
 
-                SetFileAttributesW(lpExistingFileName, FILE_ATTRIBUTE_NORMAL);
-                DeleteFileW(lpExistingFileName);
+                SetFileAttributesW(lpExistingFileName,FILE_ATTRIBUTE_NORMAL);
+                DeleteFileW( lpExistingFileName );
             }
         }
-    }
-    finally
-    {
-        if (Handle != INVALID_HANDLE_VALUE)
-        {
-            NtClose(Handle);
+
+    } finally {
+        if (Handle != INVALID_HANDLE_VALUE) {
+            NtClose( Handle );
         }
-        RtlFreeHeap(RtlProcessHeap(), 0, OldFileName.Buffer);
-        RtlFreeHeap(RtlProcessHeap(), 0, NewFileName.Buffer);
+        RtlFreeHeap( RtlProcessHeap(), 0, OldFileName.Buffer );
+        RtlFreeHeap( RtlProcessHeap(), 0, NewFileName.Buffer );
     }
 
     return b;
 }
 
-
+
 NTSTATUS
-BasepMoveFileDelayed(IN PUNICODE_STRING OldFileName, IN PUNICODE_STRING NewFileName, IN ULONG Index,
-                     IN BOOL OkayToCreateNewValue)
+BasepMoveFileDelayed(
+    IN PUNICODE_STRING OldFileName,
+    IN PUNICODE_STRING NewFileName,
+    IN ULONG Index,
+    IN BOOL OkayToCreateNewValue
+    )
 
 /*++
 
@@ -1522,41 +1759,55 @@ Return Value:
     NTSTATUS Status;
 
 
-    RtlInitUnicodeString(&KeyName, L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Session Manager");
+    RtlInitUnicodeString( &KeyName, L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Session Manager" );
 
-    if (Index == 1)
-    {
-        RtlInitUnicodeString(&ValueName, L"PendingFileRenameOperations");
-    }
-    else
-    {
-        swprintf(ValueNameBuf, L"PendingFileRenameOperations%d", Index);
-        RtlInitUnicodeString(&ValueName, ValueNameBuf);
+    if (Index == 1) {
+        RtlInitUnicodeString( &ValueName, L"PendingFileRenameOperations" );
+    } else {
+        swprintf(ValueNameBuf,L"PendingFileRenameOperations%d",Index);
+        RtlInitUnicodeString( &ValueName, ValueNameBuf );
     }
 
-    InitializeObjectAttributes(&Obja, &KeyName, OBJ_OPENIF | OBJ_CASE_INSENSITIVE, NULL, NULL);
+    InitializeObjectAttributes(
+        &Obja,
+        &KeyName,
+        OBJ_OPENIF | OBJ_CASE_INSENSITIVE,
+        NULL,
+        NULL
+        );
 
-    Status = NtCreateKey(&KeyHandle, GENERIC_READ | GENERIC_WRITE, &Obja, 0, NULL, 0, NULL);
-    if (Status == STATUS_ACCESS_DENIED)
-    {
-        Status = NtCreateKey(&KeyHandle, GENERIC_READ | GENERIC_WRITE, &Obja, 0, NULL, REG_OPTION_BACKUP_RESTORE, NULL);
+    Status = NtCreateKey( &KeyHandle,
+                          GENERIC_READ | GENERIC_WRITE,
+                          &Obja,
+                          0,
+                          NULL,
+                          0,
+                          NULL
+                        );
+    if ( Status == STATUS_ACCESS_DENIED ) {
+        Status = NtCreateKey( &KeyHandle,
+                              GENERIC_READ | GENERIC_WRITE,
+                              &Obja,
+                              0,
+                              NULL,
+                              REG_OPTION_BACKUP_RESTORE,
+                              NULL
+                            );
     }
 
-    if (!NT_SUCCESS(Status))
-    {
+    if (!NT_SUCCESS( Status )) {
         return Status;
     }
 
-    while (TRUE)
-    {
-        ValueInfo = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG),
-                                    ValueLength + OldFileName->Length + sizeof(WCHAR) + NewFileName->Length +
-                                        2 * sizeof(WCHAR));
+    while (TRUE) {
+        ValueInfo = RtlAllocateHeap(RtlProcessHeap(),
+                                    MAKE_TAG(TMP_TAG),
+                                    ValueLength + OldFileName->Length + sizeof(WCHAR) +
+                                                  NewFileName->Length + 2*sizeof(WCHAR));
 
-        if (ValueInfo == NULL)
-        {
+        if (ValueInfo == NULL) {
             NtClose(KeyHandle);
-            return (STATUS_NO_MEMORY);
+            return(STATUS_NO_MEMORY);
         }
 
         //
@@ -1567,11 +1818,14 @@ Return Value:
         // NULL-terminated strings.
         //
 
-        Status =
-            NtQueryValueKey(KeyHandle, &ValueName, KeyValuePartialInformation, ValueInfo, ValueLength, &ReturnedLength);
+        Status = NtQueryValueKey(KeyHandle,
+                                 &ValueName,
+                                 KeyValuePartialInformation,
+                                 ValueInfo,
+                                 ValueLength,
+                                 &ReturnedLength);
 
-        if (Status != STATUS_BUFFER_OVERFLOW)
-        {
+        if (Status != STATUS_BUFFER_OVERFLOW) {
             break;
         }
 
@@ -1583,51 +1837,59 @@ Return Value:
         RtlFreeHeap(RtlProcessHeap(), 0, ValueInfo);
     }
 
-    if ((Status == STATUS_OBJECT_NAME_NOT_FOUND) && OkayToCreateNewValue)
-    {
+    if ((Status == STATUS_OBJECT_NAME_NOT_FOUND)
+	&& OkayToCreateNewValue) {
         //
         // The value does not currently exist. Create the
         // value with our data.
         //
         s = ValueData = (PWSTR)ValueInfo;
-    }
-    else if (NT_SUCCESS(Status))
-    {
+    } else if (NT_SUCCESS(Status)) {
         //
         // A value already exists, append our two strings to the
         // MULTI_SZ.
         //
         ValueData = (PWSTR)(&ValueInfo->Data);
         s = (PWSTR)((PCHAR)ValueData + ValueInfo->DataLength) - 1;
-    }
-    else
-    {
+    } else {
         NtClose(KeyHandle);
         RtlFreeHeap(RtlProcessHeap(), 0, ValueInfo);
-        return (Status);
+        return(Status);
     }
 
     CopyMemory(s, OldFileName->Buffer, OldFileName->Length);
-    s += (OldFileName->Length / sizeof(WCHAR));
+    s += (OldFileName->Length/sizeof(WCHAR));
     *s++ = L'\0';
 
     CopyMemory(s, NewFileName->Buffer, NewFileName->Length);
-    s += (NewFileName->Length / sizeof(WCHAR));
+    s += (NewFileName->Length/sizeof(WCHAR));
     *s++ = L'\0';
     *s++ = L'\0';
 
-    Status = NtSetValueKey(KeyHandle, &ValueName, 0, REG_MULTI_SZ, ValueData, (ULONG)((s - ValueData) * sizeof(WCHAR)));
+    Status = NtSetValueKey(KeyHandle,
+                           &ValueName,
+                           0,
+                           REG_MULTI_SZ,
+                           ValueData,
+                           (ULONG)((s-ValueData)*sizeof(WCHAR)));
     NtClose(KeyHandle);
     RtlFreeHeap(RtlProcessHeap(), 0, ValueInfo);
 
-    return (Status);
+    return(Status);
 }
 
 
+
+
 NTSTATUS
-BasepOpenFileForMove(IN LPCWSTR lpFileName, OUT PUNICODE_STRING FileName, OUT PVOID *FileNameFreeBuffer,
-                     OUT PHANDLE Handle, OUT POBJECT_ATTRIBUTES Obja, IN ULONG DesiredAccess, IN ULONG ShareAccess,
-                     IN ULONG OpenOptions)
+BasepOpenFileForMove( IN     LPCWSTR lpFileName,
+                      OUT    PUNICODE_STRING FileName,
+                      OUT    PVOID *FileNameFreeBuffer,
+                      OUT    PHANDLE Handle,
+                      OUT    POBJECT_ATTRIBUTES Obja,
+                      IN     ULONG DesiredAccess,
+                      IN     ULONG ShareAccess,
+                      IN     ULONG OpenOptions )
 /*++
 
 Routine Description:
@@ -1681,26 +1943,33 @@ Return Value:
         //  Initialize the object attributes
         //
 
-        TranslationStatus = RtlDosPathNameToNtPathName_U(lpFileName, FileName, NULL, &RelativeName);
+        TranslationStatus = RtlDosPathNameToNtPathName_U(
+                                lpFileName,
+                                FileName,
+                                NULL,
+                                &RelativeName
+                                );
 
-        if (!TranslationStatus)
-        {
+        if ( !TranslationStatus ) {
             Status = STATUS_OBJECT_PATH_NOT_FOUND;
             leave;
         }
         *FileNameFreeBuffer = FileName->Buffer;
 
 
-        if (RelativeName.RelativeName.Length)
-        {
+        if ( RelativeName.RelativeName.Length ) {
             *FileName = *(PUNICODE_STRING)&RelativeName.RelativeName;
-        }
-        else
-        {
+        } else {
             RelativeName.ContainingDirectory = NULL;
         }
 
-        InitializeObjectAttributes(Obja, FileName, OBJ_CASE_INSENSITIVE, RelativeName.ContainingDirectory, NULL);
+        InitializeObjectAttributes(
+                                  Obja,
+                                  FileName,
+                                  OBJ_CASE_INSENSITIVE,
+                                  RelativeName.ContainingDirectory,
+                                  NULL
+                                  );
 
         //
         //  Establish whether we are handling a symbolic link or not by:
@@ -1713,12 +1982,16 @@ Return Value:
 
         OpenOptions |= (FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT);
 
-        Status = NtOpenFile(Handle, FILE_READ_ATTRIBUTES | SYNCHRONIZE | DesiredAccess, Obja, &IoStatusBlock,
-                            FILE_SHARE_READ | FILE_SHARE_WRITE | ShareAccess, FILE_OPEN_REPARSE_POINT | OpenOptions);
+        Status = NtOpenFile( Handle,
+                             FILE_READ_ATTRIBUTES | SYNCHRONIZE | DesiredAccess,
+                             Obja,
+                             &IoStatusBlock,
+                             FILE_SHARE_READ | FILE_SHARE_WRITE | ShareAccess,
+                             FILE_OPEN_REPARSE_POINT | OpenOptions
+                             );
 
 
-        if (!NT_SUCCESS(Status))
-        {
+        if (!NT_SUCCESS( Status )) {
 
             //
             //  Back level file systems may not support reparse points and thus not
@@ -1727,26 +2000,29 @@ Return Value:
             //  We infer this is the case when the Status is STATUS_INVALID_PARAMETER.
             //
 
-            if (Status == STATUS_INVALID_PARAMETER)
-            {
+            if ( Status == STATUS_INVALID_PARAMETER ) {
 
                 //
                 //  Retry the open without reparse behaviour.  This should be compatible
                 //  with older file systems.
                 //
 
-                Status = NtOpenFile(Handle, SYNCHRONIZE | DesiredAccess, Obja, &IoStatusBlock,
-                                    FILE_SHARE_READ | FILE_SHARE_WRITE | ShareAccess, OpenOptions);
+                Status = NtOpenFile(
+                                   Handle,
+                                   SYNCHRONIZE | DesiredAccess,
+                                   Obja,
+                                   &IoStatusBlock,
+                                   FILE_SHARE_READ | FILE_SHARE_WRITE | ShareAccess,
+                                   OpenOptions
+                                   );
             }
 
-            if (!NT_SUCCESS(Status))
-            {
+            if ( !NT_SUCCESS( Status ) ) {
 
                 leave;
             }
-        }
-        else
-        {
+
+        } else {
 
             FILE_ATTRIBUTE_TAG_INFORMATION FileTagInformation;
 
@@ -1755,11 +2031,15 @@ Return Value:
             //  re-open without inhibiting the reparse behavior.
             //
 
-            Status = NtQueryInformationFile(*Handle, &IoStatusBlock, (PVOID)&FileTagInformation,
-                                            sizeof(FileTagInformation), FileAttributeTagInformation);
+            Status = NtQueryInformationFile(
+                                           *Handle,
+                                           &IoStatusBlock,
+                                           (PVOID) &FileTagInformation,
+                                           sizeof(FileTagInformation),
+                                           FileAttributeTagInformation
+                                           );
 
-            if (!NT_SUCCESS(Status))
-            {
+            if ( !NT_SUCCESS( Status ) ) {
 
                 //
                 //  Not all File Systems implement all information classes.
@@ -1772,30 +2052,35 @@ Return Value:
                 //  the file at hand is not a reparse point.
                 //
 
-                if ((Status != STATUS_NOT_IMPLEMENTED) && (Status != STATUS_INVALID_PARAMETER))
-                {
+                if ( (Status != STATUS_NOT_IMPLEMENTED) &&
+                     (Status != STATUS_INVALID_PARAMETER) ) {
 
                     leave;
                 }
             }
 
-            if (NT_SUCCESS(Status) && (FileTagInformation.FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
-                FileTagInformation.ReparseTag != IO_REPARSE_TAG_MOUNT_POINT)
-            {
+            if ( NT_SUCCESS(Status) &&
+                 (FileTagInformation.FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
+                 FileTagInformation.ReparseTag != IO_REPARSE_TAG_MOUNT_POINT ) {
 
                 //
                 //  Open without inhibiting the reparse behavior and not needing to
                 //  read the attributes.
                 //
 
-                NtClose(*Handle);
+                NtClose( *Handle );
                 *Handle = INVALID_HANDLE_VALUE;
 
-                Status = NtOpenFile(Handle, SYNCHRONIZE | DesiredAccess, Obja, &IoStatusBlock,
-                                    FILE_SHARE_DELETE | FILE_SHARE_READ | ShareAccess, OpenOptions);
+                Status = NtOpenFile(
+                                   Handle,
+                                   SYNCHRONIZE | DesiredAccess,
+                                   Obja,
+                                   &IoStatusBlock,
+                                   FILE_SHARE_DELETE | FILE_SHARE_READ | ShareAccess,
+                                   OpenOptions
+                                   );
 
-                if (!NT_SUCCESS(Status))
-                {
+                if ( !NT_SUCCESS( Status ) ) {
 
                     leave;
                 }
@@ -1806,11 +2091,19 @@ Return Value:
     {
     }
 
-    return (Status);
+    return( Status );
+
 }
 
 
-BOOL APIENTRY PrivMoveFileIdentityW(LPCWSTR lpOldFileName, LPCWSTR lpNewFileName, DWORD dwFlags)
+
+BOOL
+APIENTRY
+PrivMoveFileIdentityW(
+    LPCWSTR lpOldFileName,
+    LPCWSTR lpNewFileName,
+    DWORD dwFlags
+    )
 
 /*++
 
@@ -1833,7 +2126,7 @@ Return Value:
 
 --*/
 
-{ // MOVE_FILEIDentityW
+{   // MOVE_FILEIDentityW
 
     NTSTATUS Status = STATUS_SUCCESS;
     NTSTATUS StatusIgnored = STATUS_SUCCESS;
@@ -1855,132 +2148,127 @@ Return Value:
     DWORD SourceFileAccess;
     DWORD DestFileAccess;
 
-    try
-    {
+    try {
 
         // Open the source file.  It must be opened for write or the
         // FileTrackingInformation call will fail.
 
         SourceFileAccess = FILE_WRITE_DATA | FILE_READ_ATTRIBUTES;
-        if (dwFlags & PRIVMOVE_FILEID_DELETE_OLD_FILE)
-        {
+        if( dwFlags & PRIVMOVE_FILEID_DELETE_OLD_FILE ) {
             SourceFileAccess |= DELETE;
         }
 
-        while (TRUE)
-        {
+        while( TRUE ) {
 
-            Status = BasepOpenFileForMove(lpOldFileName, &SourceFileName, &SourceFileNameFreeBuffer, &SourceFile,
-                                          &SourceObja, SourceFileAccess,
-                                          FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_OPEN_NO_RECALL);
-            if (NT_SUCCESS(Status))
-            {
+            Status = BasepOpenFileForMove( lpOldFileName,
+                                           &SourceFileName,
+                                           &SourceFileNameFreeBuffer,
+                                           &SourceFile,
+                                           &SourceObja,
+                                           SourceFileAccess,
+                                           FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                           FILE_OPEN_NO_RECALL );
+            if( NT_SUCCESS(Status) ) {
                 break;
-            }
-            else
-            {
+            } else {
 
                 // We might be able to try again without requesting write access
-                if ((SourceFileAccess & FILE_WRITE_DATA) && (dwFlags & PRIVMOVE_FILEID_IGNORE_ID_ERRORS))
-                {
+                if( (SourceFileAccess & FILE_WRITE_DATA) &&
+                    (dwFlags & PRIVMOVE_FILEID_IGNORE_ID_ERRORS) ) {
 
                     // Try again without write access
                     SourceFileAccess &= ~FILE_WRITE_DATA;
 
-                    if (NT_SUCCESS(StatusIgnored))
-                    {
+                    if( NT_SUCCESS(StatusIgnored) ) {
                         StatusIgnored = Status;
                     }
                     Status = STATUS_SUCCESS;
-                }
-                else
-                {
+                } else {
                     // Nothing we can do.
                     break;
                 }
             }
         }
 
-        if (!NT_SUCCESS(Status))
-        {
+        if( !NT_SUCCESS(Status) ) {
             leave;
         }
 
         // Open the destination file
 
         DestFileAccess = FILE_WRITE_ATTRIBUTES;
-        if (SourceFileAccess & FILE_WRITE_DATA)
+        if( SourceFileAccess & FILE_WRITE_DATA )
             DestFileAccess |= FILE_WRITE_DATA;
 
-        while (TRUE)
-        {
+        while( TRUE ) {
 
-            Status = BasepOpenFileForMove(lpNewFileName, &DestFileName, &DestFileNameFreeBuffer, &DestFile, &DestObja,
-                                          (SourceFileAccess & FILE_WRITE_DATA) ? FILE_WRITE_ATTRIBUTES | FILE_WRITE_DATA
-                                                                               : FILE_WRITE_ATTRIBUTES,
-                                          FILE_SHARE_DELETE | FILE_SHARE_WRITE | FILE_SHARE_READ, FILE_OPEN_NO_RECALL);
+            Status = BasepOpenFileForMove( lpNewFileName,
+                                           &DestFileName,
+                                           &DestFileNameFreeBuffer,
+                                           &DestFile,
+                                           &DestObja,
+                                           (SourceFileAccess & FILE_WRITE_DATA)
+                                                ? FILE_WRITE_ATTRIBUTES | FILE_WRITE_DATA
+                                                : FILE_WRITE_ATTRIBUTES,
+                                           FILE_SHARE_DELETE | FILE_SHARE_WRITE | FILE_SHARE_READ,
+                                           FILE_OPEN_NO_RECALL );
 
-            if (NT_SUCCESS(Status))
-            {
+            if( NT_SUCCESS(Status) ) {
                 break;
-            }
-            else
-            {
+            } else {
 
                 // We might be able to try again without requesting write access
-                if ((DestFileAccess & FILE_WRITE_DATA) && (dwFlags & PRIVMOVE_FILEID_IGNORE_ID_ERRORS))
-                {
+                if( (DestFileAccess & FILE_WRITE_DATA) &&
+                    (dwFlags & PRIVMOVE_FILEID_IGNORE_ID_ERRORS) ) {
 
                     // Try again
                     DestFileAccess &= ~FILE_WRITE_DATA;
 
-                    if (NT_SUCCESS(StatusIgnored))
-                    {
+                    if( NT_SUCCESS(StatusIgnored) ) {
                         StatusIgnored = Status;
                     }
                     Status = STATUS_SUCCESS;
-                }
-                else
-                {
+
+                } else {
                     // Nothing we can do.
                     break;
                 }
             }
         }
 
-        if (!NT_SUCCESS(Status))
-        {
+        if( !NT_SUCCESS(Status) ) {
             leave;
         }
 
         // Copy the create date to the dest file
 
-        Status = NtQueryInformationFile(SourceFile, &IoStatus, &SourceBasicInfo, sizeof(SourceBasicInfo),
-                                        FileBasicInformation);
-        if (NT_SUCCESS(Status))
-        {
+        Status = NtQueryInformationFile( SourceFile,
+                                         &IoStatus,
+                                         &SourceBasicInfo,
+                                         sizeof(SourceBasicInfo),
+                                         FileBasicInformation );
+        if( NT_SUCCESS(Status) ) {
 
-            RtlZeroMemory(&DestBasicInfo, sizeof(DestBasicInfo));
+            RtlZeroMemory( &DestBasicInfo, sizeof(DestBasicInfo) );
             DestBasicInfo.CreationTime = SourceBasicInfo.CreationTime;
 
-            Status =
-                NtSetInformationFile(DestFile, &IoStatus, &DestBasicInfo, sizeof(DestBasicInfo), FileBasicInformation);
+            Status = NtSetInformationFile( DestFile,
+                                           &IoStatus,
+                                           &DestBasicInfo,
+                                           sizeof(DestBasicInfo),
+                                           FileBasicInformation );
         }
 
         // If we had an error and can't ignore it, abort.
-        if (!NT_SUCCESS(Status))
-        {
+        if( !NT_SUCCESS(Status) ) {
 
-            if (dwFlags & PRIVMOVE_FILEID_IGNORE_ID_ERRORS)
-            {
-                if (NT_SUCCESS(StatusIgnored))
-                {
+            if( dwFlags & PRIVMOVE_FILEID_IGNORE_ID_ERRORS ) {
+                if( NT_SUCCESS(StatusIgnored) ) {
                     StatusIgnored = Status;
                 }
                 Status = STATUS_SUCCESS;
             }
-            else
-            {
+            else {
                 leave;
             }
         }
@@ -1988,84 +2276,96 @@ Return Value:
         // Transfer the tracking information to the dest file, but only if we
         // were able to get write access to both files.
 
-        if ((DestFileAccess & FILE_WRITE_DATA) && (SourceFileAccess & FILE_WRITE_DATA))
-        {
+        if( (DestFileAccess & FILE_WRITE_DATA) &&
+            (SourceFileAccess & FILE_WRITE_DATA) ) {
 
-            Status = BasepNotifyTrackingService(&SourceFile, &SourceObja, DestFile, &DestFileName);
-            if (!NT_SUCCESS(Status))
-            {
-                if (dwFlags & PRIVMOVE_FILEID_IGNORE_ID_ERRORS)
-                {
-                    if (NT_SUCCESS(StatusIgnored))
-                    {
+            Status = BasepNotifyTrackingService( &SourceFile,
+                                                 &SourceObja,
+                                                 DestFile,
+                                                 &DestFileName );
+            if( !NT_SUCCESS(Status) ) {
+                if( dwFlags & PRIVMOVE_FILEID_IGNORE_ID_ERRORS ) {
+                    if( NT_SUCCESS(StatusIgnored) ) {
                         StatusIgnored = Status;
                     }
                     Status = STATUS_SUCCESS;
                 }
-                else
-                {
+                else {
                     leave;
                 }
             }
         }
+
     }
     finally
     {
-        if (SourceFileNameFreeBuffer != NULL)
-            RtlFreeHeap(RtlProcessHeap(), 0, SourceFileNameFreeBuffer);
+        if( SourceFileNameFreeBuffer != NULL )
+            RtlFreeHeap( RtlProcessHeap(), 0, SourceFileNameFreeBuffer );
 
-        if (DestFileNameFreeBuffer != NULL)
-            RtlFreeHeap(RtlProcessHeap(), 0, DestFileNameFreeBuffer);
+        if( DestFileNameFreeBuffer != NULL )
+            RtlFreeHeap( RtlProcessHeap(), 0, DestFileNameFreeBuffer );
+
     }
 
     // If requested, delete the source file.  DispositionInformation.DeleteFile
     // has already been initialized to TRUE.
 
-    if (NT_SUCCESS(Status) && (dwFlags & PRIVMOVE_FILEID_DELETE_OLD_FILE))
-    {
+    if( NT_SUCCESS(Status) && (dwFlags & PRIVMOVE_FILEID_DELETE_OLD_FILE) ) {
 
-        Status = NtSetInformationFile(SourceFile, &IoStatus, &DispositionInformation, sizeof(DispositionInformation),
-                                      FileDispositionInformation);
+        Status = NtSetInformationFile(
+            SourceFile,
+            &IoStatus,
+            &DispositionInformation,
+            sizeof(DispositionInformation),
+            FileDispositionInformation
+            );
     }
 
-    if (DestFile != INVALID_HANDLE_VALUE)
-        NtClose(DestFile);
+    if( DestFile != INVALID_HANDLE_VALUE )
+        NtClose( DestFile );
 
-    if (SourceFile != INVALID_HANDLE_VALUE)
-        NtClose(SourceFile);
+    if( SourceFile != INVALID_HANDLE_VALUE )
+        NtClose( SourceFile );
 
-    if (!NT_SUCCESS(Status))
-    {
+    if( !NT_SUCCESS(Status) ) {
         BaseSetLastNTError(Status);
     }
-    else if (!NT_SUCCESS(StatusIgnored))
-    {
+    else if( !NT_SUCCESS(StatusIgnored) ) {
         BaseSetLastNTError(StatusIgnored);
     }
 
-    return (NT_SUCCESS(Status));
+    return( NT_SUCCESS(Status) );
+
 }
+
+
+
 
 
 DWORD
 WINAPI
-GetCompressedFileSizeA(LPCSTR lpFileName, LPDWORD lpFileSizeHigh)
+GetCompressedFileSizeA(
+    LPCSTR lpFileName,
+    LPDWORD lpFileSizeHigh
+    )
 {
 
     PUNICODE_STRING Unicode;
 
-    Unicode = Basep8BitStringToStaticUnicodeString(lpFileName);
-    if (Unicode == NULL)
-    {
+    Unicode = Basep8BitStringToStaticUnicodeString( lpFileName );
+    if (Unicode == NULL) {
         return (DWORD)-1;
     }
 
-    return (GetCompressedFileSizeW((LPCWSTR)Unicode->Buffer, lpFileSizeHigh));
+    return ( GetCompressedFileSizeW((LPCWSTR)Unicode->Buffer,lpFileSizeHigh) );
 }
 
 DWORD
 WINAPI
-GetCompressedFileSizeW(LPCWSTR lpFileName, LPDWORD lpFileSizeHigh)
+GetCompressedFileSizeW(
+    LPCWSTR lpFileName,
+    LPDWORD lpFileSizeHigh
+    )
 {
     NTSTATUS Status;
     OBJECT_ATTRIBUTES Obja;
@@ -2078,63 +2378,78 @@ GetCompressedFileSizeW(LPCWSTR lpFileName, LPDWORD lpFileSizeHigh)
     PVOID FreeBuffer;
     DWORD FileSizeLow;
 
-    TranslationStatus = RtlDosPathNameToNtPathName_U(lpFileName, &FileName, NULL, &RelativeName);
+    TranslationStatus = RtlDosPathNameToNtPathName_U(
+                            lpFileName,
+                            &FileName,
+                            NULL,
+                            &RelativeName
+                            );
 
-    if (!TranslationStatus)
-    {
+    if ( !TranslationStatus ) {
         SetLastError(ERROR_PATH_NOT_FOUND);
         return (DWORD)-1;
-    }
+        }
 
     FreeBuffer = FileName.Buffer;
 
-    if (RelativeName.RelativeName.Length)
-    {
+    if ( RelativeName.RelativeName.Length ) {
         FileName = *(PUNICODE_STRING)&RelativeName.RelativeName;
-    }
-    else
-    {
+        }
+    else {
         RelativeName.ContainingDirectory = NULL;
-    }
+        }
 
-    InitializeObjectAttributes(&Obja, &FileName, OBJ_CASE_INSENSITIVE, RelativeName.ContainingDirectory, NULL);
+    InitializeObjectAttributes(
+        &Obja,
+        &FileName,
+        OBJ_CASE_INSENSITIVE,
+        RelativeName.ContainingDirectory,
+        NULL
+        );
 
     //
     // Open the file
     //
 
-    Status = NtOpenFile(&Handle, FILE_READ_ATTRIBUTES, &Obja, &IoStatusBlock,
-                        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_OPEN_FOR_BACKUP_INTENT);
+    Status = NtOpenFile(
+                &Handle,
+                FILE_READ_ATTRIBUTES,
+                &Obja,
+                &IoStatusBlock,
+                FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                FILE_OPEN_FOR_BACKUP_INTENT
+                );
     RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
-    if (!NT_SUCCESS(Status))
-    {
+    if ( !NT_SUCCESS(Status) ) {
         BaseSetLastNTError(Status);
         return (DWORD)-1;
-    }
+        }
 
     //
     // Get the compressed file size.
     //
 
-    Status = NtQueryInformationFile(Handle, &IoStatusBlock, &CompressionInfo, sizeof(CompressionInfo),
-                                    FileCompressionInformation);
+    Status = NtQueryInformationFile(
+                Handle,
+                &IoStatusBlock,
+                &CompressionInfo,
+                sizeof(CompressionInfo),
+                FileCompressionInformation
+                );
 
-    if (!NT_SUCCESS(Status))
-    {
-        FileSizeLow = GetFileSize(Handle, lpFileSizeHigh);
+    if ( !NT_SUCCESS(Status) ) {
+        FileSizeLow = GetFileSize(Handle,lpFileSizeHigh);
         NtClose(Handle);
         return FileSizeLow;
-    }
+        }
 
 
     NtClose(Handle);
-    if (ARGUMENT_PRESENT(lpFileSizeHigh))
-    {
+    if ( ARGUMENT_PRESENT(lpFileSizeHigh) ) {
         *lpFileSizeHigh = (DWORD)CompressionInfo.CompressedFileSize.HighPart;
-    }
-    if (CompressionInfo.CompressedFileSize.LowPart == -1)
-    {
+        }
+    if (CompressionInfo.CompressedFileSize.LowPart == -1 ) {
         SetLastError(0);
-    }
+        }
     return CompressionInfo.CompressedFileSize.LowPart;
 }

@@ -10,28 +10,28 @@
 #include <wchar.h>
 //
 // Define these to match your machine.  If these are not set properly, its
-// very likely the tests will pass when they didn't deserve to.
+// very likely the tests will pass when they didn't deserve to. 
 //
-// List of all logical drives
+                                      // List of all logical drives
 
 #define LOGICAL_DRIVES "a:\\\0c:\\\0"
 #define LOGICAL_DRIVES_W L"a:\\\0c:\\\0"
 #define LEN_LOGICAL_DRIVES 8
-#define SYSTEM_DIR "c:\\winnt\\system32"    // Where is system dir
-#define SYSTEM_DIR_W L"c:\\winnt\\system32" // Where is system dir
-#define WINDOWS_DIR "c:\\winnt"             // Where is windows dir
+#define SYSTEM_DIR  "c:\\winnt\\system32"  // Where is system dir
+#define SYSTEM_DIR_W  L"c:\\winnt\\system32"  // Where is system dir
+#define WINDOWS_DIR "c:\\winnt"          // Where is windows dir
 #define WINDOWS_DIR_W L"c:\\winnt"          // Where is windows dir
-#define TEMP_DIRA "c:\\tmp"                 // For GetTempPath, env var tmp or temp
-#define TEMP_DIR_WA L"c:\\tmp"              // For GetTempPath, env var tmp or temp
-#define TEMP_DIRB "c:\\tmp\\"               // For GetTempPath, env var tmp or temp
-#define TEMP_DIR_WB L"c:\\tmp\\"            // For GetTempPath, env var tmp or temp
-#define TEMP_DIRC "c:\\"                    // For GetTempPath, env var tmp or temp
-#define TEMP_DIR_WC L"c:\\"                 // For GetTempPath, env var tmp or temp
-#define VOLUME_NAME "MARKLTST433"           // Name of volume where c: partition is
+#define TEMP_DIRA   "c:\\tmp"         // For GetTempPath, env var tmp or temp
+#define TEMP_DIR_WA   L"c:\\tmp"         // For GetTempPath, env var tmp or temp
+#define TEMP_DIRB   "c:\\tmp\\"         // For GetTempPath, env var tmp or temp
+#define TEMP_DIR_WB   L"c:\\tmp\\"         // For GetTempPath, env var tmp or temp
+#define TEMP_DIRC   "c:\\"         // For GetTempPath, env var tmp or temp
+#define TEMP_DIR_WC   L"c:\\"         // For GetTempPath, env var tmp or temp
+#define VOLUME_NAME "MARKLTST433"        // Name of volume where c: partition is
 #define VOLUME_NAME_W L"MARKLTST433"        // Name of volume where c: partition is
-#define FILE_SYSTEM_NAME "FAT"              // Name of file system on c: partition
-#define FILE_SYSTEM_NAME_W L"FAT"           // Name of file system on c: partition
-                                            // { FAT, HPFS, NTFS }
+#define FILE_SYSTEM_NAME "FAT"        // Name of file system on c: partition
+#define FILE_SYSTEM_NAME_W L"FAT"        // Name of file system on c: partition
+                                      // { FAT, HPFS, NTFS }
 
 //
 // Global vars, constants and prototypes
@@ -43,8 +43,8 @@
 
 void init_buff();
 void init_buffw();
-void check(DWORD retcode, DWORD size_passed, int expected_ret, BOOL shouldxfer);
-void checkw(DWORD retcode, DWORD size_passed, int expected_ret, BOOL shouldxfer);
+void check(DWORD retcode, DWORD size_passed, int expected_ret,BOOL shouldxfer);
+void checkw(DWORD retcode, DWORD size_passed, int expected_ret,BOOL shouldxfer);
 
 char buff[SIZE_BUFF], *cur_test;
 wchar_t buffw[SIZE_BUFF];
@@ -57,86 +57,87 @@ LPWSTR exp_valw;
 
 void _cdecl main(void)
 {
-    int exp_len;
-    int wexp_len;
+    int   exp_len;
+    int   wexp_len;
     LPSTR lpJunk;
     LPWSTR lpwJunk;
-    BOOL bRet;
+    BOOL  bRet;
 
     //
     // GetSystemDirectory
     //
 
     cur_test = "GetSystemDirectory";
-    exp_len = strlen(SYSTEM_DIR);
+    exp_len  = strlen(SYSTEM_DIR);
     exp_val = SYSTEM_DIR;
     exp_valw = SYSTEM_DIR_W;
 
     printf("\nGetSystemDirectory: Expected string is <%s>\n", SYSTEM_DIR);
 
     init_buff();
-    check(GetSystemDirectory(buff, exp_len - 1), exp_len - 1, exp_len + 1, FALSE);
+    check(GetSystemDirectory(buff, exp_len-1), exp_len-1, exp_len+1,FALSE);
     init_buff();
-    check(GetSystemDirectory(buff, exp_len), exp_len, exp_len + 1, FALSE);
+    check(GetSystemDirectory(buff, exp_len),   exp_len,   exp_len+1,FALSE);
     init_buff();
-    check(GetSystemDirectory(buff, exp_len + 1), exp_len + 1, exp_len, TRUE);
+    check(GetSystemDirectory(buff, exp_len+1), exp_len+1, exp_len,TRUE);
 
     init_buffw();
-    checkw(GetSystemDirectoryW(buffw, exp_len - 1), exp_len - 1, exp_len + 1, FALSE);
+    checkw(GetSystemDirectoryW(buffw, exp_len-1), exp_len-1, exp_len+1,FALSE);
     init_buffw();
-    checkw(GetSystemDirectoryW(buffw, exp_len), exp_len, exp_len + 1, FALSE);
+    checkw(GetSystemDirectoryW(buffw, exp_len),   exp_len,   exp_len+1,FALSE);
     init_buffw();
-    checkw(GetSystemDirectoryW(buffw, exp_len + 1), exp_len + 1, exp_len, TRUE);
+    checkw(GetSystemDirectoryW(buffw, exp_len+1), exp_len+1, exp_len,TRUE);
 
     //
     // GetWindowsDirectory
     //
 
     cur_test = "GetWindowsDirectory";
-    exp_len = strlen(WINDOWS_DIR);
+    exp_len  = strlen(WINDOWS_DIR);
     exp_val = WINDOWS_DIR;
     exp_valw = WINDOWS_DIR_W;
 
     printf("\nGetWindowsDirectory: Expected string is <%s>\n", WINDOWS_DIR);
 
     init_buff();
-    check(GetWindowsDirectory(buff, exp_len - 1), exp_len - 1, exp_len + 1, FALSE);
+    check(GetWindowsDirectory(buff, exp_len-1), exp_len-1, exp_len+1,FALSE);
     init_buff();
-    check(GetWindowsDirectory(buff, exp_len), exp_len, exp_len + 1, FALSE);
+    check(GetWindowsDirectory(buff, exp_len),   exp_len,   exp_len+1,FALSE);
     init_buff();
-    check(GetWindowsDirectory(buff, exp_len + 1), exp_len + 1, exp_len, TRUE);
+    check(GetWindowsDirectory(buff, exp_len+1), exp_len+1, exp_len,TRUE);
 
     init_buffw();
-    checkw(GetWindowsDirectoryW(buffw, exp_len - 1), exp_len - 1, exp_len + 1, FALSE);
+    checkw(GetWindowsDirectoryW(buffw, exp_len-1), exp_len-1, exp_len+1,FALSE);
     init_buffw();
-    checkw(GetWindowsDirectoryW(buffw, exp_len), exp_len, exp_len + 1, FALSE);
+    checkw(GetWindowsDirectoryW(buffw, exp_len),   exp_len,   exp_len+1,FALSE);
     init_buffw();
-    checkw(GetWindowsDirectoryW(buffw, exp_len + 1), exp_len + 1, exp_len, TRUE);
+    checkw(GetWindowsDirectoryW(buffw, exp_len+1), exp_len+1, exp_len,TRUE);
 
     //
-    // GetLogicalDriveStrings
+    // GetLogicalDriveStrings 
     //
 
     cur_test = "GetLogicalDriveStrings";
-    exp_len = LEN_LOGICAL_DRIVES;
+    exp_len  = LEN_LOGICAL_DRIVES;
     exp_val = LOGICAL_DRIVES;
     exp_valw = LOGICAL_DRIVES_W;
 
-    printf("\nGetLogicalDriveStrings: Expected string is <%s>\n", LOGICAL_DRIVES);
+    printf("\nGetLogicalDriveStrings: Expected string is <%s>\n",
+           LOGICAL_DRIVES);
 
     init_buff();
-    check(GetLogicalDriveStrings(exp_len - 1, buff), exp_len - 1, exp_len + 1, FALSE);
+    check(GetLogicalDriveStrings(exp_len-1, buff), exp_len-1, exp_len+1,FALSE);
     init_buff();
-    check(GetLogicalDriveStrings(exp_len, buff), exp_len, exp_len + 1, FALSE);
+    check(GetLogicalDriveStrings(exp_len,   buff), exp_len,   exp_len+1,FALSE);
     init_buff();
-    check(GetLogicalDriveStrings(exp_len + 1, buff), exp_len + 1, exp_len, TRUE);
+    check(GetLogicalDriveStrings(exp_len+1, buff), exp_len+1, exp_len,TRUE);
 
     init_buffw();
-    checkw(GetLogicalDriveStringsW(exp_len - 1, buffw), exp_len - 1, exp_len + 1, FALSE);
+    checkw(GetLogicalDriveStringsW(exp_len-1, buffw), exp_len-1, exp_len+1,FALSE);
     init_buffw();
-    checkw(GetLogicalDriveStringsW(exp_len, buffw), exp_len, exp_len + 1, FALSE);
+    checkw(GetLogicalDriveStringsW(exp_len,   buffw), exp_len,   exp_len+1,FALSE);
     init_buffw();
-    checkw(GetLogicalDriveStringsW(exp_len + 1, buffw), exp_len + 1, exp_len, TRUE);
+    checkw(GetLogicalDriveStringsW(exp_len+1, buffw), exp_len+1, exp_len,TRUE);
 
     //
     // GetVolumeInformation: Be sure that does not stomp on VolumeName buffer,
@@ -145,7 +146,7 @@ void _cdecl main(void)
     //
 
     cur_test = "GetVolumeInformation 1";
-    exp_len = strlen(VOLUME_NAME);
+    exp_len  = strlen(VOLUME_NAME);
     exp_val = VOLUME_NAME;
     exp_valw = VOLUME_NAME_W;
 
@@ -153,43 +154,49 @@ void _cdecl main(void)
 
     init_buff();
     bRet = GetVolumeInformation("c:\\",
-                                buff, // volume name buffer
-                                exp_len - 1, NULL, NULL, NULL, NULL, 0);
+                                buff,      // volume name buffer
+                                exp_len-1,
+                                NULL, NULL, NULL, NULL, 0);
 
-    check(bRet, exp_len - 1, FALSE, FALSE);
-
-    init_buff();
-    bRet = GetVolumeInformation("c:\\",
-                                buff, // volume name buffer
-                                exp_len, NULL, NULL, NULL, NULL, 0);
-
-    check(bRet, exp_len, FALSE, FALSE);
+    check(bRet, exp_len-1, FALSE,FALSE);
 
     init_buff();
     bRet = GetVolumeInformation("c:\\",
-                                buff, // volume name buffer
-                                exp_len + 1, NULL, NULL, NULL, NULL, 0);
-    check(bRet, exp_len + 1, TRUE, TRUE);
+                                buff,      // volume name buffer
+                                exp_len,
+                                NULL, NULL, NULL, NULL, 0);
+
+    check(bRet, exp_len, FALSE,FALSE);
+
+    init_buff();
+    bRet = GetVolumeInformation("c:\\",
+                                buff,      // volume name buffer
+                                exp_len+1,
+                                NULL, NULL, NULL, NULL, 0);
+    check(bRet, exp_len+1, TRUE,TRUE);
 
     init_buffw();
     bRet = GetVolumeInformationW(L"c:\\",
-                                 buffw, // volume name buffer
-                                 exp_len - 1, NULL, NULL, NULL, NULL, 0);
+                                buffw,      // volume name buffer
+                                exp_len-1,
+                                NULL, NULL, NULL, NULL, 0);
 
-    checkw(bRet, exp_len - 1, FALSE, FALSE);
-
-    init_buffw();
-    bRet = GetVolumeInformationW(L"c:\\",
-                                 buffw, // volume name buffer
-                                 exp_len, NULL, NULL, NULL, NULL, 0);
-
-    checkw(bRet, exp_len, FALSE, FALSE);
+    checkw(bRet, exp_len-1, FALSE,FALSE);
 
     init_buffw();
     bRet = GetVolumeInformationW(L"c:\\",
-                                 buffw, // volume name buffer
-                                 exp_len + 1, NULL, NULL, NULL, NULL, 0);
-    checkw(bRet, exp_len + 1, TRUE, TRUE);
+                                buffw,      // volume name buffer
+                                exp_len,
+                                NULL, NULL, NULL, NULL, 0);
+
+    checkw(bRet, exp_len, FALSE,FALSE);
+
+    init_buffw();
+    bRet = GetVolumeInformationW(L"c:\\",
+                                buffw,      // volume name buffer
+                                exp_len+1,
+                                NULL, NULL, NULL, NULL, 0);
+    checkw(bRet, exp_len+1, TRUE,TRUE);
 
     //
     // GetVolumeInformation: Be sure that does not stomp on the File system
@@ -197,53 +204,60 @@ void _cdecl main(void)
     //
 
     cur_test = "GetVolumeInformation 2";
-    exp_len = strlen(FILE_SYSTEM_NAME);
+    exp_len  = strlen(FILE_SYSTEM_NAME);
     exp_val = FILE_SYSTEM_NAME;
     exp_valw = FILE_SYSTEM_NAME_W;
 
-    printf("\nGetVolumeInformation 2: Expected string is <%s>\n", FILE_SYSTEM_NAME);
+    printf("\nGetVolumeInformation 2: Expected string is <%s>\n",
+            FILE_SYSTEM_NAME);
 
     init_buff();
-    bRet = GetVolumeInformation("c:\\", NULL, 0, NULL, NULL, NULL,
-                                buff, // file system name buffer, ex: FAT
-                                exp_len - 1);
+    bRet = GetVolumeInformation("c:\\",
+                                NULL, 0, NULL, NULL, NULL,
+                                buff,      // file system name buffer, ex: FAT
+                                exp_len-1);
 
-    check(bRet, exp_len - 1, FALSE, FALSE);
+    check(bRet, exp_len-1, FALSE,FALSE);
 
     init_buff();
-    bRet = GetVolumeInformation("c:\\", NULL, 0, NULL, NULL, NULL,
-                                buff, // file system name buffer, ex: FAT
+    bRet = GetVolumeInformation("c:\\",
+                                NULL, 0, NULL, NULL, NULL,
+                                buff,      // file system name buffer, ex: FAT
                                 exp_len);
 
-    check(bRet, exp_len, FALSE, FALSE);
+    check(bRet, exp_len, FALSE,FALSE);
 
     init_buff();
-    bRet = GetVolumeInformation("c:\\", NULL, 0, NULL, NULL, NULL,
-                                buff, // file system name buffer, ex: FAT
-                                exp_len + 1);
+    bRet = GetVolumeInformation("c:\\",
+                                NULL, 0, NULL, NULL, NULL,
+                                buff,      // file system name buffer, ex: FAT
+                                exp_len+1);
 
-    check(bRet, exp_len + 1, TRUE, TRUE);
-
-    init_buffw();
-    bRet = GetVolumeInformationW(L"c:\\", NULL, 0, NULL, NULL, NULL,
-                                 buffw, // file system name buffer, ex: FAT
-                                 exp_len - 1);
-
-    checkw(bRet, exp_len - 1, FALSE, FALSE);
+    check(bRet, exp_len+1, TRUE,TRUE);
 
     init_buffw();
-    bRet = GetVolumeInformationW(L"c:\\", NULL, 0, NULL, NULL, NULL,
-                                 buffw, // file system name buffer, ex: FAT
-                                 exp_len);
+    bRet = GetVolumeInformationW(L"c:\\",
+                                NULL, 0, NULL, NULL, NULL,
+                                buffw,      // file system name buffer, ex: FAT
+                                exp_len-1);
 
-    checkw(bRet, exp_len, FALSE, FALSE);
+    checkw(bRet, exp_len-1, FALSE,FALSE);
 
     init_buffw();
-    bRet = GetVolumeInformationW(L"c:\\", NULL, 0, NULL, NULL, NULL,
-                                 buffw, // file system name buffer, ex: FAT
-                                 exp_len + 1);
+    bRet = GetVolumeInformationW(L"c:\\",
+                                NULL, 0, NULL, NULL, NULL,
+                                buffw,      // file system name buffer, ex: FAT
+                                exp_len);
 
-    checkw(bRet, exp_len + 1, TRUE, TRUE);
+    checkw(bRet, exp_len, FALSE,FALSE);
+
+    init_buffw();
+    bRet = GetVolumeInformationW(L"c:\\",
+                                NULL, 0, NULL, NULL, NULL,
+                                buffw,      // file system name buffer, ex: FAT
+                                exp_len+1);
+
+    checkw(bRet, exp_len+1, TRUE,TRUE);
 
     //
     // GetEnvironmentVariable: set variable JUNK=junk and check
@@ -255,25 +269,24 @@ void _cdecl main(void)
 
     printf("\nGetEnvironmentVariable: Expected string is <%s>\n", "junk");
 
-    if (!SetEnvironmentVariable("JUNK", "junk"))
-    {
+    if ( ! SetEnvironmentVariable("JUNK", "junk") ) {
         printf("Error setting environment variable\n");
         exit(1);
     }
 
     init_buff();
-    check(GetEnvironmentVariable("JUNK", buff, 3), 3, 5, FALSE);
+    check(GetEnvironmentVariable("JUNK", buff, 3), 3, 5,FALSE);
     init_buff();
-    check(GetEnvironmentVariable("JUNK", buff, 4), 4, 5, FALSE);
+    check(GetEnvironmentVariable("JUNK", buff, 4), 4, 5,FALSE);
     init_buff();
-    check(GetEnvironmentVariable("JUNK", buff, 5), 5, 4, TRUE);
+    check(GetEnvironmentVariable("JUNK", buff, 5), 5, 4,TRUE);
 
     init_buffw();
-    checkw(GetEnvironmentVariableW(L"JUNK", buffw, 3), 3, 5, FALSE);
+    checkw(GetEnvironmentVariableW(L"JUNK", buffw, 3), 3, 5,FALSE);
     init_buffw();
-    checkw(GetEnvironmentVariableW(L"JUNK", buffw, 4), 4, 5, FALSE);
+    checkw(GetEnvironmentVariableW(L"JUNK", buffw, 4), 4, 5,FALSE);
     init_buffw();
-    checkw(GetEnvironmentVariableW(L"JUNK", buffw, 5), 5, 4, TRUE);
+    checkw(GetEnvironmentVariableW(L"JUNK", buffw, 5), 5, 4,TRUE);
 
 
     //
@@ -287,25 +300,24 @@ void _cdecl main(void)
 
     printf("\nGetCurrentDirectory: Expected string is <%s>\n", "c:\\winnt");
 
-    if (!SetCurrentDirectory("c:\\winnt"))
-    {
+    if ( ! SetCurrentDirectory("c:\\winnt") ) {
         printf("Error setting cur dir\n");
         exit(1);
     }
 
     init_buff();
-    check(GetCurrentDirectory(exp_len - 1, buff), exp_len - 1, exp_len + 1, FALSE);
+    check(GetCurrentDirectory(exp_len-1, buff), exp_len-1,exp_len+1,FALSE);
     init_buff();
-    check(GetCurrentDirectory(exp_len, buff), exp_len, exp_len + 1, FALSE);
+    check(GetCurrentDirectory(exp_len, buff), exp_len, exp_len+1,FALSE);
     init_buff();
-    check(GetCurrentDirectory(exp_len + 1, buff), exp_len + 1, exp_len, TRUE);
+    check(GetCurrentDirectory(exp_len+1, buff), exp_len+1, exp_len,TRUE);
 
     init_buffw();
-    checkw(GetCurrentDirectoryW(exp_len - 1, buffw), exp_len - 1, exp_len + 1, FALSE);
+    checkw(GetCurrentDirectoryW(exp_len-1, buffw), exp_len-1,exp_len+1,FALSE);
     init_buffw();
-    checkw(GetCurrentDirectoryW(exp_len, buffw), exp_len, exp_len + 1, FALSE);
+    checkw(GetCurrentDirectoryW(exp_len, buffw), exp_len, exp_len+1,FALSE);
     init_buffw();
-    checkw(GetCurrentDirectoryW(exp_len + 1, buffw), exp_len + 1, exp_len, TRUE);
+    checkw(GetCurrentDirectoryW(exp_len+1, buffw), exp_len+1, exp_len,TRUE);
 
     cur_test = "GetCurrentDirectory";
     exp_val = "c:\\";
@@ -314,25 +326,24 @@ void _cdecl main(void)
 
     printf("\nGetCurrentDirectory: Expected string is <%s>\n", "c:\\");
 
-    if (!SetCurrentDirectory("c:\\"))
-    {
+    if ( ! SetCurrentDirectory("c:\\") ) {
         printf("Error setting cur dir\n");
         exit(1);
     }
 
     init_buff();
-    check(GetCurrentDirectory(exp_len - 1, buff), exp_len - 1, exp_len + 1, FALSE);
+    check(GetCurrentDirectory(exp_len-1, buff), exp_len-1,exp_len+1,FALSE);
     init_buff();
-    check(GetCurrentDirectory(exp_len, buff), exp_len, exp_len + 1, FALSE);
+    check(GetCurrentDirectory(exp_len, buff), exp_len, exp_len+1,FALSE);
     init_buff();
-    check(GetCurrentDirectory(exp_len + 1, buff), exp_len + 1, exp_len, TRUE);
+    check(GetCurrentDirectory(exp_len+1, buff), exp_len+1, exp_len,TRUE);
 
     init_buffw();
-    checkw(GetCurrentDirectoryW(exp_len - 1, buffw), exp_len - 1, exp_len + 1, FALSE);
+    checkw(GetCurrentDirectoryW(exp_len-1, buffw), exp_len-1,exp_len+1,FALSE);
     init_buffw();
-    checkw(GetCurrentDirectoryW(exp_len, buffw), exp_len, exp_len + 1, FALSE);
+    checkw(GetCurrentDirectoryW(exp_len, buffw), exp_len, exp_len+1,FALSE);
     init_buffw();
-    checkw(GetCurrentDirectoryW(exp_len + 1, buffw), exp_len + 1, exp_len, TRUE);
+    checkw(GetCurrentDirectoryW(exp_len+1, buffw), exp_len+1, exp_len,TRUE);
 
 
     //
@@ -344,47 +355,46 @@ void _cdecl main(void)
     cur_test = "GetFullPathName";
     exp_val = "c:\\junk.txt";
     exp_valw = L"c:\\junk.txt";
-    exp_len = strlen(exp_val);
+    exp_len  = strlen(exp_val);
 
     printf("\nGetFullPathName: Expected string is <%s>\n", exp_val);
 
     init_buff();
-    check(GetFullPathName(exp_val, exp_len - 1, buff, &lpJunk), exp_len - 1, exp_len + 1, FALSE);
+    check(GetFullPathName(exp_val, exp_len-1, buff, &lpJunk), exp_len-1,exp_len+1,FALSE);
     init_buff();
-    check(GetFullPathName(exp_val, exp_len, buff, &lpJunk), exp_len, exp_len + 1, FALSE);
+    check(GetFullPathName(exp_val, exp_len, buff, &lpJunk), exp_len,exp_len+1,FALSE);
     init_buff();
-    check(GetFullPathName(exp_val, exp_len + 1, buff, &lpJunk), exp_len + 1, exp_len, TRUE);
+    check(GetFullPathName(exp_val, exp_len+1, buff, &lpJunk), exp_len+1,exp_len,TRUE);
 
     init_buffw();
-    checkw(GetFullPathNameW(exp_valw, exp_len - 1, buffw, &lpwJunk), exp_len - 1, exp_len + 1, FALSE);
+    checkw(GetFullPathNameW(exp_valw, exp_len-1, buffw, &lpwJunk), exp_len-1,exp_len+1,FALSE);
     init_buffw();
-    checkw(GetFullPathNameW(exp_valw, exp_len, buffw, &lpwJunk), exp_len, exp_len + 1, FALSE);
+    checkw(GetFullPathNameW(exp_valw, exp_len, buffw, &lpwJunk), exp_len,exp_len+1,FALSE);
     init_buffw();
-    checkw(GetFullPathNameW(exp_valw, exp_len + 1, buffw, &lpwJunk), exp_len + 1, exp_len, TRUE);
+    checkw(GetFullPathNameW(exp_valw, exp_len+1, buffw, &lpwJunk), exp_len+1,exp_len,TRUE);
 
     cur_test = "GetFullPathName";
     exp_val = "\\\\.\\lpt1";
     exp_valw = L"\\\\.\\lpt1";
-    exp_len = strlen(exp_val);
+    exp_len  = strlen(exp_val);
 
     printf("\nGetFullPathName: Expected string is <%s>\n", exp_val);
 
     init_buff();
-    check(GetFullPathName("lpt1", exp_len - 1, buff, &lpJunk), exp_len - 1, exp_len + 1, FALSE);
+    check(GetFullPathName("lpt1", exp_len-1, buff, &lpJunk), exp_len-1,exp_len+1,FALSE);
     init_buff();
-    check(GetFullPathName("lpt1", exp_len, buff, &lpJunk), exp_len, exp_len + 1, FALSE);
+    check(GetFullPathName("lpt1", exp_len, buff, &lpJunk), exp_len,exp_len+1,FALSE);
     init_buff();
-    check(GetFullPathName("lpt1", exp_len + 1, buff, &lpJunk), exp_len + 1, exp_len, TRUE);
+    check(GetFullPathName("lpt1", exp_len+1, buff, &lpJunk), exp_len+1,exp_len,TRUE);
 
     init_buffw();
-    checkw(GetFullPathNameW(L"lpt1", exp_len - 1, buffw, &lpwJunk), exp_len - 1, exp_len + 1, FALSE);
+    checkw(GetFullPathNameW(L"lpt1", exp_len-1, buffw, &lpwJunk), exp_len-1,exp_len+1,FALSE);
     init_buffw();
-    checkw(GetFullPathNameW(L"lpt1", exp_len, buffw, &lpwJunk), exp_len, exp_len + 1, FALSE);
+    checkw(GetFullPathNameW(L"lpt1", exp_len, buffw, &lpwJunk), exp_len,exp_len+1,FALSE);
     init_buffw();
-    checkw(GetFullPathNameW(L"lpt1", exp_len + 1, buffw, &lpwJunk), exp_len + 1, exp_len, TRUE);
+    checkw(GetFullPathNameW(L"lpt1", exp_len+1, buffw, &lpwJunk), exp_len+1,exp_len,TRUE);
 
-    if (!SetCurrentDirectory("c:\\winnt\\dump"))
-    {
+    if ( ! SetCurrentDirectory("c:\\winnt\\dump") ) {
         printf("Error setting cur dir\n");
         exit(1);
     }
@@ -392,26 +402,25 @@ void _cdecl main(void)
     cur_test = "GetFullPathName";
     exp_val = "c:\\winnt\\dump";
     exp_valw = L"c:\\winnt\\dump";
-    exp_len = strlen(exp_val);
+    exp_len  = strlen(exp_val);
 
     printf("\nGetFullPathName: Expected string is <%s>\n", exp_val);
 
     init_buff();
-    check(GetFullPathName(".", exp_len - 1, buff, &lpJunk), exp_len - 1, exp_len + 1, FALSE);
+    check(GetFullPathName(".", exp_len-1, buff, &lpJunk), exp_len-1,exp_len+1,FALSE);
     init_buff();
-    check(GetFullPathName(".", exp_len, buff, &lpJunk), exp_len, exp_len + 1, FALSE);
+    check(GetFullPathName(".", exp_len, buff, &lpJunk), exp_len,exp_len+1,FALSE);
     init_buff();
-    check(GetFullPathName(".", exp_len + 1, buff, &lpJunk), exp_len + 1, exp_len, TRUE);
+    check(GetFullPathName(".", exp_len+1, buff, &lpJunk), exp_len+1,exp_len,TRUE);
 
     init_buffw();
-    checkw(GetFullPathNameW(L".", exp_len - 1, buffw, &lpwJunk), exp_len - 1, exp_len + 1, FALSE);
+    checkw(GetFullPathNameW(L".", exp_len-1, buffw, &lpwJunk), exp_len-1,exp_len+1,FALSE);
     init_buffw();
-    checkw(GetFullPathNameW(L".", exp_len, buffw, &lpwJunk), exp_len, exp_len + 1, FALSE);
+    checkw(GetFullPathNameW(L".", exp_len, buffw, &lpwJunk), exp_len,exp_len+1,FALSE);
     init_buffw();
-    checkw(GetFullPathNameW(L".", exp_len + 1, buffw, &lpwJunk), exp_len + 1, exp_len, TRUE);
+    checkw(GetFullPathNameW(L".", exp_len+1, buffw, &lpwJunk), exp_len+1,exp_len,TRUE);
 
-    if (!SetCurrentDirectory("c:\\winnt"))
-    {
+    if ( ! SetCurrentDirectory("c:\\winnt") ) {
         printf("Error setting cur dir\n");
         exit(1);
     }
@@ -419,25 +428,24 @@ void _cdecl main(void)
     cur_test = "GetFullPathName";
     exp_val = "c:\\winnt\\dump";
     exp_valw = L"c:\\winnt\\dump";
-    exp_len = strlen(exp_val);
+    exp_len  = strlen(exp_val);
 
     printf("\nGetFullPathName: Expected string is <%s>\n", exp_val);
 
     init_buff();
-    check(GetFullPathName("c:dump", exp_len - 1, buff, &lpJunk), exp_len - 1, exp_len + 1, FALSE);
+    check(GetFullPathName("c:dump", exp_len-1, buff, &lpJunk), exp_len-1,exp_len+1,FALSE);
     init_buff();
-    check(GetFullPathName("c:dump", exp_len, buff, &lpJunk), exp_len, exp_len + 1, FALSE);
+    check(GetFullPathName("c:dump", exp_len, buff, &lpJunk), exp_len,exp_len+1,FALSE);
     init_buff();
-    check(GetFullPathName("c:dump", exp_len + 1, buff, &lpJunk), exp_len + 1, exp_len, TRUE);
+    check(GetFullPathName("c:dump", exp_len+1, buff, &lpJunk), exp_len+1,exp_len,TRUE);
     init_buffw();
-    checkw(GetFullPathNameW(L"c:dump", exp_len - 1, buffw, &lpwJunk), exp_len - 1, exp_len + 1, FALSE);
+    checkw(GetFullPathNameW(L"c:dump", exp_len-1, buffw, &lpwJunk), exp_len-1,exp_len+1,FALSE);
     init_buffw();
-    checkw(GetFullPathNameW(L"c:dump", exp_len, buffw, &lpwJunk), exp_len, exp_len + 1, FALSE);
+    checkw(GetFullPathNameW(L"c:dump", exp_len, buffw, &lpwJunk), exp_len,exp_len+1,FALSE);
     init_buffw();
-    checkw(GetFullPathNameW(L"c:dump", exp_len + 1, buffw, &lpwJunk), exp_len + 1, exp_len, TRUE);
+    checkw(GetFullPathNameW(L"c:dump", exp_len+1, buffw, &lpwJunk), exp_len+1,exp_len,TRUE);
 
-    if (!SetCurrentDirectory("c:\\"))
-    {
+    if ( ! SetCurrentDirectory("c:\\") ) {
         printf("Error setting cur dir\n");
         exit(1);
     }
@@ -445,23 +453,23 @@ void _cdecl main(void)
     cur_test = "GetFullPathName";
     exp_val = "c:\\";
     exp_valw = L"c:\\";
-    exp_len = strlen(exp_val);
+    exp_len  = strlen(exp_val);
 
     printf("\nGetFullPathName: Expected string is <%s>\n", exp_val);
 
     init_buff();
-    check(GetFullPathName(".", exp_len - 1, buff, &lpJunk), exp_len - 1, exp_len + 1, FALSE);
+    check(GetFullPathName(".", exp_len-1, buff, &lpJunk), exp_len-1,exp_len+1,FALSE);
     init_buff();
-    check(GetFullPathName(".", exp_len, buff, &lpJunk), exp_len, exp_len + 1, FALSE);
+    check(GetFullPathName(".", exp_len, buff, &lpJunk), exp_len,exp_len+1,FALSE);
     init_buff();
-    check(GetFullPathName(".", exp_len + 1, buff, &lpJunk), exp_len + 1, exp_len, TRUE);
+    check(GetFullPathName(".", exp_len+1, buff, &lpJunk), exp_len+1,exp_len,TRUE);
 
     init_buffw();
-    checkw(GetFullPathNameW(L".", exp_len - 1, buffw, &lpwJunk), exp_len - 1, exp_len + 1, FALSE);
+    checkw(GetFullPathNameW(L".", exp_len-1, buffw, &lpwJunk), exp_len-1,exp_len+1,FALSE);
     init_buffw();
-    checkw(GetFullPathNameW(L".", exp_len, buffw, &lpwJunk), exp_len, exp_len + 1, FALSE);
+    checkw(GetFullPathNameW(L".", exp_len, buffw, &lpwJunk), exp_len,exp_len+1,FALSE);
     init_buffw();
-    checkw(GetFullPathNameW(L".", exp_len + 1, buffw, &lpwJunk), exp_len + 1, exp_len, TRUE);
+    checkw(GetFullPathNameW(L".", exp_len+1, buffw, &lpwJunk), exp_len+1,exp_len,TRUE);
 
 
     //
@@ -469,11 +477,10 @@ void _cdecl main(void)
     //
 
     cur_test = "GetTempPath";
-    exp_len = strlen(TEMP_DIRB);
+    exp_len  = strlen(TEMP_DIRB);
     exp_val = TEMP_DIRB;
     exp_valw = TEMP_DIR_WB;
-    if (!SetEnvironmentVariable("TMP", TEMP_DIRA))
-    {
+    if ( ! SetEnvironmentVariable("TMP", TEMP_DIRA)) {
         printf("Error setting tmp environment variable\n");
         exit(1);
     }
@@ -481,25 +488,24 @@ void _cdecl main(void)
     printf("\nGetTempPath: Expected string is <%s>\n", TEMP_DIRB);
 
     init_buff();
-    check(GetTempPath(exp_len - 1, buff), exp_len - 1, exp_len + 1, FALSE);
+    check(GetTempPath(exp_len-1, buff), exp_len-1, exp_len+1,FALSE);
     init_buff();
-    check(GetTempPath(exp_len, buff), exp_len, exp_len + 1, FALSE);
+    check(GetTempPath(exp_len,   buff), exp_len,   exp_len+1,FALSE);
     init_buff();
-    check(GetTempPath(exp_len + 1, buff), exp_len + 1, exp_len, TRUE);
+    check(GetTempPath(exp_len+1, buff), exp_len+1, exp_len,TRUE);
 
     init_buffw();
-    checkw(GetTempPathW(exp_len - 1, buffw), exp_len - 1, exp_len + 1, FALSE);
+    checkw(GetTempPathW(exp_len-1, buffw), exp_len-1, exp_len+1,FALSE);
     init_buffw();
-    checkw(GetTempPathW(exp_len, buffw), exp_len, exp_len + 1, FALSE);
+    checkw(GetTempPathW(exp_len,   buffw), exp_len,   exp_len+1,FALSE);
     init_buffw();
-    checkw(GetTempPathW(exp_len + 1, buffw), exp_len + 1, exp_len, TRUE);
+    checkw(GetTempPathW(exp_len+1, buffw), exp_len+1, exp_len,TRUE);
 
     cur_test = "GetTempPath";
-    exp_len = strlen(TEMP_DIRB);
+    exp_len  = strlen(TEMP_DIRB);
     exp_val = TEMP_DIRB;
     exp_valw = TEMP_DIR_WB;
-    if (!SetEnvironmentVariable("TMP", TEMP_DIRB))
-    {
+    if ( ! SetEnvironmentVariable("TMP", TEMP_DIRB)) {
         printf("Error setting tmp environment variable\n");
         exit(1);
     }
@@ -507,25 +513,24 @@ void _cdecl main(void)
     printf("\nGetTempPath: Expected string is <%s>\n", TEMP_DIRB);
 
     init_buff();
-    check(GetTempPath(exp_len - 1, buff), exp_len - 1, exp_len + 1, FALSE);
+    check(GetTempPath(exp_len-1, buff), exp_len-1, exp_len+1,FALSE);
     init_buff();
-    check(GetTempPath(exp_len, buff), exp_len, exp_len + 1, FALSE);
+    check(GetTempPath(exp_len,   buff), exp_len,   exp_len+1,FALSE);
     init_buff();
-    check(GetTempPath(exp_len + 1, buff), exp_len + 1, exp_len, TRUE);
+    check(GetTempPath(exp_len+1, buff), exp_len+1, exp_len,TRUE);
 
     init_buffw();
-    checkw(GetTempPathW(exp_len - 1, buffw), exp_len - 1, exp_len + 1, FALSE);
+    checkw(GetTempPathW(exp_len-1, buffw), exp_len-1, exp_len+1,FALSE);
     init_buffw();
-    checkw(GetTempPathW(exp_len, buffw), exp_len, exp_len + 1, FALSE);
+    checkw(GetTempPathW(exp_len,   buffw), exp_len,   exp_len+1,FALSE);
     init_buffw();
-    checkw(GetTempPathW(exp_len + 1, buffw), exp_len + 1, exp_len, TRUE);
+    checkw(GetTempPathW(exp_len+1, buffw), exp_len+1, exp_len,TRUE);
 
     cur_test = "GetTempPath";
-    exp_len = strlen(TEMP_DIRC);
+    exp_len  = strlen(TEMP_DIRC);
     exp_val = TEMP_DIRC;
     exp_valw = TEMP_DIR_WC;
-    if (!SetEnvironmentVariable("TMP", TEMP_DIRC))
-    {
+    if ( ! SetEnvironmentVariable("TMP", TEMP_DIRC)) {
         printf("Error setting tmp environment variable\n");
         exit(1);
     }
@@ -533,61 +538,63 @@ void _cdecl main(void)
     printf("\nGetTempPath: Expected string is <%s>\n", TEMP_DIRC);
 
     init_buff();
-    check(GetTempPath(exp_len - 1, buff), exp_len - 1, exp_len + 1, FALSE);
+    check(GetTempPath(exp_len-1, buff), exp_len-1, exp_len+1,FALSE);
     init_buff();
-    check(GetTempPath(exp_len, buff), exp_len, exp_len + 1, FALSE);
+    check(GetTempPath(exp_len,   buff), exp_len,   exp_len+1,FALSE);
     init_buff();
-    check(GetTempPath(exp_len + 1, buff), exp_len + 1, exp_len, TRUE);
+    check(GetTempPath(exp_len+1, buff), exp_len+1, exp_len,TRUE);
 
     init_buffw();
-    checkw(GetTempPathW(exp_len - 1, buffw), exp_len - 1, exp_len + 1, FALSE);
+    checkw(GetTempPathW(exp_len-1, buffw), exp_len-1, exp_len+1,FALSE);
     init_buffw();
-    checkw(GetTempPathW(exp_len, buffw), exp_len, exp_len + 1, FALSE);
+    checkw(GetTempPathW(exp_len,   buffw), exp_len,   exp_len+1,FALSE);
     init_buffw();
-    checkw(GetTempPathW(exp_len + 1, buffw), exp_len + 1, exp_len, TRUE);
+    checkw(GetTempPathW(exp_len+1, buffw), exp_len+1, exp_len,TRUE);
 
 
     cur_test = "SearchPath";
-    exp_len = strlen("c:\\winnt\\system32\\kernel32.dll");
+    exp_len  = strlen("c:\\winnt\\system32\\kernel32.dll");
     exp_val = "c:\\winnt\\system32\\kernel32.dll";
     exp_valw = L"c:\\winnt\\system32\\kernel32.dll";
 
     printf("\nSearchPath: Expected string is <%s>\n", exp_val);
 
     init_buff();
-    check(SearchPath(NULL, "kernel32", ".dll", exp_len - 1, buff, &lpJunk), exp_len - 1, exp_len + 1, FALSE);
+    check(SearchPath(NULL,"kernel32",".dll",exp_len-1,buff,&lpJunk),exp_len-1,exp_len+1,FALSE);
     init_buff();
-    check(SearchPath(NULL, "kernel32", ".dll", exp_len, buff, &lpJunk), exp_len, exp_len + 1, FALSE);
+    check(SearchPath(NULL,"kernel32",".dll",exp_len,buff,&lpJunk),exp_len,exp_len+1,FALSE);
     init_buff();
-    check(SearchPath(NULL, "kernel32", ".dll", exp_len + 1, buff, &lpJunk), exp_len + 1, exp_len, TRUE);
+    check(SearchPath(NULL,"kernel32",".dll",exp_len+1,buff,&lpJunk),exp_len+1,exp_len,TRUE);
 
     init_buffw();
-    checkw(SearchPathW(NULL, L"kernel32", L".dll", exp_len - 1, buffw, &lpwJunk), exp_len - 1, exp_len + 1, FALSE);
+    checkw(SearchPathW(NULL,L"kernel32",L".dll",exp_len-1,buffw,&lpwJunk),exp_len-1,exp_len+1,FALSE);
     init_buffw();
-    checkw(SearchPathW(NULL, L"kernel32", L".dll", exp_len, buffw, &lpwJunk), exp_len, exp_len + 1, FALSE);
+    checkw(SearchPathW(NULL,L"kernel32",L".dll",exp_len,buffw,&lpwJunk),exp_len,exp_len+1,FALSE);
     init_buffw();
-    checkw(SearchPathW(NULL, L"kernel32", L".dll", exp_len + 1, buffw, &lpwJunk), exp_len + 1, exp_len, TRUE);
+    checkw(SearchPathW(NULL,L"kernel32",L".dll",exp_len+1,buffw,&lpwJunk),exp_len+1,exp_len,TRUE);
 
     cur_test = "GetModuleFileName";
-    exp_len = strlen("c:\\winnt\\system32\\bnd.exe");
+    exp_len  = strlen("c:\\winnt\\system32\\bnd.exe");
     exp_val = "c:\\winnt\\system32\\bnd.exe";
     exp_valw = L"c:\\winnt\\system32\\bnd.exe";
 
     printf("\nGetModuleFileName: Expected string is <%s>\n", exp_val);
 
     init_buff();
-    check(GetModuleFileName(NULL, buff, exp_len - 1), exp_len - 1, exp_len + 1, FALSE);
+    check(GetModuleFileName(NULL,buff,exp_len-1),exp_len-1,exp_len+1,FALSE);
     init_buff();
-    check(GetModuleFileName(NULL, buff, exp_len), exp_len, exp_len + 1, FALSE);
+    check(GetModuleFileName(NULL,buff,exp_len),exp_len,exp_len+1,FALSE);
     init_buff();
-    check(GetModuleFileName(NULL, buff, exp_len + 1), exp_len + 1, exp_len, TRUE);
+    check(GetModuleFileName(NULL,buff,exp_len+1),exp_len+1,exp_len,TRUE);
 
     init_buffw();
-    checkw(GetModuleFileNameW(NULL, buffw, exp_len - 1), exp_len - 1, exp_len + 1, FALSE);
+    checkw(GetModuleFileNameW(NULL,buffw,exp_len-1),exp_len-1,exp_len+1,FALSE);
     init_buffw();
-    checkw(GetModuleFileNameW(NULL, buffw, exp_len), exp_len, exp_len + 1, FALSE);
+    checkw(GetModuleFileNameW(NULL,buffw,exp_len),exp_len,exp_len+1,FALSE);
     init_buffw();
-    checkw(GetModuleFileNameW(NULL, buffw, exp_len + 1), exp_len + 1, exp_len, TRUE);
+    checkw(GetModuleFileNameW(NULL,buffw,exp_len+1),exp_len+1,exp_len,TRUE);
+
+
 }
 
 //
@@ -598,21 +605,22 @@ void init_buff()
 {
     int i;
 
-    for (i = 0; i < SIZE_BUFF; i++)
+    for ( i=0; i<SIZE_BUFF; i++ )
         buff[i] = SIGNATURE;
 
-    buff[SIZE_BUFF - 1] = '\0'; // to ensure its null-terminated somewhere
-                                // (for debugging)
+    buff[SIZE_BUFF-1] = '\0'; // to ensure its null-terminated somewhere
+                              // (for debugging)
 }
 
 void init_buffw()
 {
     int i;
 
-    for (i = 0; i < SIZE_BUFF; i++)
+    for ( i=0; i<SIZE_BUFF; i++ )
         buffw[i] = SIGNATURE_W;
 
-    buffw[SIZE_BUFF - 1] = 0;
+    buffw[SIZE_BUFF-1] = 0;
+
 }
 
 //
@@ -627,26 +635,22 @@ void check(DWORD retcode, DWORD size_passed, int expected_ret, BOOL shouldxfer)
 
     int i;
 
-    if (buff[size_passed] != SIGNATURE)
-    {
-        printf("\nFAILURE: %s wrote past end of buffer, when passed %d\n", cur_test, size_passed);
+    if ( buff[size_passed] != SIGNATURE ) {
+        printf("\nFAILURE: %s wrote past end of buffer, when passed %d\n",
+                cur_test, size_passed);
         return;
     }
 
-    if (retcode != (DWORD)expected_ret)
-    {
-        printf("\nFAILURE: %s returned %d, expected %d, when passed %d\n", cur_test, retcode, expected_ret,
-               size_passed);
+    if ( retcode != (DWORD)expected_ret ) {
+        printf("\nFAILURE: %s returned %d, expected %d, when passed %d\n",
+               cur_test, retcode, expected_ret, size_passed);
         return;
     }
 
-    if (shouldxfer)
-    {
-        for (i = 0; i < expected_ret; i++)
-        {
-            if (toupper(buff[i]) != toupper(exp_val[i]))
-            {
-                printf("\nFAILURE: %s mismatch at %d", cur_test, i);
+    if ( shouldxfer ) {
+        for (i=0;i<expected_ret;i++){
+            if ( toupper(buff[i]) != toupper(exp_val[i]) ) {
+                printf("\nFAILURE: %s mismatch at %d",cur_test, i);
                 return;
             }
         }
@@ -655,29 +659,25 @@ void check(DWORD retcode, DWORD size_passed, int expected_ret, BOOL shouldxfer)
 }
 
 
-void checkw(DWORD retcode, DWORD size_passed, int expected_ret, BOOL shouldxfer)
+void checkw(DWORD retcode, DWORD size_passed, int expected_ret,BOOL shouldxfer)
 {
     int i;
-    if (buffw[size_passed] != SIGNATURE_W)
-    {
-        printf("\nFAILURE: %s wrote past end of buffer, when passed %d\n", cur_test, size_passed);
+    if ( buffw[size_passed] != SIGNATURE_W ) {
+        printf("\nFAILURE: %s wrote past end of buffer, when passed %d\n",
+                cur_test, size_passed);
         return;
     }
 
-    if (retcode != (DWORD)expected_ret)
-    {
-        printf("\nFAILURE: %s returned %d, expected %d, when passed %d\n", cur_test, retcode, expected_ret,
-               size_passed);
+    if ( retcode != (DWORD)expected_ret ) {
+        printf("\nFAILURE: %s returned %d, expected %d, when passed %d\n",
+               cur_test, retcode, expected_ret, size_passed);
         return;
     }
 
-    if (shouldxfer)
-    {
-        for (i = 0; i < expected_ret; i++)
-        {
-            if (towupper(buffw[i]) != towupper(exp_valw[i]))
-            {
-                printf("\nFAILURE: %s mismatch at %d", cur_test, i);
+    if (shouldxfer) {
+        for (i=0;i<expected_ret;i++){
+            if ( towupper(buffw[i]) != towupper(exp_valw[i]) ) {
+                printf("\nFAILURE: %s mismatch at %d",cur_test, i);
                 return;
             }
         }

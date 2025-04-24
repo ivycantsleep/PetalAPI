@@ -26,7 +26,9 @@ Revision History:
 #include "ldrp.h"
 
 NTSTATUS
-RtlEnterCriticalSection(IN PRTL_CRITICAL_SECTION CriticalSection)
+RtlEnterCriticalSection(
+    IN PRTL_CRITICAL_SECTION CriticalSection
+    )
 
 /*++
 
@@ -56,8 +58,7 @@ Return Value:
     //
 
     Thread = NtCurrentTeb()->ClientId.UniqueThread;
-    if (Thread == CriticalSection->OwningThread)
-    {
+    if (Thread == CriticalSection->OwningThread) {
 
         ASSERT(CriticalSection->LockCount >= 0);
 
@@ -73,10 +74,8 @@ Return Value:
     //
 
     SpinCount = CriticalSection->SpinCount;
-    if (SpinCount != 0)
-    {
-        do
-        {
+    if (SpinCount != 0) {
+        do {
 
             //
             // If the critical section is free, then attempt to enter the
@@ -84,17 +83,16 @@ Return Value:
             // zero and there are no waiters for the critical section.
             //
 
-            if (CriticalSection->LockCount == -1)
-            {
-                if (InterlockedCompareExchange(&CriticalSection->LockCount, 0, -1) == -1)
-                {
+            if (CriticalSection->LockCount == - 1) {
+                if (InterlockedCompareExchange(&CriticalSection->LockCount,
+                                               0,
+                                               - 1) == - 1) {
                     CriticalSection->OwningThread = Thread;
                     CriticalSection->RecursionCount = 1;
                     return STATUS_SUCCESS;
                 }
-            }
-            else if (CriticalSection->LockCount > 0)
-            {
+
+            } else if (CriticalSection->LockCount > 0) {
                 break;
             }
 
@@ -107,8 +105,7 @@ Return Value:
     // free, then wait for ownership to be granted.
     //
 
-    if (InterlockedIncrement(&CriticalSection->LockCount) != 0)
-    {
+    if (InterlockedIncrement(&CriticalSection->LockCount) != 0) {
         RtlpWaitForCriticalSection(CriticalSection);
     }
 
@@ -123,7 +120,9 @@ Return Value:
 }
 
 NTSTATUS
-RtlLeaveCriticalSection(IN PRTL_CRITICAL_SECTION CriticalSection)
+RtlLeaveCriticalSection(
+    IN PRTL_CRITICAL_SECTION CriticalSection
+    )
 
 /*++
 
@@ -150,11 +149,9 @@ Return Value:
 
     ASSERT(NtCurrentTeb()->ClientId.UniqueThread == CriticalSection->OwningThread);
 
-    if ((CriticalSection->RecursionCount -= 1) == 0)
-    {
+    if ((CriticalSection->RecursionCount -= 1) == 0) {
         CriticalSection->OwningThread = NULL;
-        if (InterlockedDecrement(&CriticalSection->LockCount) >= 0)
-        {
+        if (InterlockedDecrement(&CriticalSection->LockCount) >= 0) {
             RtlpUnWaitCriticalSection(CriticalSection);
         }
     }
@@ -163,7 +160,9 @@ Return Value:
 }
 
 BOOLEAN
-RtlTryEnterCriticalSection(IN PRTL_CRITICAL_SECTION CriticalSection)
+RtlTryEnterCriticalSection (
+    IN PRTL_CRITICAL_SECTION CriticalSection
+    )
 
 /*++
 
@@ -192,8 +191,7 @@ Return Value:
     //
 
     Thread = NtCurrentTeb()->ClientId.UniqueThread;
-    if (Thread == CriticalSection->OwningThread)
-    {
+    if (Thread == CriticalSection->OwningThread) {
 
         ASSERT(CriticalSection->LockCount >= 0);
 
@@ -208,14 +206,14 @@ Return Value:
     // TRUE. Otherwise, return FALSE.
     //
 
-    if (InterlockedCompareExchange(&CriticalSection->LockCount, 0, -1) == -1)
-    {
+    if (InterlockedCompareExchange(&CriticalSection->LockCount,
+                                   0,
+                                   - 1) == - 1) {
         CriticalSection->OwningThread = Thread;
         CriticalSection->RecursionCount = 1;
         return TRUE;
-    }
-    else
-    {
+
+    } else {
         return FALSE;
     }
 }

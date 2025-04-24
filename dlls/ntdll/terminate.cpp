@@ -30,8 +30,7 @@ Revision History:
 void __cdecl terminate(void)
 {
 #if DBG
-    DbgPrint("NTDLL:"__FUNCTION__
-             ":NtTerminateThread(NtCurrentThread(), STATUS_UNHANDLED_EXCEPTION)\n");
+    DbgPrint("NTDLL:"__FUNCTION__":NtTerminateThread(NtCurrentThread(), STATUS_UNHANDLED_EXCEPTION)\n");
     DbgBreakPoint();
 #endif
     NtTerminateThread(NtCurrentThread(), STATUS_UNHANDLED_EXCEPTION);

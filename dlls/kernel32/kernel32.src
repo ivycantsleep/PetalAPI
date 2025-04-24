@@ -3,8 +3,8 @@ LIBRARY KERNEL32
 EXPORTS
     AddAtomA
     AddAtomW
-    AddConsoleAliasA                   PRIVATE
-    AddConsoleAliasW                   PRIVATE
+    AddConsoleAliasA
+    AddConsoleAliasW
     AddLocalAlternateComputerNameA
     AddLocalAlternateComputerNameW
     AddVectoredExceptionHandler = NTDLL.RtlAddVectoredExceptionHandler
@@ -51,6 +51,7 @@ EXPORTS
     ContinueDebugEvent
     ConvertDefaultLocale
     ConvertThreadToFiber
+    ConvertThreadToFiberEx
     ConvertFiberToThread
     CopyFileA
     CopyFileExA
@@ -65,6 +66,7 @@ EXPORTS
     CreateEventW
     CreateFiber
     CreateFiberEx
+    ReOpenFile
     CreateFileA
     CreateFileMappingA
     CreateFileMappingW
@@ -188,6 +190,7 @@ EXPORTS
     FindFirstFileExA
     FindFirstFileExW
     FindFirstFileW
+    FindFirstStreamW
     FindFirstVolumeA
     FindFirstVolumeMountPointA
     FindFirstVolumeMountPointW
@@ -195,6 +198,7 @@ EXPORTS
     FindNextChangeNotification
     FindNextFileA
     FindNextFileW
+    FindNextStreamW
     FindNextVolumeA
     FindNextVolumeMountPointA
     FindNextVolumeMountPointW
@@ -205,6 +209,10 @@ EXPORTS
     FindResourceW
     FindVolumeClose
     FindVolumeMountPointClose
+    FlsAlloc
+    FlsFree
+    FlsGetValue
+    FlsSetValue
     FlushConsoleInputBuffer
     FlushFileBuffers
     FlushInstructionCache
@@ -249,16 +257,16 @@ EXPORTS
     GetComputerNameExA
     GetComputerNameExW
     GetComputerNameW
-    GetConsoleAliasA                   PRIVATE
-    GetConsoleAliasExesA               PRIVATE
-    GetConsoleAliasExesLengthA         PRIVATE
-    GetConsoleAliasExesLengthW         PRIVATE
-    GetConsoleAliasExesW               PRIVATE
-    GetConsoleAliasW                   PRIVATE
-    GetConsoleAliasesA                 PRIVATE
-    GetConsoleAliasesLengthA           PRIVATE
-    GetConsoleAliasesLengthW           PRIVATE
-    GetConsoleAliasesW                 PRIVATE
+    GetConsoleAliasA
+    GetConsoleAliasExesA
+    GetConsoleAliasExesLengthA
+    GetConsoleAliasExesLengthW
+    GetConsoleAliasExesW
+    GetConsoleAliasW
+    GetConsoleAliasesA
+    GetConsoleAliasesLengthA
+    GetConsoleAliasesLengthW
+    GetConsoleAliasesW
     GetConsoleCP
     GetConsoleCharType                 PRIVATE
     GetConsoleCommandHistoryA          PRIVATE
@@ -293,6 +301,10 @@ EXPORTS
     GetCurrentDirectoryW
     GetCurrentProcess
     GetCurrentProcessId
+    GetThreadId
+    GetProcessIdOfThread
+    GetProcessId
+    GetCurrentProcessorNumber=NTDLL.NtGetCurrentProcessorNumber
     GetCurrentThread
     GetCurrentThreadId
     GetDateFormatA
@@ -312,6 +324,8 @@ EXPORTS
     GetEnvironmentStrings
     GetEnvironmentStringsA = GetEnvironmentStrings
     GetEnvironmentStringsW
+    SetEnvironmentStringsA
+    SetEnvironmentStringsW
     GetEnvironmentVariableA
     GetEnvironmentVariableW
     GetExitCodeProcess
@@ -332,6 +346,7 @@ EXPORTS
     GetGeoInfoA
     GetGeoInfoW
     GetHandleInformation
+    GetLargePageMinimum
     GetLargestConsoleWindowSize
     GetLastError = NTDLL.RtlGetLastWin32Error
     GetLinguistLangSize                PRIVATE
@@ -341,6 +356,7 @@ EXPORTS
     GetLogicalDriveStringsA
     GetLogicalDriveStringsW
     GetLogicalDrives
+    GetLogicalProcessorInformation
     GetLongPathNameA
     GetLongPathNameW
     GetMailslotInfo
@@ -356,13 +372,12 @@ EXPORTS
     GetNativeSystemInfo
     GetNextVDMCommand                  PRIVATE
     GetNlsSectionName                  PRIVATE
+    GetNLSVersion
     OpenDataFile                       PRIVATE
     NlsConvertIntegerToString          PRIVATE
-    GetNumaAvailableMemory
     GetNumaAvailableMemoryNode
     GetNumaHighestNodeNumber
     GetNumaNodeProcessorMask
-    GetNumaProcessorMap
     GetNumaProcessorNode
     GetNumberFormatA
     GetNumberFormatW
@@ -387,13 +402,13 @@ EXPORTS
     GetProcessHandleCount
     GetProcessHeap
     GetProcessHeaps
-    GetProcessId
     GetProcessIoCounters
     GetProcessPriorityBoost
     GetProcessShutdownParameters
     GetProcessTimes
     GetProcessVersion
     GetProcessWorkingSetSize
+    GetProcessWorkingSetSizeEx
     GetProfileIntA
     GetProfileIntW
     GetProfileSectionA
@@ -523,6 +538,7 @@ EXPORTS
     InterlockedExchange
     InterlockedExchangeAdd
     InterlockedIncrement
+    InterlockedCompareExchange64=NTDLL.RtlInterlockedCompareExchange64
 
 #endif
 
@@ -541,8 +557,10 @@ EXPORTS
     IsDBCSLeadByte
     IsDBCSLeadByteEx
     IsDebuggerPresent
+    IsNLSDefinedString
     IsProcessorFeaturePresent
     IsSystemResumeAutomatic
+    IsTimeZoneRedirectionEnabled       PRIVATE
     IsValidCodePage
     IsValidLanguageGroup
     IsValidLocale
@@ -590,7 +608,6 @@ EXPORTS
     MultiByteToWideChar
     NlsGetCacheUpdateCount             PRIVATE
     NlsResetProcessLocale              PRIVATE
-    NumaVirtualQueryNode
     OpenConsoleW                       PRIVATE
     OpenEventA
     OpenEventW
@@ -631,7 +648,6 @@ EXPORTS
     QueryMemoryResourceNotification
     QueryPerformanceCounter
     QueryPerformanceFrequency
-    QueryWin31IniFilesMappedToRegistry PRIVATE
     QueueUserAPC
     QueueUserWorkItem
     RaiseException
@@ -768,6 +784,7 @@ EXPORTS
     SetProcessPriorityBoost
     SetProcessShutdownParameters
     SetProcessWorkingSetSize
+    SetProcessWorkingSetSizeEx
     SetStdHandle
     SetSystemPowerState
     SetSystemTime
@@ -794,6 +811,8 @@ EXPORTS
     SetVolumeMountPointW
     SetWaitableTimer
     SetupComm
+    NeedCurrentDirectoryForExePathA
+    NeedCurrentDirectoryForExePathW
     ShowConsoleCursor                  PRIVATE
     SignalObjectAndWait
     SizeofResource
@@ -862,6 +881,7 @@ EXPORTS
     WaitNamedPipeW
     WideCharToMultiByte
     WinExec
+    Wow64EnableWow64FsRedirection
     WriteConsoleA
     WriteConsoleInputA
     WriteConsoleInputVDMA              PRIVATE
@@ -926,9 +946,13 @@ EXPORTS
     RtlCopyMemory = NTDLL.RtlCopyMemory
     RtlCompareMemory = NTDLL.RtlCompareMemory
     RtlUnwindEx = NTDLL.RtlUnwindEx
+    RtlAddFunctionTable = NTDLL.RtlAddFunctionTable
+    RtlDeleteFunctionTable= NTDLL.RtlDeleteFunctionTable
+    RtlInstallFunctionTableCallback = NTDLL.RtlInstallFunctionTableCallback
     __C_specific_handler = NTDLL.__C_specific_handler
     _local_unwind = NTDLL._local_unwind
     __chkstk = NTDLL.__chkstk
+    __misaligned_access = NTDLL.__misaligned_access
 
 #elif defined (IA64)
 
@@ -940,15 +964,18 @@ EXPORTS
     RtlCompareMemory = NTDLL.RtlCompareMemory
     RtlUnwind2 = NTDLL.RtlUnwind2
     RtlUnwindEx = NTDLL.RtlUnwindEx
+    RtlAddFunctionTable = NTDLL.RtlAddFunctionTable
+    RtlDeleteFunctionTable= NTDLL.RtlDeleteFunctionTable
+    RtlInstallFunctionTableCallback = NTDLL.RtlInstallFunctionTableCallback
     __C_specific_handler = NTDLL.__C_specific_handler
     memset = NTDLL.memset  PRIVATE
     memcpy = NTDLL.memcpy  PRIVATE
 
 #elif defined(_X86_)
 
-    SetHandleContext        PRIVATE             ; Exported for Win9x compat
-    GetHandleContext        PRIVATE             ; Exported for Win9x compat
-    CreateSocketHandle      PRIVATE             ; Exported for Win9x compat
+    SetHandleContext        PRIVATE             // Exported for Win9x compat
+    GetHandleContext        PRIVATE             // Exported for Win9x compat
+    CreateSocketHandle      PRIVATE             // Exported for Win9x compat
 
 #endif
 
@@ -1018,10 +1045,92 @@ EXPORTS
 
 // Application Compatibility Cache support
     BaseInitAppcompatCacheSupport    PRIVATE
-    BaseCleanupAppcompatCache        PRIVATE
     BaseCleanupAppcompatCacheSupport PRIVATE
-    BaseInitAppcompatCache           PRIVATE
-    BaseUpdateAppcompatCache         PRIVATE
     BaseCheckAppcompatCache          PRIVATE
     BaseFlushAppcompatCache          PRIVATE
     BaseDumpAppcompatCache           PRIVATE
+    BaseUpdateAppcompatCache         PRIVATE
+
+// Application compatibility infrastructure availability check
+    BaseIsAppcompatInfrastructureDisabled = IsShimInfrastructureDisabled PRIVATE
+
+// Changes for WindowsXP+
+
+	InitializeSRWLock = NTDLL.RtlInitializeSRWLock
+    AcquireSRWLockExclusive = NTDLL.RtlAcquireSRWLockExclusive
+	AcquireSRWLockShared = NTDLL.RtlAcquireSRWLockShared
+	TryAcquireSRWLockExclusive = NTDLL.RtlTryAcquireSRWLockExclusive
+	ReleaseSRWLockExclusive = NTDLL.RtlReleaseSRWLockExclusive
+	ReleaseSRWLockShared = NTDLL.RtlReleaseSRWLockShared
+	
+	InitializeCriticalSectionEx = NTDLL.RtlInitializeCriticalSectionEx
+	
+	CreateMutexExA
+	CreateMutexExW
+	
+	CreateEventExW
+	
+	CreateSemaphoreExW
+	
+	CreateThreadpoolTimer
+//	CloseThreadpoolTimer
+	
+	DecodePointer = NTDLL.RtlDecodePointer
+	EncodePointer = NTDLL.RtlEncodePointer
+	
+	VirtualProtect
+	VirtualProtectEx
+	
+	CompareStringEx
+	CompareStringOrdinal
+
+	FindNLSString
+	FindNLSStringEx
+	FindStringOrdinal
+	
+	LocaleNameToLCID
+	LCIDToLocaleName
+	IsValidLocaleName
+	
+	QueryFullProcessImageNameA
+	QueryFullProcessImageNameW
+	
+	RegisterApplicationRestart
+	ApplicationRecoveryInProgress
+	ApplicationRecoveryFinished
+	RegisterApplicationRecoveryCallback
+	UnregisterApplicationRecoveryCallback
+	
+	CreateThreadpoolTimer
+	SetThreadpoolTimer
+	CloseThreadpoolTimer
+	WaitForThreadpoolTimerCallbacks
+	
+	ResolveDelayLoadedAPI
+	
+	GetFileInformationByHandleEx
+	GetFinalPathNameByHandle = GetFinalPathNameByHandleW
+	GetFinalPathNameByHandleA
+	GetFinalPathNameByHandleW
+	
+	GetTickCount64
+	
+	GetActiveProcessorCount
+	GetLogicalProcessorInformationEx
+	
+	InitializeProcThreadAttributeList
+	UpdateProcThreadAttribute
+	DeleteProcThreadAttributeList
+	
+	CreateSymbolicLinkW
+	
+	GetErrorMode
+	SetErrorMode
+	
+	InitializeConditionVariable = NTDLL.RtlInitializeConditionVariable
+	WakeByAddressAll = NTDLL.RtlWakeByAddressAll
+	WakeAllConditionVariable = NTDLL.RtlWakeAllConditionVariable
+	WakeConditionVariable = NTDLL.RtlWakeConditionVariable
+	
+	RunOnceExecuteOnce=NTDLL.RtlRunOnceExecuteOnce
+	RunOnceComplete=NTDLL.RtlRunOnceComplete

@@ -26,7 +26,7 @@ Revision History:
 #define DbgUiDebugObjectHandle (NtCurrentTeb()->DbgSsReserved[1])
 
 NTSTATUS
-DbgUiConnectToDbg(VOID)
+DbgUiConnectToDbg( VOID )
 
 /*++
 
@@ -55,17 +55,21 @@ Return Value:
     // if app is already connected, don't reconnect
     //
     st = STATUS_SUCCESS;
-    if (!DbgUiDebugObjectHandle)
-    {
+    if ( !DbgUiDebugObjectHandle ) {
 
-        InitializeObjectAttributes(&oa, NULL, 0, NULL, NULL);
-        st = NtCreateDebugObject(&DbgUiDebugObjectHandle, DEBUG_ALL_ACCESS, &oa, DEBUG_KILL_ON_CLOSE);
+        InitializeObjectAttributes (&oa, NULL, 0, NULL, NULL);
+        st = NtCreateDebugObject (&DbgUiDebugObjectHandle,
+                                  DEBUG_ALL_ACCESS,
+                                  &oa,
+                                  DEBUG_KILL_ON_CLOSE);
     }
     return st;
+
 }
 
 HANDLE
-DbgUiGetThreadDebugObject()
+DbgUiGetThreadDebugObject (
+    )
 /*++
 
 Routine Description:
@@ -86,7 +90,10 @@ Return Value:
 }
 
 
-VOID DbgUiSetThreadDebugObject(IN HANDLE DebugObject)
+VOID
+DbgUiSetThreadDebugObject (
+    IN HANDLE DebugObject
+    )
 /*++
 
 Routine Description:
@@ -110,7 +117,10 @@ Return Value:
 
 
 NTSTATUS
-DbgUiWaitStateChange(OUT PDBGUI_WAIT_STATE_CHANGE StateChange, IN PLARGE_INTEGER Timeout OPTIONAL)
+DbgUiWaitStateChange (
+    OUT PDBGUI_WAIT_STATE_CHANGE StateChange,
+    IN PLARGE_INTEGER Timeout OPTIONAL
+    )
 
 /*++
 
@@ -138,13 +148,19 @@ Return Value:
     //
     // Wait for a StateChange to occur
     //
-    st = NtWaitForDebugEvent(DbgUiDebugObjectHandle, TRUE, Timeout, StateChange);
+    st = NtWaitForDebugEvent (DbgUiDebugObjectHandle,
+                              TRUE,
+                              Timeout,
+                              StateChange);
 
     return st;
 }
 
 NTSTATUS
-DbgUiContinue(IN PCLIENT_ID AppClientId, IN NTSTATUS ContinueStatus)
+DbgUiContinue (
+    IN PCLIENT_ID AppClientId,
+    IN NTSTATUS ContinueStatus
+    )
 
 /*++
 
@@ -184,13 +200,17 @@ Return Value:
 {
     NTSTATUS st;
 
-    st = NtDebugContinue(DbgUiDebugObjectHandle, AppClientId, ContinueStatus);
+    st = NtDebugContinue (DbgUiDebugObjectHandle,
+                          AppClientId,
+                          ContinueStatus);
 
     return st;
 }
 
 NTSTATUS
-DbgUiStopDebugging(IN HANDLE Process)
+DbgUiStopDebugging (
+    IN HANDLE Process
+    )
 /*++
 
 Routine Description:
@@ -209,12 +229,16 @@ Return Value:
 {
     NTSTATUS st;
 
-    st = NtRemoveProcessDebug(Process, DbgUiDebugObjectHandle);
+    st = NtRemoveProcessDebug (Process,
+                               DbgUiDebugObjectHandle);
 
     return st;
 }
 
-VOID DbgUiRemoteBreakin(IN PVOID Context)
+VOID
+DbgUiRemoteBreakin (
+    IN PVOID Context
+    )
 /*++
 
 Routine Description:
@@ -239,21 +263,20 @@ Return Value:
     // is call the breakpoint routine in a try/except block so if it goes
     // away now we unwind and just exit this thread.
     //
-    if ((NtCurrentPeb()->BeingDebugged) || (USER_SHARED_DATA->KdDebuggerEnabled & 0x00000002))
-    {
-        try
-        {
+    if ((NtCurrentPeb()->BeingDebugged) ||
+        (USER_SHARED_DATA->KdDebuggerEnabled & 0x00000002)) {
+        try {
             DbgBreakPoint();
-        }
-        except(EXCEPTION_EXECUTE_HANDLER)
-        {
+        } except (EXCEPTION_EXECUTE_HANDLER) {
         }
     }
-    RtlExitUserThread(STATUS_SUCCESS);
+    RtlExitUserThread (STATUS_SUCCESS);
 }
 
 NTSTATUS
-DbgUiIssueRemoteBreakin(IN HANDLE Process)
+DbgUiIssueRemoteBreakin (
+    IN HANDLE Process
+    )
 /*++
 
 Routine Description:
@@ -274,18 +297,27 @@ Return Value:
     HANDLE Thread;
     CLIENT_ID ClientId;
 
-    Status = RtlCreateUserThread(Process, NULL, FALSE, 0, 0, 0, (PUSER_THREAD_START_ROUTINE)DbgUiRemoteBreakin, NULL,
-                                 &Thread, &ClientId);
-    if (NT_SUCCESS(Status))
-    {
-        Status1 = NtClose(Thread);
-        ASSERT(NT_SUCCESS(Status1));
+    Status = RtlCreateUserThread (Process,
+                                  NULL,
+                                  FALSE,
+                                  0,
+                                  0,
+                                  0,
+                                  (PUSER_THREAD_START_ROUTINE) DbgUiRemoteBreakin,
+                                  NULL,
+                                  &Thread,
+                                  &ClientId);
+    if (NT_SUCCESS (Status)) {
+        Status1 = NtClose (Thread);
+        ASSERT (NT_SUCCESS (Status1));
     }
     return Status;
 }
 
 NTSTATUS
-DbgUiDebugActiveProcess(IN HANDLE Process)
+DbgUiDebugActiveProcess (
+     IN HANDLE Process
+     )
 /*++
 
 Routine Description:
@@ -304,13 +336,12 @@ Return Value:
 {
     NTSTATUS Status, Status1;
 
-    Status = NtDebugActiveProcess(Process, DbgUiDebugObjectHandle);
-    if (NT_SUCCESS(Status))
-    {
-        Status = DbgUiIssueRemoteBreakin(Process);
-        if (!NT_SUCCESS(Status))
-        {
-            Status1 = DbgUiStopDebugging(Process);
+    Status = NtDebugActiveProcess (Process,
+                                   DbgUiDebugObjectHandle);
+    if (NT_SUCCESS (Status)) {
+        Status = DbgUiIssueRemoteBreakin (Process);
+        if (!NT_SUCCESS (Status)) {
+            Status1 = DbgUiStopDebugging (Process);
         }
     }
 
@@ -318,7 +349,9 @@ Return Value:
 }
 
 NTSTATUS
-DbgUiConvertStateChangeStructure(IN PDBGUI_WAIT_STATE_CHANGE StateChange, OUT LPDEBUG_EVENT DebugEvent)
+DbgUiConvertStateChangeStructure (
+    IN PDBGUI_WAIT_STATE_CHANGE StateChange,
+    OUT LPDEBUG_EVENT DebugEvent)
 /*++
 
 Routine Description:
@@ -342,50 +375,54 @@ Return Value:
     OBJECT_ATTRIBUTES Obja;
 
 
-    DebugEvent->dwProcessId = HandleToUlong(StateChange->AppClientId.UniqueProcess);
-    DebugEvent->dwThreadId = HandleToUlong(StateChange->AppClientId.UniqueThread);
+    DebugEvent->dwProcessId = HandleToUlong (StateChange->AppClientId.UniqueProcess);
+    DebugEvent->dwThreadId = HandleToUlong (StateChange->AppClientId.UniqueThread);
 
-    switch (StateChange->NewState)
-    {
+    switch (StateChange->NewState) {
 
-    case DbgCreateThreadStateChange:
+    case DbgCreateThreadStateChange :
         DebugEvent->dwDebugEventCode = CREATE_THREAD_DEBUG_EVENT;
-        DebugEvent->u.CreateThread.hThread = StateChange->StateInfo.CreateThread.HandleToThread;
+        DebugEvent->u.CreateThread.hThread =
+            StateChange->StateInfo.CreateThread.HandleToThread;
         DebugEvent->u.CreateThread.lpStartAddress =
             (LPTHREAD_START_ROUTINE)StateChange->StateInfo.CreateThread.NewThread.StartAddress;
-        Status = NtQueryInformationThread(StateChange->StateInfo.CreateThread.HandleToThread, ThreadBasicInformation,
-                                          &ThreadBasicInfo, sizeof(ThreadBasicInfo), NULL);
-        if (!NT_SUCCESS(Status))
-        {
+        Status = NtQueryInformationThread (StateChange->StateInfo.CreateThread.HandleToThread,
+                                           ThreadBasicInformation,
+                                           &ThreadBasicInfo,
+                                           sizeof (ThreadBasicInfo),
+                                           NULL);
+        if (!NT_SUCCESS (Status)) {
             DebugEvent->u.CreateThread.lpThreadLocalBase = NULL;
-        }
-        else
-        {
+        } else {
             DebugEvent->u.CreateThread.lpThreadLocalBase = ThreadBasicInfo.TebBaseAddress;
         }
 
         break;
 
-    case DbgCreateProcessStateChange:
+    case DbgCreateProcessStateChange :
         DebugEvent->dwDebugEventCode = CREATE_PROCESS_DEBUG_EVENT;
-        DebugEvent->u.CreateProcessInfo.hProcess = StateChange->StateInfo.CreateProcessInfo.HandleToProcess;
-        DebugEvent->u.CreateProcessInfo.hThread = StateChange->StateInfo.CreateProcessInfo.HandleToThread;
-        DebugEvent->u.CreateProcessInfo.hFile = StateChange->StateInfo.CreateProcessInfo.NewProcess.FileHandle;
-        DebugEvent->u.CreateProcessInfo.lpBaseOfImage = StateChange->StateInfo.CreateProcessInfo.NewProcess.BaseOfImage;
+        DebugEvent->u.CreateProcessInfo.hProcess =
+            StateChange->StateInfo.CreateProcessInfo.HandleToProcess;
+        DebugEvent->u.CreateProcessInfo.hThread =
+            StateChange->StateInfo.CreateProcessInfo.HandleToThread;
+        DebugEvent->u.CreateProcessInfo.hFile =
+            StateChange->StateInfo.CreateProcessInfo.NewProcess.FileHandle;
+        DebugEvent->u.CreateProcessInfo.lpBaseOfImage =
+            StateChange->StateInfo.CreateProcessInfo.NewProcess.BaseOfImage;
         DebugEvent->u.CreateProcessInfo.dwDebugInfoFileOffset =
             StateChange->StateInfo.CreateProcessInfo.NewProcess.DebugInfoFileOffset;
         DebugEvent->u.CreateProcessInfo.nDebugInfoSize =
             StateChange->StateInfo.CreateProcessInfo.NewProcess.DebugInfoSize;
         DebugEvent->u.CreateProcessInfo.lpStartAddress =
             (LPTHREAD_START_ROUTINE)StateChange->StateInfo.CreateProcessInfo.NewProcess.InitialThread.StartAddress;
-        Status = NtQueryInformationThread(StateChange->StateInfo.CreateProcessInfo.HandleToThread,
-                                          ThreadBasicInformation, &ThreadBasicInfo, sizeof(ThreadBasicInfo), NULL);
-        if (!NT_SUCCESS(Status))
-        {
+        Status = NtQueryInformationThread (StateChange->StateInfo.CreateProcessInfo.HandleToThread,
+                                           ThreadBasicInformation,
+                                           &ThreadBasicInfo,
+                                           sizeof (ThreadBasicInfo),
+                                           NULL);
+        if (!NT_SUCCESS (Status)) {
             DebugEvent->u.CreateProcessInfo.lpThreadLocalBase = NULL;
-        }
-        else
-        {
+        } else {
             DebugEvent->u.CreateProcessInfo.lpThreadLocalBase = ThreadBasicInfo.TebBaseAddress;
         }
         DebugEvent->u.CreateProcessInfo.lpImageName = NULL;
@@ -394,24 +431,23 @@ Return Value:
 
         break;
 
-    case DbgExitThreadStateChange:
+    case DbgExitThreadStateChange :
 
         DebugEvent->dwDebugEventCode = EXIT_THREAD_DEBUG_EVENT;
         DebugEvent->u.ExitThread.dwExitCode = (DWORD)StateChange->StateInfo.ExitThread.ExitStatus;
         break;
 
-    case DbgExitProcessStateChange:
+    case DbgExitProcessStateChange :
 
         DebugEvent->dwDebugEventCode = EXIT_PROCESS_DEBUG_EVENT;
         DebugEvent->u.ExitProcess.dwExitCode = (DWORD)StateChange->StateInfo.ExitProcess.ExitStatus;
         break;
 
-    case DbgExceptionStateChange:
-    case DbgBreakpointStateChange:
-    case DbgSingleStepStateChange:
+    case DbgExceptionStateChange :
+    case DbgBreakpointStateChange :
+    case DbgSingleStepStateChange :
 
-        if (StateChange->StateInfo.Exception.ExceptionRecord.ExceptionCode == DBG_PRINTEXCEPTION_C)
-        {
+        if (StateChange->StateInfo.Exception.ExceptionRecord.ExceptionCode == DBG_PRINTEXCEPTION_C) {
             DebugEvent->dwDebugEventCode = OUTPUT_DEBUG_STRING_EVENT;
 
             DebugEvent->u.DebugString.lpDebugStringData =
@@ -419,48 +455,52 @@ Return Value:
             DebugEvent->u.DebugString.nDebugStringLength =
                 (WORD)StateChange->StateInfo.Exception.ExceptionRecord.ExceptionInformation[0];
             DebugEvent->u.DebugString.fUnicode = (WORD)0;
-        }
-        else if (StateChange->StateInfo.Exception.ExceptionRecord.ExceptionCode == DBG_RIPEXCEPTION)
-        {
+        } else if (StateChange->StateInfo.Exception.ExceptionRecord.ExceptionCode == DBG_RIPEXCEPTION) {
             DebugEvent->dwDebugEventCode = RIP_EVENT;
 
             DebugEvent->u.RipInfo.dwType =
                 (DWORD)StateChange->StateInfo.Exception.ExceptionRecord.ExceptionInformation[1];
             DebugEvent->u.RipInfo.dwError =
                 (DWORD)StateChange->StateInfo.Exception.ExceptionRecord.ExceptionInformation[0];
-        }
-        else
-        {
+        } else {
             DebugEvent->dwDebugEventCode = EXCEPTION_DEBUG_EVENT;
-            DebugEvent->u.Exception.ExceptionRecord = StateChange->StateInfo.Exception.ExceptionRecord;
-            DebugEvent->u.Exception.dwFirstChance = StateChange->StateInfo.Exception.FirstChance;
+            DebugEvent->u.Exception.ExceptionRecord =
+                StateChange->StateInfo.Exception.ExceptionRecord;
+            DebugEvent->u.Exception.dwFirstChance =
+                StateChange->StateInfo.Exception.FirstChance;
         }
         break;
 
-    case DbgLoadDllStateChange:
+    case DbgLoadDllStateChange :
         DebugEvent->dwDebugEventCode = LOAD_DLL_DEBUG_EVENT;
-        DebugEvent->u.LoadDll.lpBaseOfDll = StateChange->StateInfo.LoadDll.BaseOfDll;
-        DebugEvent->u.LoadDll.hFile = StateChange->StateInfo.LoadDll.FileHandle;
-        DebugEvent->u.LoadDll.dwDebugInfoFileOffset = StateChange->StateInfo.LoadDll.DebugInfoFileOffset;
-        DebugEvent->u.LoadDll.nDebugInfoSize = StateChange->StateInfo.LoadDll.DebugInfoSize;
+        DebugEvent->u.LoadDll.lpBaseOfDll =
+            StateChange->StateInfo.LoadDll.BaseOfDll;
+        DebugEvent->u.LoadDll.hFile =
+            StateChange->StateInfo.LoadDll.FileHandle;
+        DebugEvent->u.LoadDll.dwDebugInfoFileOffset =
+            StateChange->StateInfo.LoadDll.DebugInfoFileOffset;
+        DebugEvent->u.LoadDll.nDebugInfoSize =
+            StateChange->StateInfo.LoadDll.DebugInfoSize;
         //
         // pick up the image name
         //
 
         InitializeObjectAttributes(&Obja, NULL, 0, NULL, NULL);
-        Status = NtOpenThread(&hThread, THREAD_QUERY_INFORMATION, &Obja, &StateChange->AppClientId);
-        if (NT_SUCCESS(Status))
-        {
-            Status = NtQueryInformationThread(hThread, ThreadBasicInformation, &ThreadBasicInfo,
-                                              sizeof(ThreadBasicInfo), NULL);
-            NtClose(hThread);
+        Status = NtOpenThread (&hThread,
+                               THREAD_QUERY_INFORMATION,
+                               &Obja,
+                               &StateChange->AppClientId);
+        if (NT_SUCCESS (Status)) {
+            Status = NtQueryInformationThread (hThread,
+                                               ThreadBasicInformation,
+                                               &ThreadBasicInfo,
+                                               sizeof (ThreadBasicInfo),
+                                               NULL);
+            NtClose (hThread);
         }
-        if (NT_SUCCESS(Status))
-        {
+        if (NT_SUCCESS (Status)) {
             DebugEvent->u.LoadDll.lpImageName = &ThreadBasicInfo.TebBaseAddress->NtTib.ArbitraryUserPointer;
-        }
-        else
-        {
+        } else {
             DebugEvent->u.LoadDll.lpImageName = NULL;
         }
         DebugEvent->u.LoadDll.fUnicode = 1;
@@ -468,9 +508,10 @@ Return Value:
 
         break;
 
-    case DbgUnloadDllStateChange:
+    case DbgUnloadDllStateChange :
         DebugEvent->dwDebugEventCode = UNLOAD_DLL_DEBUG_EVENT;
-        DebugEvent->u.UnloadDll.lpBaseOfDll = StateChange->StateInfo.UnloadDll.BaseAddress;
+        DebugEvent->u.UnloadDll.lpBaseOfDll =
+            StateChange->StateInfo.UnloadDll.BaseAddress;
         break;
 
     default:

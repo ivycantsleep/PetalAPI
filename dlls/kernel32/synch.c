@@ -25,7 +25,10 @@ Revision History:
 // Critical Section Services
 //
 
-VOID InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
+VOID
+InitializeCriticalSection(
+    LPCRITICAL_SECTION lpCriticalSection
+    )
 
 /*++
 
@@ -57,13 +60,16 @@ Return Value:
     NTSTATUS Status;
 
     Status = RtlInitializeCriticalSection(lpCriticalSection);
-    if (!NT_SUCCESS(Status))
-    {
+    if ( !NT_SUCCESS(Status) ){
         RtlRaiseStatus(Status);
-    }
+        }
 }
 
-BOOL InitializeCriticalSectionAndSpinCount(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount)
+BOOL
+InitializeCriticalSectionAndSpinCount(
+    LPCRITICAL_SECTION lpCriticalSection,
+    DWORD dwSpinCount
+    )
 
 /*++
 
@@ -96,22 +102,27 @@ Return Value:
     BOOL rv;
 
     rv = TRUE;
-    Status = RtlInitializeCriticalSectionAndSpinCount(lpCriticalSection, dwSpinCount);
-    if (!NT_SUCCESS(Status))
-    {
+    Status = RtlInitializeCriticalSectionAndSpinCount(lpCriticalSection,dwSpinCount);
+    if ( !NT_SUCCESS(Status) ){
         BaseSetLastNTError(Status);
         rv = FALSE;
-    }
+        }
     return rv;
 }
 
 
+
 //
 // Event Services
 //
 HANDLE
 APIENTRY
-CreateEventA(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCSTR lpName)
+CreateEventA(
+    LPSECURITY_ATTRIBUTES lpEventAttributes,
+    BOOL bManualReset,
+    BOOL bInitialState,
+    LPCSTR lpName
+    )
 
 /*++
 
@@ -129,33 +140,39 @@ Routine Description:
     LPCWSTR NameBuffer;
 
     NameBuffer = NULL;
-    if (ARGUMENT_PRESENT(lpName))
-    {
+    if ( ARGUMENT_PRESENT(lpName) ) {
         Unicode = &NtCurrentTeb()->StaticUnicodeString;
-        RtlInitAnsiString(&AnsiString, lpName);
-        Status = RtlAnsiStringToUnicodeString(Unicode, &AnsiString, FALSE);
-        if (!NT_SUCCESS(Status))
-        {
-            if (Status == STATUS_BUFFER_OVERFLOW)
-            {
+        RtlInitAnsiString(&AnsiString,lpName);
+        Status = RtlAnsiStringToUnicodeString(Unicode,&AnsiString,FALSE);
+        if ( !NT_SUCCESS(Status) ) {
+            if ( Status == STATUS_BUFFER_OVERFLOW ) {
                 SetLastError(ERROR_FILENAME_EXCED_RANGE);
-            }
-            else
-            {
+                }
+            else {
                 BaseSetLastNTError(Status);
-            }
+                }
             return NULL;
-        }
+            }
         NameBuffer = (LPCWSTR)Unicode->Buffer;
-    }
+        }
 
-    return CreateEventW(lpEventAttributes, bManualReset, bInitialState, NameBuffer);
+    return CreateEventW(
+                lpEventAttributes,
+                bManualReset,
+                bInitialState,
+                NameBuffer
+                );
 }
 
 
 HANDLE
 APIENTRY
-CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCWSTR lpName)
+CreateEventW(
+    LPSECURITY_ATTRIBUTES lpEventAttributes,
+    BOOL bManualReset,
+    BOOL bInitialState,
+    LPCWSTR lpName
+    )
 
 /*++
 
@@ -222,57 +239,58 @@ Return Value:
     UNICODE_STRING ObjectName;
     PWCHAR pstrNewObjName = NULL;
 
-    if (ARGUMENT_PRESENT(lpName))
-    {
+    if ( ARGUMENT_PRESENT(lpName) ) {
 
-        if (gpTermsrvFormatObjectName && (pstrNewObjName = gpTermsrvFormatObjectName(lpName)))
-        {
+        if (gpTermsrvFormatObjectName && 
+            (pstrNewObjName = gpTermsrvFormatObjectName(lpName))) {
 
-            RtlInitUnicodeString(&ObjectName, pstrNewObjName);
-        }
-        else
-        {
+            RtlInitUnicodeString(&ObjectName,pstrNewObjName);
 
-            RtlInitUnicodeString(&ObjectName, lpName);
+        } else {
+
+            RtlInitUnicodeString(&ObjectName,lpName);
         }
 
-        pObja = BaseFormatObjectAttributes(&Obja, lpEventAttributes, &ObjectName);
-    }
-    else
-    {
-        pObja = BaseFormatObjectAttributes(&Obja, lpEventAttributes, NULL);
-    }
+        pObja = BaseFormatObjectAttributes(&Obja,lpEventAttributes,&ObjectName);
+        }
+    else {
+        pObja = BaseFormatObjectAttributes(&Obja,lpEventAttributes,NULL);
+        }
 
-    Status = NtCreateEvent(&Handle, EVENT_ALL_ACCESS, pObja, bManualReset ? NotificationEvent : SynchronizationEvent,
-                           (BOOLEAN)bInitialState);
+    Status = NtCreateEvent(
+                &Handle,
+                EVENT_ALL_ACCESS,
+                pObja,
+                bManualReset ? NotificationEvent : SynchronizationEvent,
+                (BOOLEAN)bInitialState
+                );
 
-    if (pstrNewObjName)
-    {
+    if (pstrNewObjName) {
         RtlFreeHeap(RtlProcessHeap(), 0, pstrNewObjName);
     }
 
-    if (NT_SUCCESS(Status))
-    {
-        if (Status == STATUS_OBJECT_NAME_EXISTS)
-        {
+    if ( NT_SUCCESS(Status) ) {
+        if ( Status == STATUS_OBJECT_NAME_EXISTS ) {
             SetLastError(ERROR_ALREADY_EXISTS);
-        }
-        else
-        {
+            }
+        else {
             SetLastError(0);
-        }
+            }
         return Handle;
-    }
-    else
-    {
+        }
+    else {
         BaseSetLastNTError(Status);
         return NULL;
-    }
+        }
 }
 
 HANDLE
 APIENTRY
-OpenEventA(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCSTR lpName)
+OpenEventA(
+    DWORD dwDesiredAccess,
+    BOOL bInheritHandle,
+    LPCSTR lpName
+    )
 
 /*++
 
@@ -287,36 +305,39 @@ Routine Description:
     ANSI_STRING AnsiString;
     NTSTATUS Status;
 
-    if (ARGUMENT_PRESENT(lpName))
-    {
+    if ( ARGUMENT_PRESENT(lpName) ) {
         Unicode = &NtCurrentTeb()->StaticUnicodeString;
-        RtlInitAnsiString(&AnsiString, lpName);
-        Status = RtlAnsiStringToUnicodeString(Unicode, &AnsiString, FALSE);
-        if (!NT_SUCCESS(Status))
-        {
-            if (Status == STATUS_BUFFER_OVERFLOW)
-            {
+        RtlInitAnsiString(&AnsiString,lpName);
+        Status = RtlAnsiStringToUnicodeString(Unicode,&AnsiString,FALSE);
+        if ( !NT_SUCCESS(Status) ) {
+            if ( Status == STATUS_BUFFER_OVERFLOW ) {
                 SetLastError(ERROR_FILENAME_EXCED_RANGE);
-            }
-            else
-            {
+                }
+            else {
                 BaseSetLastNTError(Status);
-            }
+                }
             return NULL;
+            }
         }
-    }
-    else
-    {
+    else {
         BaseSetLastNTError(STATUS_INVALID_PARAMETER);
         return NULL;
-    }
+        }
 
-    return OpenEventW(dwDesiredAccess, bInheritHandle, (LPCWSTR)Unicode->Buffer);
+    return OpenEventW(
+                dwDesiredAccess,
+                bInheritHandle,
+                (LPCWSTR)Unicode->Buffer
+                );
 }
 
 HANDLE
 APIENTRY
-OpenEventW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName)
+OpenEventW(
+    DWORD dwDesiredAccess,
+    BOOL bInheritHandle,
+    LPCWSTR lpName
+    )
 {
     OBJECT_ATTRIBUTES Obja;
     UNICODE_STRING ObjectName;
@@ -324,43 +345,51 @@ OpenEventW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName)
     HANDLE Object;
     PWCHAR pstrNewObjName = NULL;
 
-    if (!lpName)
-    {
+    if ( !lpName ) {
         BaseSetLastNTError(STATUS_INVALID_PARAMETER);
         return NULL;
+        }
+    
+    if (gpTermsrvFormatObjectName && 
+        (pstrNewObjName = gpTermsrvFormatObjectName(lpName))) {
+
+        RtlInitUnicodeString(&ObjectName,pstrNewObjName);
+
+    } else {
+
+        RtlInitUnicodeString(&ObjectName,lpName);
     }
 
-    if (gpTermsrvFormatObjectName && (pstrNewObjName = gpTermsrvFormatObjectName(lpName)))
-    {
 
-        RtlInitUnicodeString(&ObjectName, pstrNewObjName);
-    }
-    else
-    {
+    InitializeObjectAttributes(
+        &Obja,
+        &ObjectName,
+        (bInheritHandle ? OBJ_INHERIT : 0),
+        BaseGetNamedObjectDirectory(),
+        NULL
+        );
 
-        RtlInitUnicodeString(&ObjectName, lpName);
-    }
-
-
-    InitializeObjectAttributes(&Obja, &ObjectName, (bInheritHandle ? OBJ_INHERIT : 0), BaseGetNamedObjectDirectory(),
-                               NULL);
-
-    Status = NtOpenEvent(&Object, dwDesiredAccess, &Obja);
-
-    if (pstrNewObjName)
-    {
+    Status = NtOpenEvent(
+                &Object,
+                dwDesiredAccess,
+                &Obja
+                );
+    
+    if (pstrNewObjName) {
         RtlFreeHeap(RtlProcessHeap(), 0, pstrNewObjName);
     }
 
-    if (!NT_SUCCESS(Status))
-    {
+    if ( !NT_SUCCESS(Status) ) {
         BaseSetLastNTError(Status);
         return NULL;
-    }
+        }
     return Object;
 }
 
-BOOL SetEvent(HANDLE hEvent)
+BOOL
+SetEvent(
+    HANDLE hEvent
+    )
 
 /*++
 
@@ -390,19 +419,20 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = NtSetEvent(hEvent, NULL);
-    if (NT_SUCCESS(Status))
-    {
+    Status = NtSetEvent(hEvent,NULL);
+    if ( NT_SUCCESS(Status) ) {
         return TRUE;
-    }
-    else
-    {
+        }
+    else {
         BaseSetLastNTError(Status);
         return FALSE;
-    }
+        }
 }
 
-BOOL ResetEvent(HANDLE hEvent)
+BOOL
+ResetEvent(
+    HANDLE hEvent
+    )
 
 /*++
 
@@ -434,18 +464,19 @@ Return Value:
     NTSTATUS Status;
 
     Status = NtClearEvent(hEvent);
-    if (NT_SUCCESS(Status))
-    {
+    if ( NT_SUCCESS(Status) ) {
         return TRUE;
-    }
-    else
-    {
+        }
+    else {
         BaseSetLastNTError(Status);
         return FALSE;
-    }
+        }
 }
 
-BOOL PulseEvent(HANDLE hEvent)
+BOOL
+PulseEvent(
+    HANDLE hEvent
+    )
 
 /*++
 
@@ -482,26 +513,29 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = NtPulseEvent(hEvent, NULL);
-    if (NT_SUCCESS(Status))
-    {
+    Status = NtPulseEvent(hEvent,NULL);
+    if ( NT_SUCCESS(Status) ) {
         return TRUE;
-    }
-    else
-    {
+        }
+    else {
         BaseSetLastNTError(Status);
         return FALSE;
-    }
+        }
 }
 
-
+
 //
 // Semaphore Services
 //
 
 HANDLE
 APIENTRY
-CreateSemaphoreA(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount, LPCSTR lpName)
+CreateSemaphoreA(
+    LPSECURITY_ATTRIBUTES lpSemaphoreAttributes,
+    LONG lInitialCount,
+    LONG lMaximumCount,
+    LPCSTR lpName
+    )
 
 /*++
 
@@ -519,33 +553,39 @@ Routine Description:
     LPCWSTR NameBuffer;
 
     NameBuffer = NULL;
-    if (ARGUMENT_PRESENT(lpName))
-    {
+    if ( ARGUMENT_PRESENT(lpName) ) {
         Unicode = &NtCurrentTeb()->StaticUnicodeString;
-        RtlInitAnsiString(&AnsiString, lpName);
-        Status = RtlAnsiStringToUnicodeString(Unicode, &AnsiString, FALSE);
-        if (!NT_SUCCESS(Status))
-        {
-            if (Status == STATUS_BUFFER_OVERFLOW)
-            {
+        RtlInitAnsiString(&AnsiString,lpName);
+        Status = RtlAnsiStringToUnicodeString(Unicode,&AnsiString,FALSE);
+        if ( !NT_SUCCESS(Status) ) {
+            if ( Status == STATUS_BUFFER_OVERFLOW ) {
                 SetLastError(ERROR_FILENAME_EXCED_RANGE);
-            }
-            else
-            {
+                }
+            else {
                 BaseSetLastNTError(Status);
-            }
+                }
             return NULL;
-        }
+            }
         NameBuffer = (LPCWSTR)Unicode->Buffer;
-    }
+        }
 
-    return CreateSemaphoreW(lpSemaphoreAttributes, lInitialCount, lMaximumCount, NameBuffer);
+    return CreateSemaphoreW(
+                lpSemaphoreAttributes,
+                lInitialCount,
+                lMaximumCount,
+                NameBuffer
+                );
 }
 
 
 HANDLE
 APIENTRY
-CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount, LPCWSTR lpName)
+CreateSemaphoreW(
+    LPSECURITY_ATTRIBUTES lpSemaphoreAttributes,
+    LONG lInitialCount,
+    LONG lMaximumCount,
+    LPCWSTR lpName
+    )
 
 /*++
 
@@ -606,56 +646,58 @@ Return Value:
     UNICODE_STRING ObjectName;
     PWCHAR pstrNewObjName = NULL;
 
-    if (ARGUMENT_PRESENT(lpName))
-    {
+    if ( ARGUMENT_PRESENT(lpName) ) {
 
-        if (gpTermsrvFormatObjectName && (pstrNewObjName = gpTermsrvFormatObjectName(lpName)))
-        {
+        if (gpTermsrvFormatObjectName && 
+            (pstrNewObjName = gpTermsrvFormatObjectName(lpName))) {
 
-            RtlInitUnicodeString(&ObjectName, pstrNewObjName);
+            RtlInitUnicodeString(&ObjectName,pstrNewObjName);
+
+        } else {
+
+            RtlInitUnicodeString(&ObjectName,lpName);
         }
-        else
-        {
-
-            RtlInitUnicodeString(&ObjectName, lpName);
+        pObja = BaseFormatObjectAttributes(&Obja,lpSemaphoreAttributes,&ObjectName);
         }
-        pObja = BaseFormatObjectAttributes(&Obja, lpSemaphoreAttributes, &ObjectName);
-    }
-    else
-    {
-        pObja = BaseFormatObjectAttributes(&Obja, lpSemaphoreAttributes, NULL);
-    }
+    else {
+        pObja = BaseFormatObjectAttributes(&Obja,lpSemaphoreAttributes,NULL);
+        }
 
-    Status = NtCreateSemaphore(&Handle, SEMAPHORE_ALL_ACCESS, pObja, lInitialCount, lMaximumCount);
-
-    if (pstrNewObjName)
-    {
+    Status = NtCreateSemaphore(
+                &Handle,
+                SEMAPHORE_ALL_ACCESS,
+                pObja,
+                lInitialCount,
+                lMaximumCount
+                );
+    
+    if (pstrNewObjName) {
         RtlFreeHeap(RtlProcessHeap(), 0, pstrNewObjName);
     }
 
-    if (NT_SUCCESS(Status))
-    {
-        if (Status == STATUS_OBJECT_NAME_EXISTS)
-        {
+    if ( NT_SUCCESS(Status) ) {
+        if ( Status == STATUS_OBJECT_NAME_EXISTS ) {
             SetLastError(ERROR_ALREADY_EXISTS);
-        }
-        else
-        {
+            }
+        else {
             SetLastError(0);
-        }
+            }
         return Handle;
-    }
-    else
-    {
+        }
+    else {
         BaseSetLastNTError(Status);
         return NULL;
-    }
+        }
 }
 
 
 HANDLE
 APIENTRY
-OpenSemaphoreA(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCSTR lpName)
+OpenSemaphoreA(
+    DWORD dwDesiredAccess,
+    BOOL bInheritHandle,
+    LPCSTR lpName
+    )
 
 /*++
 
@@ -670,36 +712,39 @@ Routine Description:
     ANSI_STRING AnsiString;
     NTSTATUS Status;
 
-    if (ARGUMENT_PRESENT(lpName))
-    {
+    if ( ARGUMENT_PRESENT(lpName) ) {
         Unicode = &NtCurrentTeb()->StaticUnicodeString;
-        RtlInitAnsiString(&AnsiString, lpName);
-        Status = RtlAnsiStringToUnicodeString(Unicode, &AnsiString, FALSE);
-        if (!NT_SUCCESS(Status))
-        {
-            if (Status == STATUS_BUFFER_OVERFLOW)
-            {
+        RtlInitAnsiString(&AnsiString,lpName);
+        Status = RtlAnsiStringToUnicodeString(Unicode,&AnsiString,FALSE);
+        if ( !NT_SUCCESS(Status) ) {
+            if ( Status == STATUS_BUFFER_OVERFLOW ) {
                 SetLastError(ERROR_FILENAME_EXCED_RANGE);
-            }
-            else
-            {
+                }
+            else {
                 BaseSetLastNTError(Status);
-            }
+                }
             return NULL;
+            }
         }
-    }
-    else
-    {
+    else {
         BaseSetLastNTError(STATUS_INVALID_PARAMETER);
         return NULL;
-    }
+        }
 
-    return OpenSemaphoreW(dwDesiredAccess, bInheritHandle, (LPCWSTR)Unicode->Buffer);
+    return OpenSemaphoreW(
+                dwDesiredAccess,
+                bInheritHandle,
+                (LPCWSTR)Unicode->Buffer
+                );
 }
 
 HANDLE
 APIENTRY
-OpenSemaphoreW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName)
+OpenSemaphoreW(
+    DWORD dwDesiredAccess,
+    BOOL bInheritHandle,
+    LPCWSTR lpName
+    )
 {
     OBJECT_ATTRIBUTES Obja;
     UNICODE_STRING ObjectName;
@@ -707,43 +752,53 @@ OpenSemaphoreW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName)
     HANDLE Object;
     PWCHAR pstrNewObjName = NULL;
 
-    if (!lpName)
-    {
+    if ( !lpName ) {
         BaseSetLastNTError(STATUS_INVALID_PARAMETER);
         return NULL;
+        }
+
+    if (gpTermsrvFormatObjectName && 
+        (pstrNewObjName = gpTermsrvFormatObjectName(lpName))) {
+
+        RtlInitUnicodeString(&ObjectName,pstrNewObjName);
+
+    } else {
+
+        RtlInitUnicodeString(&ObjectName,lpName);
     }
 
-    if (gpTermsrvFormatObjectName && (pstrNewObjName = gpTermsrvFormatObjectName(lpName)))
-    {
+    InitializeObjectAttributes(
+        &Obja,
+        &ObjectName,
+        (bInheritHandle ? OBJ_INHERIT : 0),
+        BaseGetNamedObjectDirectory(),
+        NULL
+        );
 
-        RtlInitUnicodeString(&ObjectName, pstrNewObjName);
-    }
-    else
-    {
+    Status = NtOpenSemaphore(
+                &Object,
+                dwDesiredAccess,
+                &Obja
+                );
 
-        RtlInitUnicodeString(&ObjectName, lpName);
-    }
-
-    InitializeObjectAttributes(&Obja, &ObjectName, (bInheritHandle ? OBJ_INHERIT : 0), BaseGetNamedObjectDirectory(),
-                               NULL);
-
-    Status = NtOpenSemaphore(&Object, dwDesiredAccess, &Obja);
-
-    if (pstrNewObjName)
-    {
+    if (pstrNewObjName) {
         RtlFreeHeap(RtlProcessHeap(), 0, pstrNewObjName);
     }
 
-    if (!NT_SUCCESS(Status))
-    {
+    if ( !NT_SUCCESS(Status) ) {
         BaseSetLastNTError(Status);
         return NULL;
-    }
+        }
     return Object;
 }
 
 
-BOOL ReleaseSemaphore(HANDLE hSemaphore, LONG lReleaseCount, LPLONG lpPreviousCount)
+BOOL
+ReleaseSemaphore(
+    HANDLE hSemaphore,
+    LONG lReleaseCount,
+    LPLONG lpPreviousCount
+    )
 
 /*++
 
@@ -786,26 +841,29 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = NtReleaseSemaphore(hSemaphore, lReleaseCount, lpPreviousCount);
-    if (NT_SUCCESS(Status))
-    {
+    Status = NtReleaseSemaphore(hSemaphore,lReleaseCount,lpPreviousCount);
+    if ( NT_SUCCESS(Status) ) {
         return TRUE;
-    }
-    else
-    {
+        }
+    else {
         BaseSetLastNTError(Status);
         return FALSE;
-    }
+        }
 }
 
 
+
 //
 // Mutex Services
 //
 
 HANDLE
 APIENTRY
-CreateMutexA(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner, LPCSTR lpName)
+CreateMutexA(
+    LPSECURITY_ATTRIBUTES lpMutexAttributes,
+    BOOL bInitialOwner,
+    LPCSTR lpName
+    )
 
 /*++
 
@@ -822,33 +880,37 @@ Routine Description:
     LPCWSTR NameBuffer;
 
     NameBuffer = NULL;
-    if (ARGUMENT_PRESENT(lpName))
-    {
+    if ( ARGUMENT_PRESENT(lpName) ) {
         Unicode = &NtCurrentTeb()->StaticUnicodeString;
-        RtlInitAnsiString(&AnsiString, lpName);
-        Status = RtlAnsiStringToUnicodeString(Unicode, &AnsiString, FALSE);
-        if (!NT_SUCCESS(Status))
-        {
-            if (Status == STATUS_BUFFER_OVERFLOW)
-            {
+        RtlInitAnsiString(&AnsiString,lpName);
+        Status = RtlAnsiStringToUnicodeString(Unicode,&AnsiString,FALSE);
+        if ( !NT_SUCCESS(Status) ) {
+            if ( Status == STATUS_BUFFER_OVERFLOW ) {
                 SetLastError(ERROR_FILENAME_EXCED_RANGE);
-            }
-            else
-            {
+                }
+            else {
                 BaseSetLastNTError(Status);
-            }
+                }
             return NULL;
-        }
+            }
 
         NameBuffer = (LPCWSTR)Unicode->Buffer;
-    }
+        }
 
-    return CreateMutexW(lpMutexAttributes, bInitialOwner, NameBuffer);
+    return CreateMutexW(
+                lpMutexAttributes,
+                bInitialOwner,
+                NameBuffer
+                );
 }
 
 HANDLE
 APIENTRY
-CreateMutexW(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner, LPCWSTR lpName)
+CreateMutexW(
+    LPSECURITY_ATTRIBUTES lpMutexAttributes,
+    BOOL bInitialOwner,
+    LPCWSTR lpName
+    )
 
 /*++
 
@@ -908,56 +970,57 @@ Return Value:
     UNICODE_STRING ObjectName;
     PWCHAR pstrNewObjName = NULL;
 
-    if (ARGUMENT_PRESENT(lpName))
-    {
+    if ( ARGUMENT_PRESENT(lpName) ) {
 
-        if (gpTermsrvFormatObjectName && (pstrNewObjName = gpTermsrvFormatObjectName(lpName)))
-        {
+        if (gpTermsrvFormatObjectName && 
+            (pstrNewObjName = gpTermsrvFormatObjectName(lpName))) {
 
-            RtlInitUnicodeString(&ObjectName, pstrNewObjName);
+            RtlInitUnicodeString(&ObjectName,pstrNewObjName);
+
+        } else {
+
+            RtlInitUnicodeString(&ObjectName,lpName);
         }
-        else
-        {
-
-            RtlInitUnicodeString(&ObjectName, lpName);
+        pObja = BaseFormatObjectAttributes(&Obja,lpMutexAttributes,&ObjectName);
         }
-        pObja = BaseFormatObjectAttributes(&Obja, lpMutexAttributes, &ObjectName);
-    }
-    else
-    {
-        pObja = BaseFormatObjectAttributes(&Obja, lpMutexAttributes, NULL);
-    }
+    else {
+        pObja = BaseFormatObjectAttributes(&Obja,lpMutexAttributes,NULL);
+        }
 
 
-    Status = NtCreateMutant(&Handle, MUTANT_ALL_ACCESS, pObja, (BOOLEAN)bInitialOwner);
+    Status = NtCreateMutant(
+                &Handle,
+                MUTANT_ALL_ACCESS,
+                pObja,
+                (BOOLEAN)bInitialOwner
+                );
 
-    if (pstrNewObjName)
-    {
+    if (pstrNewObjName) {
         RtlFreeHeap(RtlProcessHeap(), 0, pstrNewObjName);
     }
-
-    if (NT_SUCCESS(Status))
-    {
-        if (Status == STATUS_OBJECT_NAME_EXISTS)
-        {
+    
+    if ( NT_SUCCESS(Status) ) {
+        if ( Status == STATUS_OBJECT_NAME_EXISTS ) {
             SetLastError(ERROR_ALREADY_EXISTS);
-        }
-        else
-        {
+            }
+        else {
             SetLastError(0);
-        }
+            }
         return Handle;
-    }
-    else
-    {
+        }
+    else {
         BaseSetLastNTError(Status);
         return NULL;
-    }
+        }
 }
 
 HANDLE
 APIENTRY
-OpenMutexA(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCSTR lpName)
+OpenMutexA(
+    DWORD dwDesiredAccess,
+    BOOL bInheritHandle,
+    LPCSTR lpName
+    )
 
 /*++
 
@@ -972,36 +1035,39 @@ Routine Description:
     ANSI_STRING AnsiString;
     NTSTATUS Status;
 
-    if (ARGUMENT_PRESENT(lpName))
-    {
+    if ( ARGUMENT_PRESENT(lpName) ) {
         Unicode = &NtCurrentTeb()->StaticUnicodeString;
-        RtlInitAnsiString(&AnsiString, lpName);
-        Status = RtlAnsiStringToUnicodeString(Unicode, &AnsiString, FALSE);
-        if (!NT_SUCCESS(Status))
-        {
-            if (Status == STATUS_BUFFER_OVERFLOW)
-            {
+        RtlInitAnsiString(&AnsiString,lpName);
+        Status = RtlAnsiStringToUnicodeString(Unicode,&AnsiString,FALSE);
+        if ( !NT_SUCCESS(Status) ) {
+            if ( Status == STATUS_BUFFER_OVERFLOW ) {
                 SetLastError(ERROR_FILENAME_EXCED_RANGE);
-            }
-            else
-            {
+                }
+            else {
                 BaseSetLastNTError(Status);
-            }
+                }
             return NULL;
+            }
         }
-    }
-    else
-    {
+    else {
         BaseSetLastNTError(STATUS_INVALID_PARAMETER);
         return NULL;
-    }
+        }
 
-    return OpenMutexW(dwDesiredAccess, bInheritHandle, (LPCWSTR)Unicode->Buffer);
+    return OpenMutexW(
+                dwDesiredAccess,
+                bInheritHandle,
+                (LPCWSTR)Unicode->Buffer
+                );
 }
 
 HANDLE
 APIENTRY
-OpenMutexW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName)
+OpenMutexW(
+    DWORD dwDesiredAccess,
+    BOOL bInheritHandle,
+    LPCWSTR lpName
+    )
 {
     OBJECT_ATTRIBUTES Obja;
     UNICODE_STRING ObjectName;
@@ -1009,42 +1075,50 @@ OpenMutexW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName)
     HANDLE Object;
     PWCHAR pstrNewObjName = NULL;
 
-    if (!lpName)
-    {
+    if ( !lpName ) {
         BaseSetLastNTError(STATUS_INVALID_PARAMETER);
         return NULL;
+        }
+
+    if (gpTermsrvFormatObjectName && 
+        (pstrNewObjName = gpTermsrvFormatObjectName(lpName))) {
+
+        RtlInitUnicodeString(&ObjectName,pstrNewObjName);
+
+    } else {
+
+        RtlInitUnicodeString(&ObjectName,lpName);
     }
 
-    if (gpTermsrvFormatObjectName && (pstrNewObjName = gpTermsrvFormatObjectName(lpName)))
-    {
+    InitializeObjectAttributes(
+        &Obja,
+        &ObjectName,
+        (bInheritHandle ? OBJ_INHERIT : 0),
+        BaseGetNamedObjectDirectory(),
+        NULL
+        );
 
-        RtlInitUnicodeString(&ObjectName, pstrNewObjName);
-    }
-    else
-    {
+    Status = NtOpenMutant(
+                &Object,
+                dwDesiredAccess,
+                &Obja
+                );
 
-        RtlInitUnicodeString(&ObjectName, lpName);
-    }
-
-    InitializeObjectAttributes(&Obja, &ObjectName, (bInheritHandle ? OBJ_INHERIT : 0), BaseGetNamedObjectDirectory(),
-                               NULL);
-
-    Status = NtOpenMutant(&Object, dwDesiredAccess, &Obja);
-
-    if (pstrNewObjName)
-    {
+    if (pstrNewObjName) {
         RtlFreeHeap(RtlProcessHeap(), 0, pstrNewObjName);
     }
 
-    if (!NT_SUCCESS(Status))
-    {
+    if ( !NT_SUCCESS(Status) ) {
         BaseSetLastNTError(Status);
         return NULL;
-    }
+        }
     return Object;
 }
 
-BOOL ReleaseMutex(HANDLE hMutex)
+BOOL
+ReleaseMutex(
+    HANDLE hMutex
+    )
 
 /*++
 
@@ -1077,25 +1151,26 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = NtReleaseMutant(hMutex, NULL);
-    if (NT_SUCCESS(Status))
-    {
+    Status = NtReleaseMutant(hMutex,NULL);
+    if ( NT_SUCCESS(Status) ) {
         return TRUE;
-    }
-    else
-    {
+        }
+    else {
         BaseSetLastNTError(Status);
         return FALSE;
-    }
+        }
 }
 
-
+
 //
 // Wait Services
 //
 
 DWORD
-WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
+WaitForSingleObject(
+    HANDLE hHandle,
+    DWORD dwMilliseconds
+    )
 
 /*++
 
@@ -1138,12 +1213,16 @@ Return Value:
 --*/
 
 {
-    return WaitForSingleObjectEx(hHandle, dwMilliseconds, FALSE);
+    return WaitForSingleObjectEx(hHandle,dwMilliseconds,FALSE);
 }
 
 DWORD
 APIENTRY
-WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertable)
+WaitForSingleObjectEx(
+    HANDLE hHandle,
+    DWORD dwMilliseconds,
+    BOOL bAlertable
+    )
 
 /*++
 
@@ -1209,52 +1288,38 @@ Return Value:
     LARGE_INTEGER TimeOut;
     PLARGE_INTEGER pTimeOut;
     PPEB Peb;
-    RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME Frame = {
-        sizeof(Frame), RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_FORMAT_WHISTLER
-    };
+    RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME Frame = { sizeof(Frame), RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_FORMAT_WHISTLER };
 
-    RtlActivateActivationContextUnsafeFast(
-        &Frame, NULL); // make the process default activation context active so that APCs are delivered under it
-    __try
-    {
+    RtlActivateActivationContextUnsafeFast(&Frame, NULL); // make the process default activation context active so that APCs are delivered under it
+    __try {
 
         Peb = NtCurrentPeb();
-        switch (HandleToUlong(hHandle))
-        {
-        case STD_INPUT_HANDLE:
-            hHandle = Peb->ProcessParameters->StandardInput;
-            break;
-        case STD_OUTPUT_HANDLE:
-            hHandle = Peb->ProcessParameters->StandardOutput;
-            break;
-        case STD_ERROR_HANDLE:
-            hHandle = Peb->ProcessParameters->StandardError;
-            break;
-        }
+        switch( HandleToUlong(hHandle) ) {
+            case STD_INPUT_HANDLE:  hHandle = Peb->ProcessParameters->StandardInput;
+                                    break;
+            case STD_OUTPUT_HANDLE: hHandle = Peb->ProcessParameters->StandardOutput;
+                                    break;
+            case STD_ERROR_HANDLE:  hHandle = Peb->ProcessParameters->StandardError;
+                                    break;
+            }
 
-        if (CONSOLE_HANDLE(hHandle) && VerifyConsoleIoHandle(hHandle))
-        {
+        if (CONSOLE_HANDLE(hHandle) && VerifyConsoleIoHandle(hHandle)) {
             hHandle = GetConsoleInputWaitHandle();
-        }
+            }
 
-        pTimeOut = BaseFormatTimeOut(&TimeOut, dwMilliseconds);
+        pTimeOut = BaseFormatTimeOut(&TimeOut,dwMilliseconds);
     rewait:
-        Status = NtWaitForSingleObject(hHandle, (BOOLEAN)bAlertable, pTimeOut);
-        if (!NT_SUCCESS(Status))
-        {
+        Status = NtWaitForSingleObject(hHandle,(BOOLEAN)bAlertable,pTimeOut);
+        if ( !NT_SUCCESS(Status) ) {
             BaseSetLastNTError(Status);
             Status = (NTSTATUS)0xffffffff;
-        }
-        else
-        {
-            if (bAlertable && Status == STATUS_ALERTED)
-            {
-                goto rewait;
             }
-        }
-    }
-    __finally
-    {
+        else {
+            if ( bAlertable && Status == STATUS_ALERTED ) {
+                goto rewait;
+                }
+            }
+    } __finally {
         RtlDeactivateActivationContextUnsafeFast(&Frame);
     }
 
@@ -1264,59 +1329,55 @@ Return Value:
 
 DWORD
 WINAPI
-SignalObjectAndWait(HANDLE hObjectToSignal, HANDLE hObjectToWaitOn, DWORD dwMilliseconds, BOOL bAlertable)
+SignalObjectAndWait(
+    HANDLE hObjectToSignal,
+    HANDLE hObjectToWaitOn,
+    DWORD dwMilliseconds,
+    BOOL bAlertable
+    )
 {
     NTSTATUS Status;
     LARGE_INTEGER TimeOut;
     PLARGE_INTEGER pTimeOut;
     PPEB Peb;
 
-    RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME Frame = {
-        sizeof(Frame), RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_FORMAT_WHISTLER
-    };
+    RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME Frame = { sizeof(Frame), RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_FORMAT_WHISTLER };
 
-    RtlActivateActivationContextUnsafeFast(
-        &Frame, NULL); // make the process default activation context active so that APCs are delivered under it
-    __try
-    {
+    RtlActivateActivationContextUnsafeFast(&Frame, NULL); // make the process default activation context active so that APCs are delivered under it
+    __try {
         Peb = NtCurrentPeb();
-        switch (HandleToUlong(hObjectToWaitOn))
-        {
-        case STD_INPUT_HANDLE:
-            hObjectToWaitOn = Peb->ProcessParameters->StandardInput;
-            break;
-        case STD_OUTPUT_HANDLE:
-            hObjectToWaitOn = Peb->ProcessParameters->StandardOutput;
-            break;
-        case STD_ERROR_HANDLE:
-            hObjectToWaitOn = Peb->ProcessParameters->StandardError;
-            break;
-        }
+        switch( HandleToUlong(hObjectToWaitOn) ) {
+            case STD_INPUT_HANDLE:  hObjectToWaitOn = Peb->ProcessParameters->StandardInput;
+                                    break;
+            case STD_OUTPUT_HANDLE: hObjectToWaitOn = Peb->ProcessParameters->StandardOutput;
+                                    break;
+            case STD_ERROR_HANDLE:  hObjectToWaitOn = Peb->ProcessParameters->StandardError;
+                                    break;
+            }
 
-        if (CONSOLE_HANDLE(hObjectToWaitOn) && VerifyConsoleIoHandle(hObjectToWaitOn))
-        {
+        if (CONSOLE_HANDLE(hObjectToWaitOn) && VerifyConsoleIoHandle(hObjectToWaitOn)) {
             hObjectToWaitOn = GetConsoleInputWaitHandle();
-        }
+            }
 
-        pTimeOut = BaseFormatTimeOut(&TimeOut, dwMilliseconds);
+        pTimeOut = BaseFormatTimeOut(&TimeOut,dwMilliseconds);
     rewait:
-        Status = NtSignalAndWaitForSingleObject(hObjectToSignal, hObjectToWaitOn, (BOOLEAN)bAlertable, pTimeOut);
+        Status = NtSignalAndWaitForSingleObject(
+                    hObjectToSignal,
+                    hObjectToWaitOn,
+                    (BOOLEAN)bAlertable,
+                    pTimeOut
+                    );
 
-        if (!NT_SUCCESS(Status))
-        {
+        if ( !NT_SUCCESS(Status) ) {
             BaseSetLastNTError(Status);
             Status = (NTSTATUS)0xffffffff;
-        }
-        else
-        {
-            if (bAlertable && Status == STATUS_ALERTED)
-            {
-                goto rewait;
             }
-        }
-    }
-    __finally
-    {
+        else {
+            if ( bAlertable && Status == STATUS_ALERTED ) {
+                goto rewait;
+                }
+            }
+    } __finally {
         RtlDeactivateActivationContextUnsafeFast(&Frame);
     }
 
@@ -1324,8 +1385,14 @@ SignalObjectAndWait(HANDLE hObjectToSignal, HANDLE hObjectToWaitOn, DWORD dwMill
 }
 
 
+
 DWORD
-WaitForMultipleObjects(DWORD nCount, CONST HANDLE *lpHandles, BOOL bWaitAll, DWORD dwMilliseconds)
+WaitForMultipleObjects(
+    DWORD nCount,
+    CONST HANDLE *lpHandles,
+    BOOL bWaitAll,
+    DWORD dwMilliseconds
+    )
 
 /*++
 
@@ -1373,12 +1440,18 @@ Return Value:
 --*/
 
 {
-    return WaitForMultipleObjectsEx(nCount, lpHandles, bWaitAll, dwMilliseconds, FALSE);
+    return WaitForMultipleObjectsEx(nCount,lpHandles,bWaitAll,dwMilliseconds,FALSE);
 }
 
 DWORD
 APIENTRY
-WaitForMultipleObjectsEx(DWORD nCount, CONST HANDLE *lpHandles, BOOL bWaitAll, DWORD dwMilliseconds, BOOL bAlertable)
+WaitForMultipleObjectsEx(
+    DWORD nCount,
+    CONST HANDLE *lpHandles,
+    BOOL bWaitAll,
+    DWORD dwMilliseconds,
+    BOOL bAlertable
+    )
 
 /*++
 
@@ -1454,85 +1527,73 @@ Return Value:
     PLARGE_INTEGER pTimeOut;
     DWORD i;
     LPHANDLE HandleArray;
-    HANDLE Handles[8];
+    HANDLE Handles[ 8 ];
     PPEB Peb;
 
-    RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME Frame = {
-        sizeof(Frame), RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_FORMAT_WHISTLER
-    };
+    RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME Frame = { sizeof(Frame), RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_FORMAT_WHISTLER };
 
-    RtlActivateActivationContextUnsafeFast(
-        &Frame, NULL); // make the process default activation context active so that APCs are delivered under it
-    __try
-    {
-        if (nCount > 8)
-        {
-            HandleArray = (LPHANDLE)RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), nCount * sizeof(HANDLE));
-            if (HandleArray == NULL)
-            {
+    RtlActivateActivationContextUnsafeFast(&Frame, NULL); // make the process default activation context active so that APCs are delivered under it
+    __try {
+        if (nCount > 8) {
+            HandleArray = (LPHANDLE) RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( TMP_TAG ), nCount*sizeof(HANDLE));
+            if (HandleArray == NULL) {
                 BaseSetLastNTError(STATUS_NO_MEMORY);
                 return 0xffffffff;
             }
-        }
-        else
-        {
+        } else {
             HandleArray = Handles;
         }
-        RtlCopyMemory(HandleArray, (LPVOID)lpHandles, nCount * sizeof(HANDLE));
+        RtlCopyMemory(HandleArray,(LPVOID)lpHandles,nCount*sizeof(HANDLE));
 
         Peb = NtCurrentPeb();
-        for (i = 0; i < nCount; i++)
-        {
-            switch (HandleToUlong(HandleArray[i]))
-            {
-            case STD_INPUT_HANDLE:
-                HandleArray[i] = Peb->ProcessParameters->StandardInput;
-                break;
-            case STD_OUTPUT_HANDLE:
-                HandleArray[i] = Peb->ProcessParameters->StandardOutput;
-                break;
-            case STD_ERROR_HANDLE:
-                HandleArray[i] = Peb->ProcessParameters->StandardError;
-                break;
-            }
+        for (i=0;i<nCount;i++) {
+            switch( HandleToUlong(HandleArray[i]) ) {
+                case STD_INPUT_HANDLE:  HandleArray[i] = Peb->ProcessParameters->StandardInput;
+                                        break;
+                case STD_OUTPUT_HANDLE: HandleArray[i] = Peb->ProcessParameters->StandardOutput;
+                                        break;
+                case STD_ERROR_HANDLE:  HandleArray[i] = Peb->ProcessParameters->StandardError;
+                                        break;
+                }
 
-            if (CONSOLE_HANDLE(HandleArray[i]) && VerifyConsoleIoHandle(HandleArray[i]))
-            {
+            if (CONSOLE_HANDLE(HandleArray[i]) && VerifyConsoleIoHandle(HandleArray[i])) {
                 HandleArray[i] = GetConsoleInputWaitHandle();
+                }
             }
-        }
 
-        pTimeOut = BaseFormatTimeOut(&TimeOut, dwMilliseconds);
+        pTimeOut = BaseFormatTimeOut(&TimeOut,dwMilliseconds);
     rewait:
-        Status = NtWaitForMultipleObjects((CHAR)nCount, HandleArray, bWaitAll ? WaitAll : WaitAny, (BOOLEAN)bAlertable,
-                                          pTimeOut);
-        if (!NT_SUCCESS(Status))
-        {
+        Status = NtWaitForMultipleObjects(
+                     (CHAR)nCount,
+                     HandleArray,
+                     bWaitAll ? WaitAll : WaitAny,
+                     (BOOLEAN)bAlertable,
+                     pTimeOut
+                     );
+        if ( !NT_SUCCESS(Status) ) {
             BaseSetLastNTError(Status);
             Status = (NTSTATUS)0xffffffff;
-        }
-        else
-        {
-            if (bAlertable && Status == STATUS_ALERTED)
-            {
-                goto rewait;
             }
-        }
+        else {
+            if ( bAlertable && Status == STATUS_ALERTED ) {
+                goto rewait;
+                }
+            }
 
-        if (HandleArray != Handles)
-        {
+        if (HandleArray != Handles) {
             RtlFreeHeap(RtlProcessHeap(), 0, HandleArray);
         }
-    }
-    __finally
-    {
+    } __finally {
         RtlDeactivateActivationContextUnsafeFast(&Frame);
     }
 
     return (DWORD)Status;
 }
 
-VOID Sleep(DWORD dwMilliseconds)
+VOID
+Sleep(
+    DWORD dwMilliseconds
+    )
 
 /*++
 
@@ -1560,12 +1621,15 @@ Return Value:
 --*/
 
 {
-    SleepEx(dwMilliseconds, FALSE);
+    SleepEx(dwMilliseconds,FALSE);
 }
 
 DWORD
 APIENTRY
-SleepEx(DWORD dwMilliseconds, BOOL bAlertable)
+SleepEx(
+    DWORD dwMilliseconds,
+    BOOL bAlertable
+    )
 
 /*++
 
@@ -1610,17 +1674,12 @@ Return Value:
     LARGE_INTEGER TimeOut;
     PLARGE_INTEGER pTimeOut;
     NTSTATUS Status;
-    RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME Frame = {
-        sizeof(Frame), RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_FORMAT_WHISTLER
-    };
+    RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME Frame = { sizeof(Frame), RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_FORMAT_WHISTLER };
 
-    RtlActivateActivationContextUnsafeFast(
-        &Frame, NULL); // make the process default activation context active so that APCs are delivered under it
-    __try
-    {
-        pTimeOut = BaseFormatTimeOut(&TimeOut, dwMilliseconds);
-        if (pTimeOut == NULL)
-        {
+    RtlActivateActivationContextUnsafeFast(&Frame, NULL); // make the process default activation context active so that APCs are delivered under it
+    __try {
+        pTimeOut = BaseFormatTimeOut(&TimeOut,dwMilliseconds);
+        if (pTimeOut == NULL) {
             //
             // If Sleep( -1 ) then delay for the longest possible integer
             // relative to now.
@@ -1629,17 +1688,17 @@ Return Value:
             TimeOut.LowPart = 0x0;
             TimeOut.HighPart = 0x80000000;
             pTimeOut = &TimeOut;
-        }
+            }
 
     rewait:
-        Status = NtDelayExecution((BOOLEAN)bAlertable, pTimeOut);
-        if (bAlertable && Status == STATUS_ALERTED)
-        {
+        Status = NtDelayExecution(
+                    (BOOLEAN)bAlertable,
+                    pTimeOut
+                    );
+        if ( bAlertable && Status == STATUS_ALERTED ) {
             goto rewait;
-        }
-    }
-    __finally
-    {
+            }
+    } __finally {
         RtlDeactivateActivationContextUnsafeFast(&Frame);
     }
 
@@ -1648,7 +1707,11 @@ Return Value:
 
 HANDLE
 WINAPI
-CreateWaitableTimerA(LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManualReset, LPCSTR lpTimerName)
+CreateWaitableTimerA(
+    LPSECURITY_ATTRIBUTES lpTimerAttributes,
+    BOOL bManualReset,
+    LPCSTR lpTimerName
+    )
 
 /*++
 
@@ -1666,32 +1729,36 @@ Routine Description:
     LPCWSTR NameBuffer;
 
     NameBuffer = NULL;
-    if (ARGUMENT_PRESENT(lpTimerName))
-    {
+    if ( ARGUMENT_PRESENT(lpTimerName) ) {
         Unicode = &NtCurrentTeb()->StaticUnicodeString;
-        RtlInitAnsiString(&AnsiString, lpTimerName);
-        Status = RtlAnsiStringToUnicodeString(Unicode, &AnsiString, FALSE);
-        if (!NT_SUCCESS(Status))
-        {
-            if (Status == STATUS_BUFFER_OVERFLOW)
-            {
+        RtlInitAnsiString(&AnsiString,lpTimerName);
+        Status = RtlAnsiStringToUnicodeString(Unicode,&AnsiString,FALSE);
+        if ( !NT_SUCCESS(Status) ) {
+            if ( Status == STATUS_BUFFER_OVERFLOW ) {
                 SetLastError(ERROR_FILENAME_EXCED_RANGE);
-            }
-            else
-            {
+                }
+            else {
                 BaseSetLastNTError(Status);
-            }
+                }
             return NULL;
-        }
+            }
         NameBuffer = (LPCWSTR)Unicode->Buffer;
-    }
+        }
 
-    return CreateWaitableTimerW(lpTimerAttributes, bManualReset, NameBuffer);
+    return CreateWaitableTimerW(
+                lpTimerAttributes,
+                bManualReset,
+                NameBuffer
+                );
 }
 
 HANDLE
 WINAPI
-CreateWaitableTimerW(LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManualReset, LPCWSTR lpTimerName)
+CreateWaitableTimerW(
+    LPSECURITY_ATTRIBUTES lpTimerAttributes,
+    BOOL bManualReset,
+    LPCWSTR lpTimerName
+    )
 {
     NTSTATUS Status;
     OBJECT_ATTRIBUTES Obja;
@@ -1699,200 +1766,218 @@ CreateWaitableTimerW(LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManualReset,
     HANDLE Handle;
     UNICODE_STRING ObjectName;
 
-    if (ARGUMENT_PRESENT(lpTimerName))
-    {
-        RtlInitUnicodeString(&ObjectName, lpTimerName);
-        pObja = BaseFormatObjectAttributes(&Obja, lpTimerAttributes, &ObjectName);
-    }
-    else
-    {
-        pObja = BaseFormatObjectAttributes(&Obja, lpTimerAttributes, NULL);
-    }
+    if ( ARGUMENT_PRESENT(lpTimerName) ) {
+        RtlInitUnicodeString(&ObjectName,lpTimerName);
+        pObja = BaseFormatObjectAttributes(&Obja,lpTimerAttributes,&ObjectName);
+        }
+    else {
+        pObja = BaseFormatObjectAttributes(&Obja,lpTimerAttributes,NULL);
+        }
 
-    Status = NtCreateTimer(&Handle, TIMER_ALL_ACCESS, pObja, bManualReset ? NotificationTimer : SynchronizationTimer);
+    Status = NtCreateTimer(
+                &Handle,
+                TIMER_ALL_ACCESS,
+                pObja,
+                bManualReset ? NotificationTimer : SynchronizationTimer
+                );
 
-    if (NT_SUCCESS(Status))
-    {
-        if (Status == STATUS_OBJECT_NAME_EXISTS)
-        {
+    if ( NT_SUCCESS(Status) ) {
+        if ( Status == STATUS_OBJECT_NAME_EXISTS ) {
             SetLastError(ERROR_ALREADY_EXISTS);
-        }
-        else
-        {
+            }
+        else {
             SetLastError(0);
-        }
+            }
         return Handle;
-    }
-    else
-    {
+        }
+    else {
         BaseSetLastNTError(Status);
         return NULL;
-    }
+        }
 }
 
 HANDLE
 WINAPI
-OpenWaitableTimerA(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCSTR lpTimerName)
+OpenWaitableTimerA(
+    DWORD dwDesiredAccess,
+    BOOL bInheritHandle,
+    LPCSTR lpTimerName
+    )
 {
     PUNICODE_STRING Unicode;
     ANSI_STRING AnsiString;
     NTSTATUS Status;
 
-    if (ARGUMENT_PRESENT(lpTimerName))
-    {
+    if ( ARGUMENT_PRESENT(lpTimerName) ) {
         Unicode = &NtCurrentTeb()->StaticUnicodeString;
-        RtlInitAnsiString(&AnsiString, lpTimerName);
-        Status = RtlAnsiStringToUnicodeString(Unicode, &AnsiString, FALSE);
-        if (!NT_SUCCESS(Status))
-        {
-            if (Status == STATUS_BUFFER_OVERFLOW)
-            {
+        RtlInitAnsiString(&AnsiString,lpTimerName);
+        Status = RtlAnsiStringToUnicodeString(Unicode,&AnsiString,FALSE);
+        if ( !NT_SUCCESS(Status) ) {
+            if ( Status == STATUS_BUFFER_OVERFLOW ) {
                 SetLastError(ERROR_FILENAME_EXCED_RANGE);
-            }
-            else
-            {
+                }
+            else {
                 BaseSetLastNTError(Status);
-            }
+                }
             return NULL;
+            }
         }
-    }
-    else
-    {
+    else {
         BaseSetLastNTError(STATUS_INVALID_PARAMETER);
         return NULL;
-    }
+        }
 
-    return OpenWaitableTimerW(dwDesiredAccess, bInheritHandle, (LPCWSTR)Unicode->Buffer);
+    return OpenWaitableTimerW(
+                dwDesiredAccess,
+                bInheritHandle,
+                (LPCWSTR)Unicode->Buffer
+                );
 }
 
 
 HANDLE
 WINAPI
-OpenWaitableTimerW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpTimerName)
+OpenWaitableTimerW(
+    DWORD dwDesiredAccess,
+    BOOL bInheritHandle,
+    LPCWSTR lpTimerName
+    )
 {
     OBJECT_ATTRIBUTES Obja;
     UNICODE_STRING ObjectName;
     NTSTATUS Status;
     HANDLE Object;
 
-    if (!lpTimerName)
-    {
+    if ( !lpTimerName ) {
         BaseSetLastNTError(STATUS_INVALID_PARAMETER);
         return NULL;
-    }
-    RtlInitUnicodeString(&ObjectName, lpTimerName);
+        }
+    RtlInitUnicodeString(&ObjectName,lpTimerName);
 
-    InitializeObjectAttributes(&Obja, &ObjectName, (bInheritHandle ? OBJ_INHERIT : 0), BaseGetNamedObjectDirectory(),
-                               NULL);
+    InitializeObjectAttributes(
+        &Obja,
+        &ObjectName,
+        (bInheritHandle ? OBJ_INHERIT : 0),
+        BaseGetNamedObjectDirectory(),
+        NULL
+        );
 
-    Status = NtOpenTimer(&Object, dwDesiredAccess, &Obja);
-    if (!NT_SUCCESS(Status))
-    {
+    Status = NtOpenTimer(
+                &Object,
+                dwDesiredAccess,
+                &Obja
+                );
+    if ( !NT_SUCCESS(Status) ) {
         BaseSetLastNTError(Status);
         return NULL;
-    }
+        }
     return Object;
 }
 
-static VOID CALLBACK BasepTimerAPCProc(PVOID pvContext, ULONG TimerLowValue, LONG TimerHighValue)
+static
+VOID
+CALLBACK
+BasepTimerAPCProc(
+    PVOID pvContext,
+    ULONG TimerLowValue,
+    LONG TimerHighValue
+    )
 {
-    PBASE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK ActivationBlock = (PBASE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK)pvContext;
+    PBASE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK ActivationBlock = (PBASE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK) pvContext;
     const PVOID CallbackContext = ActivationBlock->CallbackContext;
-    const PTIMERAPCROUTINE TimerAPCRoutine = (PTIMERAPCROUTINE)ActivationBlock->CallbackFunction;
-    RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME ActivationFrame = {
-        sizeof(ActivationFrame), RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_FORMAT_WHISTLER
-    };
+    const PTIMERAPCROUTINE TimerAPCRoutine = (PTIMERAPCROUTINE) ActivationBlock->CallbackFunction;
+    RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME ActivationFrame = { sizeof(ActivationFrame), RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_FORMAT_WHISTLER };
     const PACTIVATION_CONTEXT ActivationContext = ActivationBlock->ActivationContext;
 
-    if ((ActivationBlock->Flags & BASE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK_FLAG_DO_NOT_FREE_AFTER_CALLBACK) == 0)
-    {
+    if ((ActivationBlock->Flags & BASE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK_FLAG_DO_NOT_FREE_AFTER_CALLBACK) == 0) {
         BasepFreeActivationContextActivationBlock(ActivationBlock);
     }
 
     RtlActivateActivationContextUnsafeFast(&ActivationFrame, ActivationContext);
-    __try
-    {
+    __try {
         (*TimerAPCRoutine)(CallbackContext, TimerLowValue, TimerHighValue);
-    }
-    __finally
-    {
+    } __finally {
         RtlDeactivateActivationContextUnsafeFast(&ActivationFrame);
     }
 }
 
-BOOL WINAPI SetWaitableTimer(HANDLE hTimer, const LARGE_INTEGER *lpDueTime, LONG lPeriod,
-                             PTIMERAPCROUTINE pfnCompletionRoutine, LPVOID lpArgToCompletionRoutine, BOOL fResume)
+BOOL
+WINAPI
+SetWaitableTimer(
+    HANDLE hTimer,
+    const LARGE_INTEGER *lpDueTime,
+    LONG lPeriod,
+    PTIMERAPCROUTINE pfnCompletionRoutine,
+    LPVOID lpArgToCompletionRoutine,
+    BOOL fResume
+    )
 {
     NTSTATUS Status;
     PBASE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK ActivationBlock = NULL;
-    PTIMER_APC_ROUTINE TimerApcRoutine = (PTIMER_APC_ROUTINE)pfnCompletionRoutine;
+    PTIMER_APC_ROUTINE TimerApcRoutine = (PTIMER_APC_ROUTINE) pfnCompletionRoutine;
     PVOID TimerApcContext = lpArgToCompletionRoutine;
 
     // If there's an APC routine to call and we have a non-default activation
     // context active for this thread, we need to allocate a little chunk of heap
     // to pass to the APC callback.
-    if (pfnCompletionRoutine != NULL)
-    {
-        DWORD dwActivationBlockAllocationFlags =
-            BASEP_ALLOCATE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK_FLAG_DO_NOT_ALLOCATE_IF_PROCESS_DEFAULT;
+    if (pfnCompletionRoutine != NULL) {
+        DWORD dwActivationBlockAllocationFlags = BASEP_ALLOCATE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK_FLAG_DO_NOT_ALLOCATE_IF_PROCESS_DEFAULT;
 
         // If it's a periodic timer, don't free the block until the timer is cancelled.
         if (lPeriod > 0)
-            dwActivationBlockAllocationFlags |=
-                BASEP_ALLOCATE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK_FLAG_DO_NOT_FREE_AFTER_CALLBACK;
+            dwActivationBlockAllocationFlags |= BASEP_ALLOCATE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK_FLAG_DO_NOT_FREE_AFTER_CALLBACK;
 
-        Status = BasepAllocateActivationContextActivationBlock(dwActivationBlockAllocationFlags, pfnCompletionRoutine,
-                                                               lpArgToCompletionRoutine, &ActivationBlock);
-        if (!NT_SUCCESS(Status))
-        {
+        Status = BasepAllocateActivationContextActivationBlock(dwActivationBlockAllocationFlags, pfnCompletionRoutine, lpArgToCompletionRoutine, &ActivationBlock);
+        if (!NT_SUCCESS(Status)) {
             BaseSetLastNTError(Status);
             return FALSE;
         }
 
-        if (ActivationBlock != NULL)
-        {
+        if (ActivationBlock != NULL) {
             TimerApcRoutine = &BasepTimerAPCProc;
             TimerApcContext = ActivationBlock;
         }
     }
 
-    Status = NtSetTimer(hTimer, (PLARGE_INTEGER)lpDueTime,
-                        TimerApcRoutine, // will be NULL if pfnCompletionRoutine was null
-                        TimerApcContext, (BOOLEAN)fResume, lPeriod, NULL);
+    Status = NtSetTimer(
+                hTimer,
+                (PLARGE_INTEGER) lpDueTime,
+                TimerApcRoutine,                // will be NULL if pfnCompletionRoutine was null
+                TimerApcContext,
+                (BOOLEAN) fResume,
+                lPeriod,
+                NULL
+                );
 
-    if (!NT_SUCCESS(Status))
-    {
+    if ( !NT_SUCCESS(Status) ) {
         if (ActivationBlock != NULL)
             BasepFreeActivationContextActivationBlock(ActivationBlock);
         BaseSetLastNTError(Status);
         return FALSE;
-    }
-    else
-    {
-        if (Status == STATUS_TIMER_RESUME_IGNORED)
-        {
+    } else {
+        if ( Status == STATUS_TIMER_RESUME_IGNORED ) {
             SetLastError(ERROR_NOT_SUPPORTED);
-        }
-        else
-        {
+        } else {
             SetLastError(ERROR_SUCCESS);
         }
         return TRUE;
     }
 }
 
-BOOL WINAPI CancelWaitableTimer(HANDLE hTimer)
+BOOL
+WINAPI
+CancelWaitableTimer(
+    HANDLE hTimer
+    )
 {
     NTSTATUS Status;
-
+    
     Status = NtCancelTimer(hTimer, NULL);
-    if (!NT_SUCCESS(Status))
-    {
+    if ( !NT_SUCCESS(Status) ) {
         BaseSetLastNTError(Status);
         return FALSE;
-    }
-    else
-    {
+        }
+    else {
         return TRUE;
-    }
+        }
 }

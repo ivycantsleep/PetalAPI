@@ -22,33 +22,39 @@ Revision History:
 
 DWORD g_dwLastErrorToBreakOn = ERROR_SUCCESS;
 
-UINT GetErrorMode()
+UINT
+GetErrorMode()
 {
 
     UINT PreviousMode;
     NTSTATUS Status;
 
-    Status = NtQueryInformationProcess(NtCurrentProcess(), ProcessDefaultHardErrorMode, (PVOID)&PreviousMode,
-                                       sizeof(PreviousMode), NULL);
-    if (!NT_SUCCESS(Status))
-    {
+    Status = NtQueryInformationProcess(
+                NtCurrentProcess(),
+                ProcessDefaultHardErrorMode,
+                (PVOID) &PreviousMode,
+                sizeof(PreviousMode),
+                NULL
+                );
+    if ( !NT_SUCCESS(Status) ) {
         BaseSetLastNTError(Status);
         return 0;
-    }
+        }
 
-    if (PreviousMode & 1)
-    {
+    if (PreviousMode & 1) {
         PreviousMode &= ~SEM_FAILCRITICALERRORS;
-    }
-    else
-    {
+        }
+    else {
         PreviousMode |= SEM_FAILCRITICALERRORS;
-    }
+        }
     return PreviousMode;
 }
 
 
-UINT SetErrorMode(UINT uMode)
+UINT
+SetErrorMode(
+    UINT uMode
+    )
 {
 
     UINT PreviousMode;
@@ -57,14 +63,12 @@ UINT SetErrorMode(UINT uMode)
     PreviousMode = GetErrorMode();
 
     NewMode = uMode;
-    if (NewMode & SEM_FAILCRITICALERRORS)
-    {
+    if (NewMode & SEM_FAILCRITICALERRORS ) {
         NewMode &= ~SEM_FAILCRITICALERRORS;
-    }
-    else
-    {
+        }
+    else {
         NewMode |= SEM_FAILCRITICALERRORS;
-    }
+        }
 
     //
     // Once SEM_NOALIGNMENTFAULTEXCEPT has been enabled for a given
@@ -73,16 +77,21 @@ UINT SetErrorMode(UINT uMode)
 
     NewMode |= (PreviousMode & SEM_NOALIGNMENTFAULTEXCEPT);
 
-    if (NT_SUCCESS(
-            NtSetInformationProcess(NtCurrentProcess(), ProcessDefaultHardErrorMode, (PVOID)&NewMode, sizeof(NewMode))))
-    {
-    }
+    if ( NT_SUCCESS(NtSetInformationProcess(
+                        NtCurrentProcess(),
+                        ProcessDefaultHardErrorMode,
+                        (PVOID) &NewMode,
+                        sizeof(NewMode)
+                        ) ) ){
+        }
 
-    return (PreviousMode);
+    return( PreviousMode );
 }
 
 DWORD
-GetLastError(VOID)
+GetLastError(
+    VOID
+    )
 
 /*++
 
@@ -111,7 +120,10 @@ Return Value:
     return (DWORD)NtCurrentTeb()->LastErrorValue;
 }
 
-VOID SetLastError(DWORD dwErrCode)
+VOID
+SetLastError(
+    DWORD dwErrCode
+    )
 
 /*++
 
@@ -149,21 +161,22 @@ Return Value:
 {
     PTEB Teb = NtCurrentTeb();
 
-    if ((g_dwLastErrorToBreakOn != ERROR_SUCCESS) && (dwErrCode == g_dwLastErrorToBreakOn))
-    {
+    if ((g_dwLastErrorToBreakOn != ERROR_SUCCESS) &&
+        (dwErrCode == g_dwLastErrorToBreakOn)) {
         DbgBreakPoint();
     }
 
     // make write breakpoints to this field more meaningful by only writing to it when
     // the value changes.
-    if (Teb->LastErrorValue != dwErrCode)
-    {
+    if (Teb->LastErrorValue != dwErrCode) {
         Teb->LastErrorValue = dwErrCode;
     }
 }
 
 ULONG
-BaseSetLastNTError(IN NTSTATUS Status)
+BaseSetLastNTError(
+    IN NTSTATUS Status
+    )
 
 /*++
 
@@ -187,15 +200,19 @@ Return Value:
 {
     ULONG dwErrorCode;
 
-    dwErrorCode = RtlNtStatusToDosError(Status);
-    SetLastError(dwErrorCode);
-    return (dwErrorCode);
+    dwErrorCode = RtlNtStatusToDosError( Status );
+    SetLastError( dwErrorCode );
+    return( dwErrorCode );
 }
 
 HANDLE
 WINAPI
-CreateIoCompletionPort(HANDLE FileHandle, HANDLE ExistingCompletionPort, ULONG_PTR CompletionKey,
-                       DWORD NumberOfConcurrentThreads)
+CreateIoCompletionPort(
+    HANDLE FileHandle,
+    HANDLE ExistingCompletionPort,
+    ULONG_PTR CompletionKey,
+    DWORD NumberOfConcurrentThreads
+    )
 
 /*++
 
@@ -268,35 +285,39 @@ Return Value:
     FILE_COMPLETION_INFORMATION CompletionInfo;
 
     Port = ExistingCompletionPort;
-    if (!ARGUMENT_PRESENT(ExistingCompletionPort))
-    {
-        Status = NtCreateIoCompletion(&Port, IO_COMPLETION_ALL_ACCESS, NULL, NumberOfConcurrentThreads);
-        if (!NT_SUCCESS(Status))
-        {
+    if ( !ARGUMENT_PRESENT(ExistingCompletionPort) ) {
+        Status = NtCreateIoCompletion (
+                    &Port,
+                    IO_COMPLETION_ALL_ACCESS,
+                    NULL,
+                    NumberOfConcurrentThreads
+                    );
+        if ( !NT_SUCCESS(Status) ) {
             BaseSetLastNTError(Status);
             return NULL;
+            }
         }
-    }
 
-    if (FileHandle != INVALID_HANDLE_VALUE)
-    {
+    if ( FileHandle != INVALID_HANDLE_VALUE ) {
         CompletionInfo.Port = Port;
         CompletionInfo.Key = (PVOID)CompletionKey;
 
-        Status =
-            NtSetInformationFile(FileHandle, &IoSb, &CompletionInfo, sizeof(CompletionInfo), FileCompletionInformation);
-        if (!NT_SUCCESS(Status))
-        {
+        Status = NtSetInformationFile(
+                    FileHandle,
+                    &IoSb,
+                    &CompletionInfo,
+                    sizeof(CompletionInfo),
+                    FileCompletionInformation
+                    );
+        if ( !NT_SUCCESS(Status) ) {
             BaseSetLastNTError(Status);
-            if (!ARGUMENT_PRESENT(ExistingCompletionPort))
-            {
+            if ( !ARGUMENT_PRESENT(ExistingCompletionPort) ) {
                 NtClose(Port);
-            }
+                }
             return NULL;
+            }
         }
-    }
-    else
-    {
+    else {
 
         //
         // file handle is INVALID_HANDLE_VALUE. Usually this is
@@ -306,18 +327,23 @@ Return Value:
         // specified and fail if it is
         //
 
-        if (ARGUMENT_PRESENT(ExistingCompletionPort))
-        {
+        if ( ARGUMENT_PRESENT(ExistingCompletionPort) ) {
             Port = NULL;
             BaseSetLastNTError(STATUS_INVALID_PARAMETER);
+            }
         }
-    }
 
     return Port;
 }
 
-BOOL WINAPI PostQueuedCompletionStatus(HANDLE CompletionPort, DWORD dwNumberOfBytesTransferred,
-                                       ULONG_PTR dwCompletionKey, LPOVERLAPPED lpOverlapped)
+BOOL
+WINAPI
+PostQueuedCompletionStatus(
+    HANDLE CompletionPort,
+    DWORD dwNumberOfBytesTransferred,
+    ULONG_PTR dwCompletionKey,
+    LPOVERLAPPED lpOverlapped
+    )
 
 /*++
 
@@ -357,19 +383,31 @@ Return Value:
     BOOL rv;
 
     rv = TRUE;
-    Status = NtSetIoCompletion(CompletionPort, (PVOID)dwCompletionKey, (PVOID)lpOverlapped, STATUS_SUCCESS,
-                               dwNumberOfBytesTransferred);
-    if (!NT_SUCCESS(Status))
-    {
+    Status = NtSetIoCompletion(
+                CompletionPort,
+                (PVOID)dwCompletionKey,
+                (PVOID)lpOverlapped,
+                STATUS_SUCCESS,
+                dwNumberOfBytesTransferred
+                );
+    if ( !NT_SUCCESS(Status) ) {
         BaseSetLastNTError(Status);
         rv = FALSE;
-    }
+        }
     return rv;
 }
 
 
-BOOL WINAPI GetQueuedCompletionStatus(HANDLE CompletionPort, LPDWORD lpNumberOfBytesTransferred,
-                                      PULONG_PTR lpCompletionKey, LPOVERLAPPED *lpOverlapped, DWORD dwMilliseconds)
+
+BOOL
+WINAPI
+GetQueuedCompletionStatus(
+    HANDLE CompletionPort,
+    LPDWORD lpNumberOfBytesTransferred,
+    PULONG_PTR lpCompletionKey,
+    LPOVERLAPPED *lpOverlapped,
+    DWORD dwMilliseconds
+    )
 
 /*++
 
@@ -460,42 +498,49 @@ Return Value:
     BOOL rv;
 
 
-    pTimeOut = BaseFormatTimeOut(&TimeOut, dwMilliseconds);
-    Status = NtRemoveIoCompletion(CompletionPort, (PVOID *)lpCompletionKey, (PVOID *)&LocalOverlapped, &IoSb, pTimeOut);
+    pTimeOut = BaseFormatTimeOut(&TimeOut,dwMilliseconds);
+    Status = NtRemoveIoCompletion(
+                CompletionPort,
+                (PVOID *)lpCompletionKey,
+                (PVOID *)&LocalOverlapped,
+                &IoSb,
+                pTimeOut
+                );
 
-    if (!NT_SUCCESS(Status) || Status == STATUS_TIMEOUT)
-    {
+    if ( !NT_SUCCESS(Status) || Status == STATUS_TIMEOUT ) {
         *lpOverlapped = NULL;
-        if (Status == STATUS_TIMEOUT)
-        {
+        if ( Status == STATUS_TIMEOUT ) {
             SetLastError(WAIT_TIMEOUT);
-        }
-        else
-        {
+            }
+        else {
             BaseSetLastNTError(Status);
-        }
+            }
         rv = FALSE;
-    }
-    else
-    {
+        }
+    else {
         *lpOverlapped = LocalOverlapped;
 
         *lpNumberOfBytesTransferred = (DWORD)IoSb.Information;
 
-        if (!NT_SUCCESS(IoSb.Status))
-        {
-            BaseSetLastNTError(IoSb.Status);
+        if ( !NT_SUCCESS(IoSb.Status) ){
+            BaseSetLastNTError( IoSb.Status );
             rv = FALSE;
-        }
-        else
-        {
+            }
+        else {
             rv = TRUE;
+            }
         }
-    }
     return rv;
 }
 
-BOOL WINAPI GetOverlappedResult(HANDLE hFile, LPOVERLAPPED lpOverlapped, LPDWORD lpNumberOfBytesTransferred, BOOL bWait)
+BOOL
+WINAPI
+GetOverlappedResult(
+    HANDLE hFile,
+    LPOVERLAPPED lpOverlapped,
+    LPDWORD lpNumberOfBytesTransferred,
+    BOOL bWait
+    )
 
 /*++
 
@@ -542,39 +587,36 @@ Return Value:
     // default (file handle) used?
     //
 
-    if (lpOverlapped->Internal == (DWORD)STATUS_PENDING)
-    {
-        if (bWait)
-        {
-            WaitReturn = WaitForSingleObject((lpOverlapped->hEvent != NULL) ? lpOverlapped->hEvent : hFile, INFINITE);
-        }
-        else
-        {
+    if (lpOverlapped->Internal == (DWORD)STATUS_PENDING ) {
+        if ( bWait ) {
+            WaitReturn = WaitForSingleObject(
+                            ( lpOverlapped->hEvent != NULL ) ?
+                                lpOverlapped->hEvent : hFile,
+                            INFINITE
+                            );
+            }
+        else {
             WaitReturn = WAIT_TIMEOUT;
-        }
+            }
 
-        if (WaitReturn == WAIT_TIMEOUT)
-        {
+        if ( WaitReturn == WAIT_TIMEOUT ) {
             //  !bWait and event in not signalled state
-            SetLastError(ERROR_IO_INCOMPLETE);
+            SetLastError( ERROR_IO_INCOMPLETE );
             return FALSE;
-        }
+            }
 
-        if (WaitReturn != 0)
-        {
-            return FALSE; // WaitForSingleObject calls BaseSetLastError
+        if ( WaitReturn != 0 ) {
+             return FALSE;    // WaitForSingleObject calls BaseSetLastError
+             }
         }
-    }
 
     *lpNumberOfBytesTransferred = (DWORD)lpOverlapped->InternalHigh;
 
-    if (NT_SUCCESS((NTSTATUS)lpOverlapped->Internal))
-    {
+    if ( NT_SUCCESS((NTSTATUS)lpOverlapped->Internal) ){
         return TRUE;
-    }
-    else
-    {
-        BaseSetLastNTError((NTSTATUS)lpOverlapped->Internal);
+        }
+    else {
+        BaseSetLastNTError( (NTSTATUS)lpOverlapped->Internal );
         return FALSE;
-    }
+        }
 }

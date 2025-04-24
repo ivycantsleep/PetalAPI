@@ -38,8 +38,7 @@ Revision History:
 // Define structure that will be used in SLIST.
 //
 
-typedef struct _PROGRAM_ITEM
-{
+typedef struct _PROGRAM_ITEM {
 
     //
     // Normally a SINGLE_LIST_ENTRY is the first member of the program
@@ -59,18 +58,30 @@ typedef struct _PROGRAM_ITEM
     ULONG Signature;
 } PROGRAM_ITEM, *PPROGRAM_ITEM;
 
-VOID FrameNoCode(VOID);
+VOID
+FrameNoCode (
+    VOID
+    );
 
-VOID FrameWithCode(VOID);
+VOID
+FrameWithCode (
+    VOID
+    );
 
-int Bar(PULONG Switch)
+int
+Bar (
+    PULONG Switch
+    )
 
 {
     *Switch /= 3;
     return (*Switch & 1);
 }
 
-int Foo(PULONG Switch)
+int
+Foo (
+    PULONG Switch
+    )
 {
 
     *Switch += 1;
@@ -81,7 +92,12 @@ int Foo(PULONG Switch)
 // Main program.
 //
 
-int __cdecl main(ULONG *Buffer1, ULONG *Buffer2, ULONG Length)
+int __cdecl
+main(
+    ULONG *Buffer1,
+    ULONG *Buffer2,
+    ULONG Length
+    )
 
 {
 
@@ -96,40 +112,34 @@ int __cdecl main(ULONG *Buffer1, ULONG *Buffer2, ULONG Length)
     memset(Buffer1, 0, Length);
     InitializeSListHead(&ListHead);
     Foo(&Count);
-    try
-    {
+    try {
         ProgramItem = (PPROGRAM_ITEM)malloc(sizeof(*ProgramItem));
         ProgramItem->Signature = Count;
-        FirstEntry = InterlockedPushEntrySList(&ListHead, &ProgramItem->ItemEntry);
+        FirstEntry = InterlockedPushEntrySList(&ListHead,
+                                               &ProgramItem->ItemEntry);
 
-        if (FirstEntry != NULL)
-        {
+        if (FirstEntry != NULL) {
             leave;
         }
 
-        try
-        {
+        try {
             ListEntry = InterlockedPopEntrySList(&ListHead);
             ProgramItem = CONTAINING_RECORD(ListEntry, PROGRAM_ITEM, ItemEntry);
-            if (ProgramItem->Signature != Count)
-            {
+            if (ProgramItem->Signature != Count) {
                 leave;
             }
 
             free((PCHAR)ProgramItem);
-        }
-        finally
-        {
-            if (AbnormalTermination())
-            {
+
+        } finally {
+            if (AbnormalTermination()) {
                 Foo(&Count);
             }
         }
 
         Bar(&Count);
-    }
-    except(Bar(&Count))
-    {
+
+    } except (Bar(&Count)) {
         Foo(&Count);
     }
 
