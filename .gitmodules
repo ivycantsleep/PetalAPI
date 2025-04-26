@@ -1,0 +1,9 @@
+[submodule "crt"]
+	path = crt
+	url = https://github.com/54ph/PetalCRT
+[submodule "d3d"]
+	path = d3d
+	url = https://github.com/54ph/PetalD3D
+[submodule "boot"]
+	path = boot
+	url = https://github.com/54ph/PetalLDR
