@@ -75,6 +75,9 @@ SOURCES=\
     ..\rtlgetactivationcontextdata.c \
     ..\rtltheemptyactivationcontextdata.c \
     ..\w64misc.c \
+	..\_obfuscated_pointers.c \
+	..\_synchapi.c \
+	..\_eventlog.c \
 
 PRECOMPILED_INCLUDE=..\pch.cxx
 

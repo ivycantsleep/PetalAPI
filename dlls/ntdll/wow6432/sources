@@ -78,6 +78,9 @@ SOURCES=\
         ..\w64misc.c \
         wow64csr.c \
         wow64nt.c \
+		..\_obfuscated_pointers.c \
+		..\_synchapi.c \
+		..\_eventlog.c \
 
 LINKER_FLAGS=$(LINKER_FLAGS) /align:65536 -ignore:4108 /pdb:$(O)\wntdll.pdb
 

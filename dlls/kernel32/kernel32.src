@@ -973,9 +973,9 @@ EXPORTS
 
 #elif defined(_X86_)
 
-    SetHandleContext        PRIVATE             ; Exported for Win9x compat
-    GetHandleContext        PRIVATE             ; Exported for Win9x compat
-    CreateSocketHandle      PRIVATE             ; Exported for Win9x compat
+    SetHandleContext        PRIVATE             // Exported for Win9x compat
+    GetHandleContext        PRIVATE             // Exported for Win9x compat
+    CreateSocketHandle      PRIVATE             // Exported for Win9x compat
 
 #endif
 
@@ -1053,3 +1053,84 @@ EXPORTS
 
 // Application compatibility infrastructure availability check
     BaseIsAppcompatInfrastructureDisabled = IsShimInfrastructureDisabled PRIVATE
+
+// Changes for WindowsXP+
+
+	InitializeSRWLock = NTDLL.RtlInitializeSRWLock
+    AcquireSRWLockExclusive = NTDLL.RtlAcquireSRWLockExclusive
+	AcquireSRWLockShared = NTDLL.RtlAcquireSRWLockShared
+	TryAcquireSRWLockExclusive = NTDLL.RtlTryAcquireSRWLockExclusive
+	ReleaseSRWLockExclusive = NTDLL.RtlReleaseSRWLockExclusive
+	ReleaseSRWLockShared = NTDLL.RtlReleaseSRWLockShared
+	
+	InitializeCriticalSectionEx = NTDLL.RtlInitializeCriticalSectionEx
+	
+	CreateMutexExA
+	CreateMutexExW
+	
+	CreateEventExW
+	
+	CreateSemaphoreExW
+	
+	CreateThreadpoolTimer
+//	CloseThreadpoolTimer
+	
+	DecodePointer = NTDLL.RtlDecodePointer
+	EncodePointer = NTDLL.RtlEncodePointer
+	
+	VirtualProtect
+	VirtualProtectEx
+	
+	CompareStringEx
+	CompareStringOrdinal
+
+	FindNLSString
+	FindNLSStringEx
+	FindStringOrdinal
+	
+	LocaleNameToLCID
+	LCIDToLocaleName
+	IsValidLocaleName
+	
+	QueryFullProcessImageNameA
+	QueryFullProcessImageNameW
+	
+	RegisterApplicationRestart
+	ApplicationRecoveryInProgress
+	ApplicationRecoveryFinished
+	RegisterApplicationRecoveryCallback
+	UnregisterApplicationRecoveryCallback
+	
+	CreateThreadpoolTimer
+	SetThreadpoolTimer
+	CloseThreadpoolTimer
+	WaitForThreadpoolTimerCallbacks
+	
+	ResolveDelayLoadedAPI
+	
+	GetFileInformationByHandleEx
+	GetFinalPathNameByHandle = GetFinalPathNameByHandleW
+	GetFinalPathNameByHandleA
+	GetFinalPathNameByHandleW
+	
+	GetTickCount64
+	
+	GetActiveProcessorCount
+	GetLogicalProcessorInformationEx
+	
+	InitializeProcThreadAttributeList
+	UpdateProcThreadAttribute
+	DeleteProcThreadAttributeList
+	
+	CreateSymbolicLinkW
+	
+	GetErrorMode
+	SetErrorMode
+	
+	InitializeConditionVariable = NTDLL.RtlInitializeConditionVariable
+	WakeByAddressAll = NTDLL.RtlWakeByAddressAll
+	WakeAllConditionVariable = NTDLL.RtlWakeAllConditionVariable
+	WakeConditionVariable = NTDLL.RtlWakeConditionVariable
+	
+	RunOnceExecuteOnce=NTDLL.RtlRunOnceExecuteOnce
+	RunOnceComplete=NTDLL.RtlRunOnceComplete

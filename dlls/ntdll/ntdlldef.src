@@ -852,3 +852,31 @@ EXPORTS
     EtwpSetHWConfigFunction
 
     NtGetTickCount = RtlGetTickCount
+
+	RtlEncodePointer
+	RtlDecodePointer
+	
+	EtwEventRegister
+	EtwEventUnregister
+	EtwEventWrite
+	EtwEventWriteTransfer
+	EtwEventWriteEx
+	EtwEventSetInformation
+	
+	RtlInitializeConditionVariable
+	RtlWakeByAddressAll
+	RtlWakeAllConditionVariable
+	RtlWakeConditionVariable
+	
+	RtlInitializeSRWLock
+    RtlAcquireSRWLockExclusive
+	RtlAcquireSRWLockShared
+	RtlTryAcquireSRWLockExclusive
+	RtlReleaseSRWLockExclusive
+	RtlReleaseSRWLockShared
+	
+	RtlInitializeCriticalSectionEx
+	
+	RtlRunOnceExecuteOnce
+	RtlRunOnceComplete
+	
