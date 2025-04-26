@@ -597,7 +597,7 @@ NTSTATUS LOCAL PutIntObjData(PCTXT pctxt, POBJDATA pdataObj, ULONG dwData)
 
     MEMZERO(&data, sizeof(OBJDATA));
     data.dwDataType = OBJTYPE_INTDATA;
-    data.uipDataValue = (ULONG_PTR)dwData;
+    data.dwDataValue = (ULONG)dwData;
 
     rc = WriteObject(pctxt, pdataObj, &data);
 
@@ -830,7 +830,7 @@ NTSTATUS LOCAL CopyObjBuffer(PUCHAR pbBuff, ULONG dwLen, POBJDATA pdata)
     switch (pdata->dwDataType)
     {
         case OBJTYPE_INTDATA:
-            pb = (PUCHAR)&pdata->uipDataValue;
+            pb = (PUCHAR)&pdata->dwDataValue;
             dwcb = sizeof(ULONG);
             break;
 
@@ -1331,6 +1331,17 @@ NTSTATUS LOCAL ValidateArgTypes(POBJDATA pArgs, PSZ pszExpectedTypes)
                 {
                     rc = AMLI_LOGERR(AMLIERR_UNEXPECTED_ARGTYPE,
                                      ("ValidateArgTypes: expected Arg%d to be type reference (Type=%s)",
+                                      i,
+                                      GetObjectTypeName(pArgs[i].dwDataType)));
+                }
+                break;
+
+            case ARGOBJ_STRBUFDATA:
+                if ((pArgs[i].dwDataType != OBJTYPE_STRDATA) &&
+                    (pArgs[i].dwDataType != OBJTYPE_BUFFDATA))
+                {
+                    rc = AMLI_LOGERR(AMLIERR_UNEXPECTED_OBJTYPE,
+                                     ("ValidateArgTypes: expected Arg%d to be type str/buff (Type=%s)",
                                       i,
                                       GetObjectTypeName(pArgs[i].dwDataType)));
                 }

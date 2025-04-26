@@ -30,7 +30,9 @@
 NTSTATUS LOCAL ParseScope(PCTXT pctxt, PSCOPE pscope, NTSTATUS rc)
 {
     TRACENAME("PARSESCOPE")
-    ULONG dwStage = ((rc == STATUS_SUCCESS) || (rc == AMLISTA_BREAK))?
+    ULONG dwStage = ((rc == STATUS_SUCCESS) ||
+                     (rc == AMLISTA_BREAK)  ||
+                     (rc == AMLISTA_CONTINUEOP))?
                     (pscope->FrameHdr.dwfFrame & FRAMEF_STAGE_MASK): 2;
 
     ENTER(2, ("ParseScope(Stage=%d,pctxt=%p,pbOp=%p,pscope=%p,rc=%x)\n",
@@ -67,9 +69,20 @@ NTSTATUS LOCAL ParseScope(PCTXT pctxt, PSCOPE pscope, NTSTATUS rc)
             if (rc == AMLISTA_BREAK)
             {
                 pctxt->pbOp = pscope->pbOpEnd;
-                rc = STATUS_SUCCESS;
-            }
-            else
+
+                pscope->pbOpRet = pscope->pbOpEnd;
+                if (pscope->FrameHdr.dwfFrame & CALLF_ACQ_MUTEX) {  // test byte ptr [esi+0Ah], 2
+                    rc = STATUS_SUCCESS;
+                }
+            } else
+            if (rc == AMLISTA_CONTINUEOP)
+            {
+                pctxt->pbOp = pscope->pbOpEnd;
+
+                if (pscope->FrameHdr.dwfFrame & CALLF_ACQ_MUTEX) {  // test byte ptr [esi+0Ah], 2
+                    rc = STATUS_SUCCESS;
+                }
+            } else
             {
                 while (pctxt->pbOp < pscope->pbOpEnd)
                 {
@@ -113,7 +126,19 @@ NTSTATUS LOCAL ParseScope(PCTXT pctxt, PSCOPE pscope, NTSTATUS rc)
                 if (rc == AMLISTA_BREAK)
                 {
                     pctxt->pbOp = pscope->pbOpEnd;
-                    rc = STATUS_SUCCESS;
+
+                    pscope->pbOpRet = pscope->pbOpEnd;
+                    if (pscope->FrameHdr.dwfFrame & CALLF_ACQ_MUTEX) {  // test byte ptr [esi+0Ah], 2
+                        rc = STATUS_SUCCESS;
+                    }
+                }
+                else if (rc == AMLISTA_CONTINUEOP)
+                {
+                    pctxt->pbOp = pscope->pbOpEnd;
+
+                    if (pscope->FrameHdr.dwfFrame & CALLF_ACQ_MUTEX) {  // test byte ptr [esi+0Ah], 2
+                        rc = STATUS_SUCCESS;
+                    }
                 }
                 else if ((rc == AMLISTA_PENDING) ||
                          (&pscope->FrameHdr !=
@@ -723,12 +748,12 @@ NTSTATUS LOCAL ParseAcquire(PCTXT pctxt, PACQUIRE pacq, NTSTATUS rc)
                     pacq->pdataResult->dwDataType = OBJTYPE_INTDATA;
                     if (rc == AMLISTA_TIMEOUT)
                     {
-                        pacq->pdataResult->uipDataValue = DATAVALUE_ONES;
+                        pacq->pdataResult->dwDataValue = DATAVALUE_ONES;
                         rc = STATUS_SUCCESS;
                     }
                     else
                     {
-                        pacq->pdataResult->uipDataValue = DATAVALUE_ZERO;
+                        pacq->pdataResult->dwDataValue = DATAVALUE_ZERO;
                     }
                 }
             }
@@ -1233,12 +1258,12 @@ NTSTATUS LOCAL ParseIntObj(PUCHAR *ppbOp, POBJDATA pdataResult, BOOLEAN fErrOK)
     bOp = **ppbOp;
     (*ppbOp)++;
     pdataResult->dwDataType = OBJTYPE_INTDATA;
-    pdataResult->uipDataValue = 0;
+    pdataResult->dwDataValue = 0;
 
     switch (bOp)
     {
         case OP_ZERO:
-            pdataResult->uipDataValue = DATAVALUE_ZERO;
+            pdataResult->dwDataValue = DATAVALUE_ZERO;
           #ifdef DEBUGGER
             if (gDebugger.dwfDebugger &
                 (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
@@ -1249,7 +1274,7 @@ NTSTATUS LOCAL ParseIntObj(PUCHAR *ppbOp, POBJDATA pdataResult, BOOLEAN fErrOK)
             break;
 
         case OP_ONE:
-            pdataResult->uipDataValue = DATAVALUE_ONE;
+            pdataResult->dwDataValue = DATAVALUE_ONE;
           #ifdef DEBUGGER
             if (gDebugger.dwfDebugger &
                 (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
@@ -1260,7 +1285,7 @@ NTSTATUS LOCAL ParseIntObj(PUCHAR *ppbOp, POBJDATA pdataResult, BOOLEAN fErrOK)
             break;
 
         case OP_ONES:
-            pdataResult->uipDataValue = DATAVALUE_ONES;
+            pdataResult->dwDataValue = DATAVALUE_ONES;
           #ifdef DEBUGGER
             if (gDebugger.dwfDebugger &
                 (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
@@ -1271,7 +1296,7 @@ NTSTATUS LOCAL ParseIntObj(PUCHAR *ppbOp, POBJDATA pdataResult, BOOLEAN fErrOK)
             break;
 
         case OP_REVISION:
-            pdataResult->uipDataValue = AMLI_REVISION;
+            pdataResult->dwDataValue = AMLI_REVISION;
           #ifdef DEBUGGER
             if (gDebugger.dwfDebugger &
                 (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
@@ -1282,37 +1307,49 @@ NTSTATUS LOCAL ParseIntObj(PUCHAR *ppbOp, POBJDATA pdataResult, BOOLEAN fErrOK)
             break;
 
         case OP_BYTE:
-            MEMCPY(&pdataResult->uipDataValue, *ppbOp, sizeof(UCHAR));
+            MEMCPY(&pdataResult->dwDataValue, *ppbOp, sizeof(UCHAR));
             (*ppbOp) += sizeof(UCHAR);
           #ifdef DEBUGGER
             if (gDebugger.dwfDebugger &
                 (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
             {
-                PRINTF("0x%x", pdataResult->uipDataValue);
+                PRINTF("0x%x", pdataResult->dwDataValue);
             }
           #endif
             break;
 
         case OP_WORD:
-            MEMCPY(&pdataResult->uipDataValue, *ppbOp, sizeof(USHORT));
+            MEMCPY(&pdataResult->dwDataValue, *ppbOp, sizeof(USHORT));
             (*ppbOp) += sizeof(USHORT);
           #ifdef DEBUGGER
             if (gDebugger.dwfDebugger &
                 (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
             {
-                PRINTF("0x%x", pdataResult->uipDataValue);
+                PRINTF("0x%x", pdataResult->dwDataValue);
             }
           #endif
             break;
 
         case OP_DWORD:
-            MEMCPY(&pdataResult->uipDataValue, *ppbOp, sizeof(ULONG));
+            MEMCPY(&pdataResult->dwDataValue, *ppbOp, sizeof(ULONG));
             (*ppbOp) += sizeof(ULONG);
           #ifdef DEBUGGER
             if (gDebugger.dwfDebugger &
                 (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
             {
-                PRINTF("0x%x", pdataResult->uipDataValue);
+                PRINTF("0x%x", pdataResult->dwDataValue);
+            }
+          #endif
+            break;
+
+        case OP_QWORD:
+            MEMCPY(&pdataResult->dwDataValue, *ppbOp, sizeof(ULONG));  // ignores high 4 bytes
+            (*ppbOp) += sizeof(ULONG64);
+          #ifdef DEBUGGER
+            if (gDebugger.dwfDebugger &
+                (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+            {
+                PRINTF("0x%x", pdataResult->dwDataValue);
             }
           #endif
             break;
@@ -1332,7 +1369,7 @@ NTSTATUS LOCAL ParseIntObj(PUCHAR *ppbOp, POBJDATA pdataResult, BOOLEAN fErrOK)
     }
 
     EXIT(2, ("ParseIntObj=%x (pbOp=%x,Value=%x)\n",
-             rc, *ppbOp, pdataResult->uipDataValue));
+             rc, *ppbOp, pdataResult->dwDataValue));
     return rc;
 }       //ParseIntObj
 
@@ -1650,8 +1687,8 @@ NTSTATUS LOCAL ParseInteger(PUCHAR *ppbOp, POBJDATA pdata, ULONG dwDataLen)
 
     ASSERT(pdata != NULL);
     pdata->dwDataType = OBJTYPE_INTDATA;
-    pdata->uipDataValue = 0;
-    MEMCPY(&pdata->uipDataValue, *ppbOp, dwDataLen);
+    pdata->dwDataValue = 0;
+    MEMCPY(&pdata->dwDataValue, *ppbOp, dwDataLen);
     (*ppbOp) += dwDataLen;
 
   #ifdef DEBUGGER
@@ -1660,12 +1697,12 @@ NTSTATUS LOCAL ParseInteger(PUCHAR *ppbOp, POBJDATA pdata, ULONG dwDataLen)
          (DBGF_AMLTRACE_ON | DBGF_STEP_MODES)))
 
     {
-        PRINTF("0x%x", pdata->uipDataValue);
+        PRINTF("0x%x", pdata->dwDataValue);
     }
   #endif
 
     EXIT(2, ("ParseInteger=%x (Value=%x,pbOp=%x)\n",
-             rc, pdata->uipDataValue, *ppbOp));
+             rc, pdata->dwDataValue, *ppbOp));
     return rc;
 }       //ParseInteger
 
@@ -1692,6 +1729,22 @@ NTSTATUS LOCAL ParseField(PCTXT pctxt, PNSOBJ pnsParent, PULONG pdwFieldFlags,
 
     ENTER(2, ("ParseField(pctxt=%x,pbOp=%x,pnsParent=%x,FieldFlags=%x,BitPos=%x)\n",
               pctxt, pctxt->pbOp, pnsParent, *pdwFieldFlags, *pdwBitPos));
+              
+    // Connection Field, skip Connection() and jump to field definition
+    if (*pctxt->pbOp == 0x02) {
+        PUCHAR pbOp = pctxt->pbOp + 1;
+
+        if (*pbOp == 0x11) {                            // BufferOp()
+            ULONG dwcbBits;
+            pbOp++;
+            dwcbBits = ParsePackageLen(&pbOp, NULL);
+            pctxt->pbOp += 2;           // 0x02, 0x11, [Buffer]
+            pctxt->pbOp += dwcbBits;    // Buffer len
+        } else {                                        // NAMESEG
+            pctxt->pbOp += 1;           // 0x02, NAMESEG
+            pctxt->pbOp += 4;           // sizeof(NAMESEG)
+        }
+    }
 
     if (*pctxt->pbOp == 0x01)
     {

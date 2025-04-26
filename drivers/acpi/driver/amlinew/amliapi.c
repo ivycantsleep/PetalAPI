@@ -160,7 +160,7 @@ NTSTATUS AMLIAPI AMLIInitialize(ULONG dwCtxtBlkSize, ULONG dwGlobalHeapBlkSize,
                                              &pns, 0)) == STATUS_SUCCESS))
             {
                 pns->ObjData.dwDataType = OBJTYPE_INTDATA;
-                pns->ObjData.uipDataValue = AMLI_REVISION;
+                pns->ObjData.dwDataValue = AMLI_REVISION;
             }
 
             if ((rc == STATUS_SUCCESS) &&

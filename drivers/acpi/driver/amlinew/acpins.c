@@ -740,7 +740,7 @@ NTSTATUS LOCAL EvalPackageElement(PPACKAGEOBJ ppkg, int iPkgIndex,
 
     EXIT(3, ("EvalPackageElement=%x (Type=%s,Value=%x,Len=%d,Buff=%x)\n",
              rc, GetObjectTypeName(pdataResult->dwDataType),
-             pdataResult->uipDataValue, pdataResult->dwDataLen,
+             pdataResult->dwDataValue, pdataResult->dwDataLen,
              pdataResult->pbDataBuff));
     return rc;
 }       //EvalPackageElement

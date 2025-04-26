@@ -18,7 +18,7 @@
 //
 #include <ntacpi.h>
 
-
+#include "arblib.h"
 #include "amlipriv.h"
 #include "ctxt.h"
 #include "data.h"

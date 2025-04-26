@@ -42,6 +42,7 @@ Module Name:
 #include "acpiterm.h"
 #include "acpiirp.h"
 #include "acpilog.h"
+#include "arblib.h"
 #include "acpiosnt.h"
 #include "..\nt\irqarb.h"
 

@@ -188,6 +188,22 @@ AMLTERM
     atToBCD         = {"ToBCD",           OP_TOBCD,       "CS",    C2, 0,  NULL, 0, ExprOp1},
     atWait          = {"Wait",            OP_WAIT,        "SC",    C2, 0,  NULL, 0, Wait},
     atXOr           = {"XOr",             OP_XOR,         "CCS",   C2, 0,  NULL, 0, ExprOp2},
+    
+    // ACPI 2.0
+    atToBuffer      = {"ToBuffer",        OP_TOBUFFER,    "CS",    C2, 0,  NULL, 0, ToBuffer},
+    atToDecString   = {"ToDecimalString", OP_TODECSTRING, "CS",    C2, 0,  NULL, 0, ToDecimalString},
+    atToHexString   = {"ToHexString",     OP_TOHEXSTRING, "CS",    C2, 0,  NULL, 0, ToHexString},
+    atToInteger     = {"ToInteger",       OP_TOINTEGER,   "CS",    C2, 0,  NULL, 0, ToInteger},
+    atQWordField    = {"CreateQWordField",       OP_QWORDFIELD,    "CCN",   OB, 0,  NULL, 0, CreateQWordField},
+    atConcatRes     = {"ConcatenateResTemplate", OP_CONCATRESTMPL, "CCS",   C2, 0,  NULL, 0, ConcatenateResTemplate},
+    atMod           = {"Mod",             OP_MOD,         "CCS",   C2, 0,  NULL, 0, ExprOp2},
+    atToString      = {"ToString",        OP_TOSTRING,    "CCS",   C2, 0,  NULL, 0, ToString},
+    atCopyObject    = {"CopyObject",      OP_COPYOBJECT,  "CS",    C2, 0,  NULL, 0, CopyObject},
+    atMid           = {"Mid",             OP_MID,         "CCCS",  C2, 0,  NULL, 0, MidString},
+    atContinue      = {"Continue",        OP_CONTINUE,    NULL,    C1, 0,  NULL, 0, Continue},
+    atTimer         = {"Timer",           OP_TIMER ,      NULL,    C2, 0,  NULL, 0, Timer},
+    // OP_QWORD=0xE - see atDataObj
+
     //
     // Misc. Opcodes
     //
@@ -206,7 +222,7 @@ PAMLTERM OpcodeTable[256] =
   //0x08                0x09                0x0a                0x0b
     &atName,            NULL,               &atDataObj,         &atDataObj,
   //0x0c                0x0d                0x0e                0x0f
-    &atDataObj,         &atString,          NULL,               NULL,
+    &atDataObj,         &atString,          &atDataObj,         NULL,
   //0x10                0x11                0x12                0x13
     &atScope,           &atBuffer,          &atPackage,         NULL,
   //0x14                0x15                0x16                0x17
@@ -266,19 +282,19 @@ PAMLTERM OpcodeTable[256] =
   //0x80                0x81                0x82                0x83
     &atNot,             &atFindSetLBit,     &atFindSetRBit,     &atDerefOf,
   //0x84                0x85                0x86                0x87
-    NULL,               NULL,               &atNotify,          &atSizeOf,
+    &atConcatRes,       &atMod,             &atNotify,          &atSizeOf,
   //0x88                0x89                0x8a                0x8b
     &atIndex,           &atMatch,           &atDWordField,      &atWordField,
   //0x8c                0x8d                0x8e                0x8f
-    &atByteField,       &atBitField,        &atObjType,         NULL,
+    &atByteField,       &atBitField,        &atObjType,         &atQWordField,
   //0x90                0x91                0x92                0x93
     &atLAnd,            &atLOr,             &atLNot,            &atLEq,
   //0x94                0x95                0x96                0x97
-    &atLG,              &atLL,              NULL,               NULL,
+    &atLG,              &atLL,              &atToBuffer,        &atToDecString,
   //0x98                0x99                0x9a                0x9b
-    NULL,               NULL,               NULL,               NULL,
+    &atToHexString,     &atToInteger,       NULL,               NULL,
   //0x9c                0x9d                0x9e                0x9f
-    NULL,               NULL,               NULL,               NULL,
+    &atToString,        &atCopyObject,      &atMid,             &atContinue,
   //0xa0                0xa1                0xa2                0xa3
     &atIf,              &atElse,            &atWhile,           &atNOP,
   //0xa4                0xa5                0xa6                0xa7
@@ -349,6 +365,7 @@ OPCODEMAP ExOpcodeTable[] =
     EXOP_REVISION,      &atDataObj,
     EXOP_DEBUG,         &atDebugObj,
     EXOP_FATAL,         &atFatal,
+    EXOP_TIMER,         &atTimer,
     EXOP_OPREGION,      &atOpRegion,
     EXOP_FIELD,         &atField,
     EXOP_DEVICE,        &atDevice,

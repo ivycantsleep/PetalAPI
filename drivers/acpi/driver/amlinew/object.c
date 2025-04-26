@@ -71,7 +71,7 @@ NTSTATUS LOCAL ReadObject(PCTXT pctxt, POBJDATA pdataObj, POBJDATA pdataResult)
 
     EXIT(3, ("ReadObject=%x (Type=%s,Value=%x,Buff=%x)\n",
              rc, GetObjectTypeName(pdataResult->dwDataType),
-             pdataResult->uipDataValue, pdataResult->pbDataBuff));
+             pdataResult->dwDataValue, pdataResult->pbDataBuff));
     return rc;
 }       //ReadObject
 
@@ -135,7 +135,7 @@ NTSTATUS LOCAL WriteObject(PCTXT pctxt, POBJDATA pdataObj, POBJDATA pdataSrc)
             break;
 
         case OBJTYPE_INTDATA:
-            rc = CopyObjBuffer((PUCHAR)&pdataObj->uipDataValue, sizeof(ULONG),
+            rc = CopyObjBuffer((PUCHAR)&pdataObj->dwDataValue, sizeof(ULONG),
                                pdataSrc);
             break;
 
@@ -157,7 +157,7 @@ NTSTATUS LOCAL WriteObject(PCTXT pctxt, POBJDATA pdataObj, POBJDATA pdataSrc)
 
     EXIT(3, ("WriteObject=%x (ObjType=%s,DataType=%x,Value=%x,Buff=%x)\n",
              rc, GetObjectTypeName(pdataObj->dwDataType), pdataSrc->dwDataType,
-             pdataSrc->uipDataValue, pdataSrc->pbDataBuff));
+             pdataSrc->dwDataValue, pdataSrc->pbDataBuff));
     return rc;
 }       //WriteObject
 
@@ -300,7 +300,7 @@ NTSTATUS LOCAL ReadField(PCTXT pctxt, POBJDATA pdataObj, PFIELDDESC pfd,
     ENTER(3, ("ReadField(pctxt=%x,pdataObj=%x,FieldDesc=%x,pdataResult=%x)\n",
               pctxt, pdataObj, pfd, pdataResult));
 
-    if ((pfd->dwFieldFlags & ACCTYPE_MASK) <= ACCTYPE_DWORD)
+    if ((pfd->dwFieldFlags & ACCTYPE_MASK) <= ACCTYPE_QWORD)
     {
         PUCHAR pb;
         ULONG dwcb;
@@ -309,10 +309,10 @@ NTSTATUS LOCAL ReadField(PCTXT pctxt, POBJDATA pdataObj, PFIELDDESC pfd,
         {
             case OBJTYPE_UNKNOWN:
                 if (!(pfd->dwFieldFlags & FDF_BUFFER_TYPE) &&
-                    (pfd->dwNumBits <= sizeof(ULONG)*8))
+                     (pfd->dwNumBits <= sizeof(ULONG64)*8))      // dwNumBits = 64 for QWORD field
                 {
                     pdataResult->dwDataType = OBJTYPE_INTDATA;
-                    pb = (PUCHAR)&pdataResult->uipDataValue;
+                    pb = (PUCHAR)&pdataResult->dwDataValue;
                     dwcb = sizeof(ULONG);
                 }
                 else
@@ -340,8 +340,8 @@ NTSTATUS LOCAL ReadField(PCTXT pctxt, POBJDATA pdataObj, PFIELDDESC pfd,
                 break;
 
             case OBJTYPE_INTDATA:
-                pb = (PUCHAR)&pdataResult->uipDataValue;
-                dwcb = sizeof(ULONG);
+                pb = (PUCHAR)&pdataResult->dwDataValue;
+                dwcb = sizeof(ULONG);   // acpi 2.0: sizeof(ULONG64)
                 break;
 
             case OBJTYPE_STRDATA:
@@ -410,7 +410,7 @@ NTSTATUS LOCAL WriteField(PCTXT pctxt, POBJDATA pdataObj, PFIELDDESC pfd,
     ENTER(3, ("WriteField(pctxt=%x,pdataObj=%x,FieldDesc=%x,pdataSrc=%x)\n",
               pctxt, pdataObj, pfd, pdataSrc));
 
-    if ((pfd->dwFieldFlags & ACCTYPE_MASK) <= ACCTYPE_DWORD)
+    if ((pfd->dwFieldFlags & ACCTYPE_MASK) <= ACCTYPE_QWORD)
     {
         PWRFIELDLOOP pwfl;
 
@@ -418,7 +418,7 @@ NTSTATUS LOCAL WriteField(PCTXT pctxt, POBJDATA pdataObj, PFIELDDESC pfd,
         {
             case OBJTYPE_INTDATA:
                 dwBuffSize = MIN(sizeof(ULONG), dwDataInc);
-                pbBuff = (PUCHAR)&pdataSrc->uipDataValue;
+                pbBuff = (PUCHAR)&pdataSrc->dwDataValue;
                 break;
 
             case OBJTYPE_STRDATA:
@@ -583,6 +583,8 @@ NTSTATUS LOCAL PushAccFieldObj(PCTXT pctxt, PFNPARSE pfnAcc, POBJDATA pdataObj,
  *  EXIT-FAILURE
  *      returns AMLIERR_ code
  */
+
+#ifdef _X86_
 
 NTSTATUS LOCAL ReadFieldObj(PCTXT pctxt, PACCFIELDOBJ pafo, NTSTATUS rc)
 {
@@ -844,6 +846,8 @@ NTSTATUS LOCAL WriteFieldObj(PCTXT pctxt, PACCFIELDOBJ pafo, NTSTATUS rc)
     return rc;
 }       //WriteFieldObj
 
+#endif // _X86_
+
 /***LP  RawFieldAccess - Find and call the RawAccess handler for the RegionSpace
  *
  *  ENTRY
@@ -976,6 +980,7 @@ NTSTATUS LOCAL RawFieldAccess(PCTXT pctxt, ULONG dwAccType, POBJDATA pdataObj,
  *  EXIT-FAILURE
  *      returns AMLIERR_ code
  */
+#ifdef _X86_
 
 NTSTATUS LOCAL AccessFieldData(PCTXT pctxt, POBJDATA pdataObj, PFIELDDESC pfd,
                                PULONG pdwData, BOOLEAN fRead)
@@ -1050,6 +1055,8 @@ NTSTATUS LOCAL AccessFieldData(PCTXT pctxt, POBJDATA pdataObj, PFIELDDESC pfd,
     EXIT(3, ("AccessFieldData=%x (Data=%x)\n", rc, pdwData? *pdwData: 0));
     return rc;
 }       //AccessFieldData
+
+#endif // _X86_
 
 /***LP  PushPreserveWriteObj - Push a PreserveWrObj frame on the stack
  *
@@ -1163,6 +1170,8 @@ NTSTATUS LOCAL PreserveWriteObj(PCTXT pctxt, PPRESERVEWROBJ ppwro, NTSTATUS rc)
  *  NOTE
  *      If pdwData is NULL, it implies a read access.
  */
+
+#ifdef _X86_
 
 NTSTATUS LOCAL AccessBaseField(PCTXT pctxt, PNSOBJ pnsBase, PFIELDDESC pfd,
                                PULONG pdwData, BOOLEAN fRead)
@@ -1302,6 +1311,8 @@ NTSTATUS LOCAL AccessBaseField(PCTXT pctxt, PNSOBJ pnsBase, PFIELDDESC pfd,
              rc, *pdwData, uipAddr, dwSize, dwDataMask, dwAccMask));
     return rc;
 }       //AccessBaseField
+
+#endif // _X86_
 
 /***LP  WriteCookAccess - do a region space write cook access
  *
@@ -1500,6 +1511,8 @@ NTSTATUS LOCAL WriteCookAccess(PCTXT pctxt, PWRCOOKACC pwca, NTSTATUS rc)
  *      returns AMLIERR_ code
  */
 
+#ifdef _X86_
+
 NTSTATUS LOCAL ReadBuffField(PBUFFFIELDOBJ pbf, PFIELDDESC pfd, PULONG pdwData)
 {
     TRACENAME("READBUFFFIELD")
@@ -1568,6 +1581,7 @@ NTSTATUS LOCAL WriteBuffField(PBUFFFIELDOBJ pbf, PFIELDDESC pfd, ULONG dwData)
     return rc;
 }       //WriteBuffField
 
+#endif // _X86_
 
 /***LP  ReadSystemMem - Read system memory
  *
@@ -1579,6 +1593,7 @@ NTSTATUS LOCAL WriteBuffField(PBUFFFIELDOBJ pbf, PFIELDDESC pfd, ULONG dwData)
  *  EXIT
  *      return memory content
  */
+#ifdef _X86_
 
 ULONG LOCAL ReadSystemMem(ULONG_PTR uipAddr, ULONG dwSize, ULONG dwMask)
 {
@@ -1748,7 +1763,7 @@ VOID LOCAL WriteSystemMem(ULONG_PTR uipAddr, ULONG dwSize, ULONG dwData,
     EXIT(3, ("WriteSystemMem!\n"));
 }       //WriteSystemMem
 
-
+#endif // _X86_
 
 /***LP  ReadSystemIO - Read system IO
  *
@@ -1909,7 +1924,7 @@ VOID LOCAL DumpObject(POBJDATA pdata, PSZ pszName, int iLevel)
 
         case OBJTYPE_INTDATA:
             PRINTF("Integer(%s:Value=0x%08x[%d])",
-                   pszName, pdata->uipDataValue, pdata->uipDataValue);
+                   pszName, pdata->dwDataValue, pdata->dwDataValue);
             break;
 
         case OBJTYPE_STRDATA:

@@ -45,7 +45,7 @@ NTSTATUS LOCAL Alias(PCTXT pctxt, PTERM pterm)
                                      &pterm->pnsObj, 0)) == STATUS_SUCCESS))
     {
         pterm->pnsObj->ObjData.dwDataType = OBJTYPE_OBJALIAS;
-        pterm->pnsObj->ObjData.uipDataValue = (ULONG_PTR)pnsSrc;
+        pterm->pnsObj->ObjData.pnsAlias = pnsSrc;
     }
 
     EXIT(2, ("Alias=%x (pnsObj=%x)\n", rc, pterm->pnsObj));

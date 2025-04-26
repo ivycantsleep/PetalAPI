@@ -1915,7 +1915,7 @@ LONG LOCAL DebugRunMethod(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
         else if (icArgs < MAX_NUM_ARGS)
         {
             MEMZERO(&Args[icArgs], sizeof(OBJDATA));
-            if (IsNumber(pszArg, 0, &Args[icArgs].uipDataValue))
+            if (IsNumber(pszArg, 0, (PULONG_PTR) &Args[icArgs].dwDataValue))
             {
                 Args[icArgs].dwDataType = OBJTYPE_INTDATA;
                 icArgs++;
@@ -2230,7 +2230,7 @@ VOID LOCAL PrintObject(POBJDATA pdata)
     switch (pdata->dwDataType)
     {
         case OBJTYPE_INTDATA:
-            PRINTF("0x%p", pdata->uipDataValue);
+            PRINTF("0x%p", pdata->dwDataValue);
             break;
 
         case OBJTYPE_STRDATA:
@@ -2260,7 +2260,7 @@ VOID LOCAL PrintObject(POBJDATA pdata)
         default:
             PRINTF("<Obj=%p,Type=%s,Value=0x%p,Buff=%p,Len=%d>",
                    pdata, GetObjectTypeName(pdata->dwDataType),
-                   pdata->uipDataValue, pdata->pbDataBuff, pdata->dwDataLen);
+                   pdata->dwDataValue, pdata->pbDataBuff, pdata->dwDataLen);
     }
 
     EXIT(4, ("PrintObject!\n"));

@@ -52,6 +52,7 @@ AmliTestDebugPrintFunc(
     PCCHAR DebugMessage,
     ...)
    {
+   int     index;
    va_list ap;
    va_start(ap, DebugMessage);
 
@@ -61,17 +62,16 @@ AmliTestDebugPrintFunc(
 
        
        
-      if(_vsnprintf(AmliTestDebugBuffer,
+      index = _vsnprintf(AmliTestDebugBuffer,
          200,
          DebugMessage, 
-         ap) < 0)
+         ap);
+      if(index == -1) 
       {
-          //
-          // _vsnprintf failed, don't print out anything.
-          //
-          AmliTestDebugBuffer[0] = '\0';
+         AmliTestDebugBuffer[0] = '\0';
+      } else {
+         AmliTestDebugBuffer[index] = '\0';
       }
-      AmliTestDebugBuffer[199] = '\0';
 
       DbgPrint(AmliTestDebugBuffer);
       }
