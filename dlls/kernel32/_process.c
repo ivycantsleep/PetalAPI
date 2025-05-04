@@ -69,6 +69,24 @@ HRESULT RegisterApplicationRecoveryCallback(
 	return S_OK;
 }
 
+static SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *get_logical_processor_info(void)
+{
+    DWORD size = 0;
+    SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *info;
+
+    GetLogicalProcessorInformationEx(RelationGroup, NULL, &size);
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+        return NULL;
+    if (!(info = HeapAlloc(GetProcessHeap(), 0, size)))
+        return NULL;
+    if (!GetLogicalProcessorInformationEx(RelationGroup, info, &size))
+    {
+        HeapFree(GetProcessHeap(), 0, info);
+        return NULL;
+    }
+    return info;
+}
+
 HRESULT UnregisterApplicationRecoveryCallback()
 {
 	return S_OK;
