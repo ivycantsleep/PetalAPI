@@ -163,6 +163,9 @@ BasepIsImageVersionOk(
     // And not greater than what we are
     //
 
+/*
+* The below line has been commented out for better app compatibility
+* 
     if ( ( ImageMajorVersion > USER_SHARED_DATA->NtMajorVersion ) ||
          ( ImageMajorVersion == USER_SHARED_DATA->NtMajorVersion &&
            ImageMinorVersion > USER_SHARED_DATA->NtMinorVersion
@@ -170,6 +173,7 @@ BasepIsImageVersionOk(
        ) {
         return FALSE;
         }
+*/
 
     return TRUE;
 }
