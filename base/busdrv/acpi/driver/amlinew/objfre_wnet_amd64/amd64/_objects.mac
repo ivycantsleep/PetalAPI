@@ -1,0 +1,45 @@
+PASS0_AMD64_OBJECTS=\
+ $(PASS0_HEADERDIR)\acpilog.h \
+ $(MC_SOURCEDIR)\acpilog.rc \
+
+
+AMD64_OBJECTS=\
+ $(OBJ_PATH)\$O\acpins.obj \
+ $(OBJ_PATH)\$O\amldebug.obj \
+ $(OBJ_PATH)\$O\amliapi.obj \
+ $(OBJ_PATH)\$O\amlihook.obj \
+ $(OBJ_PATH)\$O\amlitest.obj \
+ $(OBJ_PATH)\$O\ctxt.obj \
+ $(OBJ_PATH)\$O\cmdarg.obj \
+ $(OBJ_PATH)\$O\data.obj \
+ $(OBJ_PATH)\$O\debugger.obj \
+ $(OBJ_PATH)\$O\heap.obj \
+ $(OBJ_PATH)\$O\list.obj \
+ $(OBJ_PATH)\$O\misc.obj \
+ $(OBJ_PATH)\$O\namedobj.obj \
+ $(OBJ_PATH)\$O\nsmod.obj \
+ $(OBJ_PATH)\$O\object.obj \
+ $(OBJ_PATH)\$O\parser.obj \
+ $(OBJ_PATH)\$O\sched.obj \
+ $(OBJ_PATH)\$O\sleep.obj \
+ $(OBJ_PATH)\$O\strlib.obj \
+ $(OBJ_PATH)\$O\sync.obj \
+ $(OBJ_PATH)\$O\trace.obj \
+ $(OBJ_PATH)\$O\type1op.obj \
+ $(OBJ_PATH)\$O\type2op.obj \
+ $(OBJ_PATH)\$O\uasmdata.obj \
+ $(OBJ_PATH)\$O\unasm.obj \
+
+
+PRECOMPILED_INCLUDE_BASENAME=pch.h
+
+
+
+
+# lowercased
+BASEDIR=c:\winddk\7600.16385.1
+OBJECT_ROOT=c:\winddk\7600.16385.1
+MAKEDIR_LOWERCASE=c:\users\5g\desktop\projects\petalapi\base\busdrv\acpi\driver\amlinew
+OBJ_PATH=c:\users\5g\desktop\projects\petalapi\base\busdrv\acpi\driver\amlinew
+CONCURRENT_MIDL=0
+CONCURRENT_MANIFEST_BUILD=0

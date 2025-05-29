@@ -1,3 +1,0 @@
-# Emit LTCG codegen
-LTCG_WKS=1
-# kernel32 cannot be POGO'd at this time

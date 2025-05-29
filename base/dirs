@@ -1,0 +1,4 @@
+DIRS=           \
+    busdrv      \
+    ntdll       \
+    win32       \

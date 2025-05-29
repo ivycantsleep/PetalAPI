@@ -1,0 +1,29 @@
+
+
+AMD64_OBJECTS=\
+ $(OBJ_PATH)\$O\acpictl.obj \
+ $(OBJ_PATH)\$O\acpienbl.obj \
+ $(OBJ_PATH)\$O\acpigpio.obj \
+ $(OBJ_PATH)\$O\acpiinit.obj \
+ $(OBJ_PATH)\$O\acpiio.obj \
+ $(OBJ_PATH)\$O\acpilock.obj \
+ $(OBJ_PATH)\$O\acpintfy.obj \
+ $(OBJ_PATH)\$O\acpioprg.obj \
+ $(OBJ_PATH)\$O\acpisi.obj \
+ $(OBJ_PATH)\$O\acpiterm.obj \
+ $(OBJ_PATH)\$O\loaddsdt.obj \
+ $(OBJ_PATH)\$O\reg.obj \
+
+
+PRECOMPILED_INCLUDE_BASENAME=pch.h
+
+
+
+
+# lowercased
+BASEDIR=c:\winddk\7600.16385.1
+OBJECT_ROOT=c:\winddk\7600.16385.1
+MAKEDIR_LOWERCASE=c:\users\5g\desktop\projects\petalapi\base\busdrv\acpi\driver\shared
+OBJ_PATH=c:\users\5g\desktop\projects\petalapi\base\busdrv\acpi\driver\shared
+CONCURRENT_MIDL=0
+CONCURRENT_MANIFEST_BUILD=0
