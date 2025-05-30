@@ -30,6 +30,7 @@
 support\tools				r	support\tools			wpsbled		y	a
 netsetup        			r	support\tools       		sle		n	x
 admt\release				p	admt				sbled		y	x
+valueadd\3rdparty\mgmt\citrix		r	valueadd\3rdparty\mgmt\citrix	wp		y	a
 valueadd\msft\mgmt\CIMv2r5		r	valueadd\msft\mgmt\CIMv2r5	wpsbled		y	a
 valueadd\msft\mgmt\domren		r	valueadd\msft\mgmt\domren	sed		y	a
 valueadd\msft\mgmt\pba			r	valueadd\msft\mgmt\pba		wsbled		y	a

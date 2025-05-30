@@ -285,6 +285,8 @@ for %%a in (%Products%) do (
    if not exist %TMP%\%%adrivers.txt (
       call logmsg.cmd "No drivers to cab for %%a sku ..."
    ) else (
+      rem 4chan: add timeout between cabwrapper calls, should help with collisions under newer OSs
+      sleep 3
       call logmsg.cmd "Starting generation for %%a specific drivers ..."
       set EventName=%%adrivercab
       REM syntax for CabWrapper.cmd is:

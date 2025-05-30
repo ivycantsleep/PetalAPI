@@ -74,7 +74,7 @@ sub Main {
 
 	# exclude skus even it defined in prodskus.txt
 	my %ValidSkus = &cksku::GetSkus($ENV{lang}, $ENV{_BuildArch}); 
-	my $excludeSkus = 'per pro';
+	my $excludeSkus = '';
         for my $validSku ( sort keys %ValidSkus ){
 	    $ValidFlavors{$validSku}=1 if( $excludeSkus !~ /$validSku/i );    
 	}

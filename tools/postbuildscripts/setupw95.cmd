@@ -13,6 +13,7 @@
 @REM     MLekas  - add filegen 4/29/98
 @REM     jimschm - moved hwdatgen to new POSTCOMPRESS option
 @REM     ovidiut - run hwdatgen for server SKUs as well
+@REM     anon    - add timeout between hwdatgen calls, seems to fix collision problems between processes
 @REM
 @REM  Copyright (c) Microsoft Corporation. All rights reserved.
 @REM
@@ -139,7 +140,14 @@ for %%a in (%ProductList%) do (
     start /min cmd /c wrapper.cmd !filegen_counter! filegen -i:%_NTPostBld%\%%a\i386 -o:%_NTPostBld%\!infdir!\filelist.dat -a:%_NtPostBld%\mstools\filegen.inf -w:%tmp%\filelist.%%a.wrn -b:%_NTPostBld%\congeal_scripts\setupw95.%%a.txt -t:%_NTPostBld%\build_logs\%%a
 )
 
+REM 4chan: wait for filegen processes to finish before moving onto hwdatgen
+set WaitEvents=
 
+for /l %%a in (1,1,%filegen_counter%) do (
+    set WaitEvents=!WaitEvents! filegen.%%a
+)
+
+perl %RazzleToolPath%\PostBuildScripts\cmdevt.pl -iwv %WaitEvents%
 
 :HWDATGEN
 
@@ -176,16 +184,19 @@ for %%a in (%HwDatgenProductList%) do (
         set infdir=entinf
     )
 
+    rem 4chan: add timeout between hwdatgen calls, seems to fix collision problems between processes
+    rem (kinda a band-aid fix over the main issue of filename-collisions causing errors under newer Windows OS's tho..)
+    rem under older OS's like XP I guess collisions didn't cause any SHARING_VIOLATION problems?
+    sleep 3
+    
+    call logmsg.cmd "Starting generation of %%a hwcomp.dat ..."
+    
     set /a hwdatgen_counter=!hwdatgen_counter!+1
     start /min cmd /c wrapper.cmd !hwdatgen_counter! hwdatgen -i:%_NTPOSTBLD%\%%a\%bindir% -o:%_NTPOSTBLD%\!infdir!\hwcomp.dat
 )
 
 REM Wait for all of the processes to complete
 set WaitEvents=
-
-for /l %%a in (1,1,%filegen_counter%) do (
-    set WaitEvents=!WaitEvents! filegen.%%a
-)
 
 for /l %%a in (1,1,%hwdatgen_counter%) do (
     set WaitEvents=!WaitEvents! hwdatgen.%%a

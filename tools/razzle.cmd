@@ -617,9 +617,9 @@ if /I "%_BuildBranch%" == "Lab03_DEV" (
 @rem Set the OFFICIAL_BUILD_MACHINE variable if appropriate
 @rem
 if "%_ArgOfficial%" == "true" call VerifyBuildMachine.cmd
-if NOT defined OFFICIAL_BUILD_MACHINE goto NotBuildMachine
 set __BUILDMACHINE__=%_BuildBranch%
 set NO_PDB_PATHS=1
+if NOT defined OFFICIAL_BUILD_MACHINE goto NotBuildMachine
 if /I "%_BuildType%" == "fre" (
     if /I "%_BuildBranch%" == "Lab01_N" set _NTPOGODIR=POGO
     if /I "%_BuildBranch%" == "Main" set _NTPOGODIR=POGO

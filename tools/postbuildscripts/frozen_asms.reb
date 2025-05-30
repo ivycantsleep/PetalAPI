@@ -1,5 +1,6 @@
 asms\6000\msft\windows\common\controls\comctl32.dll
 asms\1000\Msft\Windows\GdiPlus\gdiplus.dll
+asms\101000\msft\windows\gdiplus\gdiplus.dll
 asms\6000\Msft\vcrtl\atl.dll
 asms\6000\Msft\vcrtl\mfc42.dll
 asms\6000\Msft\vcrtl\mfc42u.dll

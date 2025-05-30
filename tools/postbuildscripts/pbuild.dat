@@ -33,8 +33,8 @@ END %RazzleToolPath%\PostBuildScripts\lgndata.cmd -s
 ;Run Incremental BBT script
 ;
 ;
-BEGIN %RazzleToolPath%\PostBuildScripts\bbt\incbbt.cmd
-END %RazzleToolPath%\PostBuildScripts\bbt\incbbt.cmd
+;BEGIN %RazzleToolPath%\PostBuildScripts\bbt\incbbt.cmd
+;END %RazzleToolPath%\PostBuildScripts\bbt\incbbt.cmd
 ;
 ;SwapInOriginal files has to come before aggregation so that it does not overwrite 
 ;localized files
@@ -125,13 +125,13 @@ BEGIN %RazzleToolPath%\PostBuildScripts\crypto.cmd
 BEGIN %RazzleToolPath%\PostBuildScripts\signtheme.cmd
 BEGIN %RazzleToolPath%\PostBuildScripts\tscert.cmd
 BEGIN %RazzleToolPath%\PostBuildScripts\pbainst.cmd
-BEGIN %RazzleToolPath%\PostBuildScripts\fixprn.pl
+;BEGIN %RazzleToolPath%\PostBuildScripts\fixprn.pl
 BEGIN %RazzleToolPath%\PostBuildScripts\helpsupportservices.cmd
 BEGIN %RazzleToolPath%\PostBuildScripts\migwiz.cmd
 BEGIN %RazzleToolPath%\PostBuildScripts\hnw.cmd
-BEGIN %RazzleToolPath%\PostBuildScripts\NTBackupOnPersonal.cmd
+;BEGIN %RazzleToolPath%\PostBuildScripts\NTBackupOnPersonal.cmd
 ;BEGIN %RazzleToolPath%\PostBuildScripts\MkTabCab.cmd
-BEGIN %RazzleToolPath%\PostBuildScripts\gpmc.cmd
+;BEGIN %RazzleToolPath%\PostBuildScripts\gpmc.cmd
 BEGIN %RazzleToolPath%\PostBuildScripts\samsibuild.cmd
 
 ; Now wait on 12 scripts before starting Catsign
@@ -149,8 +149,8 @@ BEGIN %RazzleToolPath%\PostBuildScripts\winfusesfcgen.cmd -cdfs:yes -hashes:yes
 
 END %RazzleToolPath%\PostBuildScripts\shimbind.cmd
 ; msi.cmd must wait for shimbind.cmd to start
-BEGIN %RazzleToolPath%\PostBuildScripts\msi.cmd
-END %RazzleToolPath%\PostBuildScripts\msi.cmd
+;BEGIN %RazzleToolPath%\PostBuildScripts\msi.cmd
+;END %RazzleToolPath%\PostBuildScripts\msi.cmd
 ;tscsetup.cmd must run after msi.cmd completes
 BEGIN %RazzleToolPath%\PostBuildScripts\tscsetup.cmd
 END %RazzleToolPath%\PostBuildScripts\winnt32msi.cmd
@@ -167,11 +167,11 @@ END %RazzleToolPath%\PostBuildScripts\adminpak.cmd
 END %RazzleToolPath%\PostBuildScripts\uddipostbuild.cmd
 END %RazzleToolPath%\PostBuildScripts\admigration.cmd
 END %RazzleToolPath%\PostBuildScripts\pbainst.cmd
-END %RazzleToolPath%\PostBuildScripts\fixprn.pl
+;END %RazzleToolPath%\PostBuildScripts\fixprn.pl
 END %RazzleToolPath%\PostBuildScripts\helpsupportservices.cmd
 END %RazzleToolPath%\PostBuildScripts\migwiz.cmd
 END %RazzleToolPath%\PostBuildScripts\hnw.cmd
-END %RazzleToolPath%\PostBuildScripts\NTBackupOnPersonal.cmd
+;END %RazzleToolPath%\PostBuildScripts\NTBackupOnPersonal.cmd
 ;END %RazzleToolPath%\PostBuildScripts\MkTabCab.cmd
 END %RazzleToolPath%\PostBuildScripts\sfcgen.cmd
 END %RazzleToolPath%\PostBuildScripts\winfusesfcgen.cmd
@@ -182,7 +182,7 @@ END %RazzleToolPath%\PostBuildScripts\samsibuild.cmd
 BEGIN %RazzleToolPath%\PostBuildScripts\sxs_msm.cmd
 END %RazzleToolPath%\PostBuildScripts\sxs_msm.cmd
 END %RazzleToolPath%\PostBuildScripts\tscsetup.cmd
-END %RazzleToolPath%\PostBuildScripts\gpmc.cmd
+;END %RazzleToolPath%\PostBuildScripts\gpmc.cmd
 
 ; We need to refresh our lists before making the driver cab and catalogs
 INCREMENTAL %RazzleToolPath%\PostBuildScripts\BinDiff.pl -a

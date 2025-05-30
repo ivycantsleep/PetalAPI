@@ -50,7 +50,7 @@ if "1" == "%vaultsign%" (
 )
 
 set CERT_FILE=%RazzleToolPath%\driver.pfx
-set CSP_SIGN_CMD=signtool sign /sha1 83E06454938FC9248845CB2C4E4E73CF8CCC6E65    
+set CSP_SIGN_CMD=signtool sign /sha1 5B8962DC21A68507196A158F8F687F232706CDBC    
 
 
 REM MS Software CSPs
